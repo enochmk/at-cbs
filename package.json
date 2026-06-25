@@ -22,8 +22,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "npx tsx test-manual.ts",
     "prepublishOnly": "npm run build",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write ."
@@ -37,7 +36,6 @@
     "@types/http-errors": "^2.0.0",
     "prettier": "^3.3.3",
     "tsup": "^8.3.0",
-    "typescript": "^5.6.0",
-    "vitest": "^4.1.9"
+    "typescript": "^5.6.0"
   }
 }
