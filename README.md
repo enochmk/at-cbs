@@ -1,17 +1,17 @@
-# @at/cbs
+# @enochmk/cbs
 
 CBS (Core Billing System) SOAP API client for AirtelTigo.
 
 ## Installation
 
 ```bash
-npm install @at/cbs
+npm install @enochmk/cbs
 ```
 
 ## Quick Start
 
 ```typescript
-import { CbsClient } from '@at/cbs';
+import { CbsClient } from '@enochmk/cbs';
 
 const client = new CbsClient({
   baseUrl: 'http://10.76.130.100:7782',
@@ -72,18 +72,19 @@ const customer = result.QueryBasicInfoResult?.Customer;
 
 ### CbsClientOptions
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `baseUrl` | `string` | Yes | CBS server base URL (e.g., `http://10.76.130.100:7782`) |
-| `username` | `string` | Yes | Authentication username |
-| `password` | `string` | Yes | Authentication password |
-| `timeout` | `number` | No | Request timeout in ms (default: `15000`) |
-| `successCode` | `string` | No | Success result code (default: `405000000`) |
-| `logger` | `Logger` | No | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
+| Property      | Type     | Required | Description                                                            |
+| ------------- | -------- | -------- | ---------------------------------------------------------------------- |
+| `baseUrl`     | `string` | Yes      | CBS server base URL (e.g., `http://10.76.130.100:7782`)                |
+| `username`    | `string` | Yes      | Authentication username                                                |
+| `password`    | `string` | Yes      | Authentication password                                                |
+| `timeout`     | `number` | No       | Request timeout in ms (default: `15000`)                               |
+| `successCode` | `string` | No       | Success result code (default: `405000000`)                             |
+| `logger`      | `Logger` | No       | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
 
 ### MSISDN Format
 
 MSISDNs are automatically normalized to 9 digits. Accepts:
+
 - 9 digits: `271004887`
 - 10 digits: `2710048870`
 - 12 digits: `233271004887`
@@ -103,7 +104,7 @@ import type {
   Product,
   Service,
   Customer,
-} from '@at/cbs';
+} from '@enochmk/cbs';
 ```
 
 ## Error Handling
