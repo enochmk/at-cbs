@@ -132,6 +132,11 @@ export interface IntegrationEnquiryResult {
   Customer?: Customer;
 }
 
+export interface IntegrationEnquiryResponse {
+  ResultHeader?: ResultHeader;
+  IntegrationEnquiryResult?: IntegrationEnquiryResult;
+}
+
 export interface CreateSubscriberOptions {
   requestId?: number;
   remark?: string;
@@ -147,7 +152,14 @@ export interface DeleteSubscriberOptions {
   remoteAddress?: string;
 }
 
-export interface DeleteSubscriberResult {}
+export interface DeleteSubscriberResult {
+  ResultHeader?: ResultHeader;
+}
+
+export interface DeleteSubscriberResponse {
+  ResultHeader?: ResultHeader;
+  DeleteSubscriberResult?: DeleteSubscriberResult;
+}
 
 export interface ProductOrderInfo {
   ProductID?: number;
@@ -159,6 +171,11 @@ export interface ProductOrderInfo {
 
 export interface NewSubscriberResult {
   ProductOrderInfo?: ProductOrderInfo[];
+}
+
+export interface NewSubscriberResponse {
+  ResultHeader?: ResultHeader;
+  NewSubscriberResult?: NewSubscriberResult;
 }
 
 export interface QueryBasicInfoOptions {
@@ -196,4 +213,9 @@ export interface QueryBasicInfoCustomer {
 
 export interface QueryBasicInfoResult {
   Customer?: QueryBasicInfoCustomer;
+}
+
+export interface QueryBasicInfoResponse {
+  ResultHeader?: ResultHeader;
+  QueryBasicInfoResult?: QueryBasicInfoResult;
 }

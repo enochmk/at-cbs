@@ -1,17 +1,17 @@
-import axios from 'axios';
+import axios, { type AxiosResponse } from 'axios';
 import { XMLParser } from 'fast-xml-parser';
 import createHttpError from 'http-errors';
 
 import type {
   CbsClientOptions,
   IntegrationEnquiryOptions,
-  IntegrationEnquiryResult,
+  IntegrationEnquiryResponse,
   CreateSubscriberOptions,
   DeleteSubscriberOptions,
-  DeleteSubscriberResult,
-  NewSubscriberResult,
+  DeleteSubscriberResponse,
+  NewSubscriberResponse,
   QueryBasicInfoOptions,
-  QueryBasicInfoResult,
+  QueryBasicInfoResponse,
 } from './types';
 import { parseSoapResponse } from './utils';
 
@@ -51,7 +51,7 @@ export class CbsClient {
   async integrationEnquiry(
     msisdn: string,
     opts?: IntegrationEnquiryOptions,
-  ): Promise<IntegrationEnquiryResult> {
+  ): Promise<IntegrationEnquiryResponse> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const requestId = opts?.requestId ?? Date.now();
     this.log('verbose', 'integrationEnquiry - sending request', { msisdn, opts });
@@ -83,9 +83,9 @@ export class CbsClient {
       </soapenv:Envelope>
     `;
 
-    let response;
+    let response: AxiosResponse<string>;
     try {
-      response = await axios.post(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.opts.url, soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'IntegrationEnquiry' },
         timeout: this.opts.timeout,
       });
@@ -98,7 +98,7 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<IntegrationEnquiryResponse>(response.data, this.parser);
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'integrationEnquiry - CBS error', {
@@ -111,13 +111,13 @@ export class CbsClient {
     }
 
     this.log('verbose', 'integrationEnquiry - success', { msisdn, requestId });
-    return (resultMsg?.IntegrationEnquiryResult ?? {}) as IntegrationEnquiryResult;
+    return resultMsg;
   }
 
   async createSubscriber(
     msisdn: string,
     opts?: CreateSubscriberOptions,
-  ): Promise<NewSubscriberResult> {
+  ): Promise<NewSubscriberResponse> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const requestId = opts?.requestId ?? Date.now();
     const remark = opts?.remark ?? `npm-${cbsMsisdn}`;
@@ -155,9 +155,9 @@ export class CbsClient {
       </soapenv:Envelope>
     `;
 
-    let response;
+    let response: AxiosResponse<string>;
     try {
-      response = await axios.post(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.opts.url, soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'NewSubscriber' },
         timeout: this.opts.timeout,
       });
@@ -170,7 +170,7 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<NewSubscriberResponse>(response.data, this.parser);
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'createSubscriber - CBS error', {
@@ -183,13 +183,13 @@ export class CbsClient {
     }
 
     this.log('info', 'createSubscriber - success', { msisdn, requestId });
-    return (resultMsg?.NewSubscriberResult as NewSubscriberResult) ?? {};
+    return resultMsg;
   }
 
   async deleteSubscriber(
     msisdn: string,
     opts?: DeleteSubscriberOptions,
-  ): Promise<DeleteSubscriberResult> {
+  ): Promise<DeleteSubscriberResponse> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const requestId = opts?.requestId ?? Date.now();
     const remark = opts?.remark ?? `npm-${cbsMsisdn}`;
@@ -224,9 +224,9 @@ export class CbsClient {
       </soapenv:Envelope>
     `;
 
-    let response;
+    let response: AxiosResponse<string>;
     try {
-      response = await axios.post(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.opts.url, soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'DeleteSubscriber' },
         timeout: this.opts.timeout,
       });
@@ -239,7 +239,7 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<DeleteSubscriberResponse>(response.data, this.parser);
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'deleteSubscriber - CBS error', {
@@ -252,13 +252,13 @@ export class CbsClient {
     }
 
     this.log('info', 'deleteSubscriber - success', { msisdn, requestId });
-    return (resultMsg as DeleteSubscriberResult) ?? {};
+    return resultMsg;
   }
 
   async queryBasicInfo(
     msisdn: string,
     opts?: QueryBasicInfoOptions,
-  ): Promise<QueryBasicInfoResult> {
+  ): Promise<QueryBasicInfoResponse> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const requestId = opts?.requestId ?? Date.now();
     this.log('verbose', 'queryBasicInfo - sending request', { msisdn, opts });
@@ -290,9 +290,9 @@ export class CbsClient {
       </soapenv:Envelope>
     `;
 
-    let response;
+    let response: AxiosResponse<string>;
     try {
-      response = await axios.post(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.opts.url, soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'QueryBasicInfo' },
         timeout: this.opts.timeout,
       });
@@ -305,7 +305,7 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QueryBasicInfoResponse>(response.data, this.parser);
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'queryBasicInfo - CBS error', {
@@ -318,6 +318,6 @@ export class CbsClient {
     }
 
     this.log('verbose', 'queryBasicInfo - success', { msisdn, requestId });
-    return (resultMsg?.QueryBasicInfoResult ?? {}) as QueryBasicInfoResult;
+    return resultMsg;
   }
 }

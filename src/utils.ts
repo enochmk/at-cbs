@@ -4,13 +4,13 @@ export function sanitizeXml(data: string): string {
   return data.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;').replace(/-/g, '&#45;');
 }
 
-export function parseSoapResponse(
+export function parseSoapResponse<T = Record<string, unknown>>(
   xml: string,
   parser: XMLParser,
 ): {
   body: Record<string, any>;
   resultMsgKey: string;
-  resultMsg: Record<string, any>;
+  resultMsg: T;
   resultCode: string;
   resultDesc: string;
 } {
@@ -35,10 +35,10 @@ export function parseSoapResponse(
     throw Object.assign(new Error('No ResultMsg in CBS response'), { status: 502 });
   }
 
-  const resultMsg = body[resultMsgKey];
-  const resultHeader = resultMsg?.ResultHeader;
-  const resultCode: string = resultHeader?.ResultCode ?? '';
-  const resultDesc: string = resultHeader?.ResultDesc ?? '';
+  const resultMsg = body[resultMsgKey] as T;
+  const resultHeader = resultMsg?.ResultHeader as Record<string, unknown> | undefined;
+  const resultCode: string = (resultHeader?.ResultCode as string) ?? '';
+  const resultDesc: string = (resultHeader?.ResultDesc as string) ?? '';
 
   return { body, resultMsgKey, resultMsg, resultCode, resultDesc };
 }
