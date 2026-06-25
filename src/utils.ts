@@ -37,8 +37,8 @@ export function parseSoapResponse<T = Record<string, unknown>>(
 
   const resultMsg = body[resultMsgKey] as T;
   const resultHeader = resultMsg?.ResultHeader as Record<string, unknown> | undefined;
-  const resultCode: string = (resultHeader?.ResultCode as string) ?? '';
-  const resultDesc: string = (resultHeader?.ResultDesc as string) ?? '';
+  const resultCode: string = String(resultHeader?.ResultCode ?? '');
+  const resultDesc: string = String(resultHeader?.ResultDesc ?? '');
 
   return { body, resultMsgKey, resultMsg, resultCode, resultDesc };
 }
