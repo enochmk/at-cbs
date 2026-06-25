@@ -19,10 +19,28 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enochmk/at-cbs.git"
+  },
+  "homepage": "https://github.com/enochmk/at-cbs#readme",
+  "bugs": {
+    "url": "https://github.com/enochmk/at-cbs/issues"
+  },
+  "keywords": [
+    "cbs",
+    "airteltigo",
+    "soap",
+    "billing",
+    "telecom"
+  ],
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
     "test": "npx tsx test-manual.ts",
+    "release": "npm version patch && git push --tags",
+    "release:minor": "npm version minor && git push --tags",
+    "release:major": "npm version major && git push --tags",
     "prepublishOnly": "npm run build",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write ."
@@ -37,6 +55,7 @@
     "@types/node": "^26.0.1",
     "prettier": "^3.3.3",
     "tsup": "^8.3.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.6.0"
   }
 }
