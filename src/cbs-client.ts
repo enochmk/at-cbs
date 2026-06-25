@@ -8,6 +8,8 @@ import type {
   IntegrationEnquiryResult,
   CreateSubscriberOptions,
   DeleteSubscriberOptions,
+  DeleteSubscriberResult,
+  NewSubscriberResult,
   QueryBasicInfoOptions,
   QueryBasicInfoResult,
 } from './types';
@@ -115,7 +117,7 @@ export class CbsClient {
   async createSubscriber(
     msisdn: string,
     opts?: CreateSubscriberOptions,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<NewSubscriberResult> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const requestId = opts?.requestId ?? Date.now();
     const remark = opts?.remark ?? `npm-${cbsMsisdn}`;
@@ -181,13 +183,13 @@ export class CbsClient {
     }
 
     this.log('info', 'createSubscriber - success', { msisdn, requestId });
-    return (resultMsg as Record<string, unknown>) ?? {};
+    return (resultMsg?.NewSubscriberResult as NewSubscriberResult) ?? {};
   }
 
   async deleteSubscriber(
     msisdn: string,
     opts?: DeleteSubscriberOptions,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<DeleteSubscriberResult> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const requestId = opts?.requestId ?? Date.now();
     const remark = opts?.remark ?? `npm-${cbsMsisdn}`;
@@ -250,7 +252,7 @@ export class CbsClient {
     }
 
     this.log('info', 'deleteSubscriber - success', { msisdn, requestId });
-    return (resultMsg as Record<string, unknown>) ?? {};
+    return (resultMsg as DeleteSubscriberResult) ?? {};
   }
 
   async queryBasicInfo(

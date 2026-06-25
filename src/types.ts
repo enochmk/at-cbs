@@ -122,7 +122,6 @@ export interface Customer {
 }
 
 export interface IntegrationEnquiryResult {
-  ResultHeader?: ResultHeader;
   BalanceRecordList?: {
     BalanceRecord?: BalanceRecord[];
   };
@@ -148,9 +147,7 @@ export interface DeleteSubscriberOptions {
   remoteAddress?: string;
 }
 
-export interface DeleteSubscriberResult {
-  ResultHeader?: ResultHeader;
-}
+export interface DeleteSubscriberResult {}
 
 export interface ProductOrderInfo {
   ProductID?: number;
@@ -161,10 +158,7 @@ export interface ProductOrderInfo {
 }
 
 export interface NewSubscriberResult {
-  ResultHeader?: ResultHeader;
-  NewSubscriberResult?: {
-    ProductOrderInfo?: ProductOrderInfo[];
-  };
+  ProductOrderInfo?: ProductOrderInfo[];
 }
 
 export interface QueryBasicInfoOptions {
@@ -201,8 +195,5 @@ export interface QueryBasicInfoCustomer {
 }
 
 export interface QueryBasicInfoResult {
-  ResultHeader?: ResultHeader;
-  QueryBasicInfoResult?: {
-    Customer?: QueryBasicInfoCustomer;
-  };
+  Customer?: QueryBasicInfoCustomer;
 }
