@@ -1,0 +1,20 @@
+# Source
+src/
+test-manual.ts
+
+# Config
+tsconfig.json
+tsup.config.ts
+.prettierrc
+.editorconfig
+.nvmrc
+.gitignore
+
+# CI/CD
+.github/
+
+# Dev
+node_modules/
+*.log
+
+# Build (dist is included via package.json "files")
