@@ -20,6 +20,9 @@ export class CbsClient {
   private opts: Required<CbsClientOptions>;
   private successCode: string;
 
+  private static BUSINESS_MGR = '/services/CBSInterfaceBusinessMgrService';
+  private static ACCOUNT_MGR = '/services/CBSInterfaceAccountMgrService';
+
   constructor(options: CbsClientOptions) {
     this.opts = {
       timeout: 15000,
@@ -33,6 +36,10 @@ export class CbsClient {
       parseTagValue: true,
       trimValues: true,
     });
+  }
+
+  private getUrl(service: string): string {
+    return `${this.opts.baseUrl}${service}`;
   }
 
   private log(level: string, msg: string, ctx?: Record<string, unknown>): void {
@@ -85,7 +92,7 @@ export class CbsClient {
 
     let response: AxiosResponse<string>;
     try {
-      response = await axios.post<string>(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'IntegrationEnquiry' },
         timeout: this.opts.timeout,
       });
@@ -157,7 +164,7 @@ export class CbsClient {
 
     let response: AxiosResponse<string>;
     try {
-      response = await axios.post<string>(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'NewSubscriber' },
         timeout: this.opts.timeout,
       });
@@ -226,7 +233,7 @@ export class CbsClient {
 
     let response: AxiosResponse<string>;
     try {
-      response = await axios.post<string>(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'DeleteSubscriber' },
         timeout: this.opts.timeout,
       });
@@ -292,7 +299,7 @@ export class CbsClient {
 
     let response: AxiosResponse<string>;
     try {
-      response = await axios.post<string>(this.opts.url, soapPayload, {
+      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
         headers: { 'Content-Type': 'text/xml', SoapAction: 'QueryBasicInfo' },
         timeout: this.opts.timeout,
       });

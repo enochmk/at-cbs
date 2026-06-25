@@ -1,5 +1,5 @@
 export interface CbsClientOptions {
-  url: string;
+  baseUrl: string;
   username: string;
   password: string;
   timeout?: number;

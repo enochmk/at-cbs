@@ -1,7 +1,7 @@
 import { CbsClient } from './src';
 
 const client = new CbsClient({
-  url: 'http://10.76.130.100:7782/services/CBSInterfaceBusinessMgrService',
+  baseUrl: 'http://10.76.130.100:7782',
   username: 'dwdev',
   password: 'C591D9B26FE9B27F5F01246252578E5FA8E6C4E26356DC7AF3CBDDD998E1D3EA',
   logger: {
