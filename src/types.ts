@@ -100,7 +100,7 @@ export interface Service {
 
 export interface SubscriberInfo {
   Subscriber?: Subscriber;
-  Product?: Product;
+  Product?: Product[];
   Service?: Service[];
 }
 
@@ -114,11 +114,20 @@ export interface SubAttachedInfo {
 export interface Customer {
   Name?: string;
   Code?: string;
+  Gender?: string;
   Birthday?: string;
   Address?: string;
   Grade?: number;
   CustomerType?: number;
+  CreditAmount?: number;
   CustomerState?: number;
+}
+
+export interface CumulativeItem {
+  CumulateID?: number;
+  CumulateBeginTime?: string;
+  CumulateEndTime?: string;
+  CumulativeAmt?: number;
 }
 
 export interface IntegrationEnquiryResult {
@@ -128,6 +137,9 @@ export interface IntegrationEnquiryResult {
   SubscriberState?: SubscriberState;
   BillingCycleDate?: BillingCycleDate;
   SubscriberInfo?: SubscriberInfo;
+  CumulativeItemList?: {
+    CumulativeItem?: CumulativeItem[];
+  };
   SubAttachedInfo?: SubAttachedInfo;
   Customer?: Customer;
 }
