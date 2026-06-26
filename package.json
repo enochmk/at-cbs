@@ -1,5 +1,5 @@
 {
-  "name": "@enochmk/cbs",
+  "name": "@enochmk/cbs-client",
   "version": "1.0.0",
   "description": "CBS (Core Billing System) SOAP API client for AirtelTigo",
   "private": false,

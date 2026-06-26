@@ -1,17 +1,17 @@
-# @enochmk/cbs
+# @enochmk/cbs-client
 
 CBS (Core Billing System) SOAP API client for AirtelTigo.
 
 ## Installation
 
 ```bash
-npm install @enochmk/cbs
+npm install @enochmk/cbs-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { CbsClient } from '@enochmk/cbs';
+import { CbsClient } from '@enochmk/cbs-client';
 
 const client = new CbsClient({
   baseUrl: 'http://10.76.130.100:7782',
@@ -104,7 +104,7 @@ import type {
   Product,
   Service,
   Customer,
-} from '@enochmk/cbs';
+} from '@enochmk/cbs-client';
 ```
 
 ## Error Handling
