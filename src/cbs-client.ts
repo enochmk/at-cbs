@@ -12,6 +12,10 @@ import type {
   NewSubscriberResponse,
   QueryBasicInfoOptions,
   QueryBasicInfoResponse,
+  SubscribeAppendantProductOptions,
+  SubscribeAppendantProductResponse,
+  UnSubscribeAppendantProductOptions,
+  UnSubscribeAppendantProductResponse,
 } from './types';
 import { parseSoapResponse } from './utils';
 
@@ -105,7 +109,10 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<IntegrationEnquiryResponse>(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<IntegrationEnquiryResponse>(
+      response.data,
+      this.parser,
+    );
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'integrationEnquiry - CBS error', {
@@ -177,7 +184,10 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<NewSubscriberResponse>(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<NewSubscriberResponse>(
+      response.data,
+      this.parser,
+    );
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'createSubscriber - CBS error', {
@@ -246,7 +256,10 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<DeleteSubscriberResponse>(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<DeleteSubscriberResponse>(
+      response.data,
+      this.parser,
+    );
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'deleteSubscriber - CBS error', {
@@ -312,7 +325,10 @@ export class CbsClient {
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QueryBasicInfoResponse>(response.data, this.parser);
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QueryBasicInfoResponse>(
+      response.data,
+      this.parser,
+    );
 
     if (resultCode !== this.successCode) {
       this.log('warn', 'queryBasicInfo - CBS error', {
@@ -325,6 +341,158 @@ export class CbsClient {
     }
 
     this.log('verbose', 'queryBasicInfo - success', { msisdn, requestId });
+    return resultMsg;
+  }
+
+  async subscribeAppendantProduct(
+    msisdn: string,
+    productId: string,
+    opts?: SubscribeAppendantProductOptions,
+  ): Promise<SubscribeAppendantProductResponse> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const requestId = opts?.requestId ?? Date.now();
+    const validMode = opts?.validMode ?? '4050000';
+    this.log('verbose', 'subscribeAppendantProduct - sending request', { msisdn, productId, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bus="http://www.huawei.com/bme/cbsinterface/cbs/businessmgrmsg" xmlns:com="http://www.huawei.com/bme/cbsinterface/common" xmlns:bus1="http://www.huawei.com/bme/cbsinterface/cbs/businessmgr">
+      <soapenv:Header/>
+      <soapenv:Body>
+          <bus:SubscribeAppendantProductRequestMsg>
+            <RequestHeader>
+                <com:CommandId>SubscribeAppendantProduct</com:CommandId>
+                <com:Version>1</com:Version>
+                <com:TransactionId></com:TransactionId>
+                <com:SequenceId>1</com:SequenceId>
+                <com:RequestType>Event</com:RequestType>
+                <com:SessionEntity>
+                  <com:Name>${this.opts.username}</com:Name>
+                  <com:Password>${this.opts.password}</com:Password>
+                  <com:RemoteAddress>${opts?.remoteAddress ?? ''}</com:RemoteAddress>
+                </com:SessionEntity>
+                <com:SerialNo>${requestId}</com:SerialNo>
+            </RequestHeader>
+            <SubscribeAppendantProductRequest>
+                <bus1:SubscriberNo>${cbsMsisdn}</bus1:SubscriberNo>
+                <bus1:Product>
+                  <bus1:Id>${productId}</bus1:Id>
+                  <bus1:ValidMode>${validMode}</bus1:ValidMode>
+                </bus1:Product>
+            </SubscribeAppendantProductRequest>
+            </bus:SubscribeAppendantProductRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
+        headers: { 'Content-Type': 'text/xml', SoapAction: 'SubscribeAppendantProduct' },
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'subscribeAppendantProduct - request failed', {
+        msisdn,
+        productId,
+        requestId,
+        error: err.message,
+      });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } =
+      parseSoapResponse<SubscribeAppendantProductResponse>(response.data, this.parser);
+
+    if (resultCode !== this.successCode) {
+      this.log('warn', 'subscribeAppendantProduct - CBS error', {
+        msisdn,
+        productId,
+        requestId,
+        resultCode,
+        resultDesc,
+      });
+      throw createHttpError(422, resultDesc || `CBS error code ${resultCode}`);
+    }
+
+    this.log('info', 'subscribeAppendantProduct - success', { msisdn, productId, requestId });
+    return resultMsg;
+  }
+
+  async unSubscribeAppendantProduct(
+    msisdn: string,
+    productId: string,
+    opts?: UnSubscribeAppendantProductOptions,
+  ): Promise<UnSubscribeAppendantProductResponse> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const requestId = opts?.requestId ?? Date.now();
+    const validMode = opts?.validMode ?? '4050000';
+    this.log('verbose', 'unSubscribeAppendantProduct - sending request', {
+      msisdn,
+      productId,
+      opts,
+    });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bus="http://www.huawei.com/bme/cbsinterface/cbs/businessmgrmsg" xmlns:com="http://www.huawei.com/bme/cbsinterface/common" xmlns:bus1="http://www.huawei.com/bme/cbsinterface/cbs/businessmgr">
+      <soapenv:Header/>
+      <soapenv:Body>
+          <bus:UnSubscribeAppendantProductRequestMsg>
+            <RequestHeader>
+                <com:CommandId>UnSubscribeAppendantProduct</com:CommandId>
+                <com:Version>1</com:Version>
+                <com:TransactionId></com:TransactionId>
+                <com:SequenceId>1</com:SequenceId>
+                <com:RequestType>Event</com:RequestType>
+                <com:SessionEntity>
+                  <com:Name>${this.opts.username}</com:Name>
+                  <com:Password>${this.opts.password}</com:Password>
+                  <com:RemoteAddress>${opts?.remoteAddress ?? ''}</com:RemoteAddress>
+                </com:SessionEntity>
+                <com:SerialNo>${requestId}</com:SerialNo>
+            </RequestHeader>
+            <UnSubscribeAppendantProductRequest>
+                <bus1:SubscriberNo>${cbsMsisdn}</bus1:SubscriberNo>
+                <bus1:Product>
+                  <bus1:ProductID>${productId}</bus1:ProductID>
+                  <bus1:ValidMode>${validMode}</bus1:ValidMode>
+                </bus1:Product>
+            </UnSubscribeAppendantProductRequest>
+            </bus:UnSubscribeAppendantProductRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
+        headers: { 'Content-Type': 'text/xml', SoapAction: 'UnSubscribeAppendantProduct' },
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'unSubscribeAppendantProduct - request failed', {
+        msisdn,
+        productId,
+        requestId,
+        error: err.message,
+      });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } =
+      parseSoapResponse<UnSubscribeAppendantProductResponse>(response.data, this.parser);
+
+    if (resultCode !== this.successCode) {
+      this.log('warn', 'unSubscribeAppendantProduct - CBS error', {
+        msisdn,
+        productId,
+        requestId,
+        resultCode,
+        resultDesc,
+      });
+      throw createHttpError(422, resultDesc || `CBS error code ${resultCode}`);
+    }
+
+    this.log('info', 'unSubscribeAppendantProduct - success', { msisdn, productId, requestId });
     return resultMsg;
   }
 }

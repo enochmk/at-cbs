@@ -190,6 +190,38 @@ export interface NewSubscriberResponse {
   NewSubscriberResult?: NewSubscriberResult;
 }
 
+export interface SubscribeAppendantProductOptions {
+  requestId?: number;
+  remark?: string;
+  remoteAddress?: string;
+  validMode?: string;
+}
+
+export interface UnSubscribeAppendantProductOptions {
+  requestId?: number;
+  remark?: string;
+  remoteAddress?: string;
+  validMode?: string;
+}
+
+export interface SubscribeAppendantProductResult {
+  ProductOrderInfo?: ProductOrderInfo[];
+}
+
+export interface SubscribeAppendantProductResponse {
+  ResultHeader?: ResultHeader;
+  SubscribeAppendantProductResult?: SubscribeAppendantProductResult;
+}
+
+export interface UnSubscribeAppendantProductResult {
+  // response confirmation, typically empty or minimal
+}
+
+export interface UnSubscribeAppendantProductResponse {
+  ResultHeader?: ResultHeader;
+  UnSubscribeAppendantProductResult?: UnSubscribeAppendantProductResult;
+}
+
 export interface QueryBasicInfoOptions {
   requestId?: number;
   remoteAddress?: string;

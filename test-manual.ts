@@ -55,6 +55,25 @@ async function main() {
     console.error('Failed:', err.message);
   }
 
+  console.log('\n--- Subscribe Appendant Product ---');
+  try {
+    const productId = process.argv[3] || '2020847001';
+    const subscribed = await client.subscribeAppendantProduct(MSISDN, productId);
+    console.log('Result Code:', subscribed.ResultHeader?.ResultCode);
+    console.log('Product Orders:', subscribed.SubscribeAppendantProductResult?.ProductOrderInfo);
+  } catch (err: any) {
+    console.error('Failed:', err.message);
+  }
+
+  console.log('\n--- UnSubscribe Appendant Product ---');
+  try {
+    const productId = process.argv[3] || '2020847001';
+    const unsubscribed = await client.unSubscribeAppendantProduct(MSISDN, productId);
+    console.log('Result Code:', unsubscribed.ResultHeader?.ResultCode);
+  } catch (err: any) {
+    console.error('Failed:', err.message);
+  }
+
   console.log('\n=== Done ===');
 }
 

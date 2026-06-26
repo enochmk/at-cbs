@@ -14,5 +14,11 @@ export type {
   QueryBasicInfoOptions,
   QueryBasicInfoResult,
   QueryBasicInfoResponse,
+  SubscribeAppendantProductOptions,
+  SubscribeAppendantProductResult,
+  SubscribeAppendantProductResponse,
+  UnSubscribeAppendantProductOptions,
+  UnSubscribeAppendantProductResult,
+  UnSubscribeAppendantProductResponse,
   Logger,
 } from './types';

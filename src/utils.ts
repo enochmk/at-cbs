@@ -24,9 +24,7 @@ export function parseSoapResponse<T = Record<string, unknown>>(
 
   if (body['soapenv:Fault']) {
     const faultMsg =
-      body['soapenv:Fault']?.faultString ??
-      body['soapenv:Fault']?.faultstring ??
-      'CBS SOAP fault';
+      body['soapenv:Fault']?.faultString ?? body['soapenv:Fault']?.faultstring ?? 'CBS SOAP fault';
     throw Object.assign(new Error(String(faultMsg)), { status: 502 });
   }
 
@@ -36,7 +34,9 @@ export function parseSoapResponse<T = Record<string, unknown>>(
   }
 
   const resultMsg = body[resultMsgKey] as T;
-  const resultHeader = resultMsg?.ResultHeader as Record<string, unknown> | undefined;
+  const resultHeader = (resultMsg as Record<string, unknown>)?.ResultHeader as
+    | Record<string, unknown>
+    | undefined;
   const resultCode: string = String(resultHeader?.ResultCode ?? '');
   const resultDesc: string = String(resultHeader?.ResultDesc ?? '');
 
