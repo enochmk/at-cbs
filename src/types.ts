@@ -15,13 +15,24 @@ export interface Logger {
   verbose?: (msg: string, ctx?: Record<string, unknown>) => void;
 }
 
-export interface QueryCustomerInfoOptions {
+export interface CbsRequestOptions {
   messageSeq?: string;
   beId?: string;
   operatorId?: string;
   accessMode?: number;
   msgLanguageCode?: number;
   timeType?: number;
+  remoteAddress?: string;
+  remark?: string;
+  version?: number | string;
+}
+
+export interface QueryCustomerInfoOptions extends CbsRequestOptions {
+  queryMode?: number | string;
+  customerMask?: string;
+  accountMask?: string;
+  subscriberMask?: string;
+  groupMask?: string;
 }
 
 export interface QueryCustomerInfoResultHeader {
@@ -45,10 +56,16 @@ export interface QueryCustomerInfoCustomer {
 }
 
 export interface QueryCustomerInfoPrimaryOffering {
+  OfferingID?: string | number;
+  PurchaseSeq?: string | number;
   OfferingKey?: Record<string, unknown>;
   BundledFlag?: string;
   OfferingClass?: string;
   Status?: number | string;
+  EffectiveTime?: string | number;
+  ExpirationTime?: string | number;
+  ActivationMode?: string;
+  ActivationTime?: string | number;
   ProductInst?: Record<string, unknown> | Record<string, unknown>[];
   [key: string]: unknown;
 }
@@ -124,6 +141,8 @@ export interface QueryCustomerInfoData {
   CurrentStatusIndex?: MappedCode<CurrentStatusLabel>;
   BirthdayDate?: string;
   MainBalance?: QueryCustomerInfoMainBalance;
+  PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
+  SupplementaryOfferings?: QueryCustomerInfoPrimaryOffering[];
   'bcs:BillCycleType'?: number | string;
   'bcs:AcctType'?: number | string;
   'bcs:PaymentType'?: number | string;
@@ -139,10 +158,7 @@ export interface QueryCustomerInfoOutput {
   data: QueryCustomerInfoData;
 }
 
-export interface QueryBalanceOptions {
-  messageSeq?: string;
-  beId?: string;
-}
+export interface QueryBalanceOptions extends CbsRequestOptions {}
 
 export interface QueryBalanceDetail {
   BalanceInstanceID?: string | number;
@@ -208,10 +224,91 @@ export interface QueryBalanceOutput {
   data: QueryBalanceData;
 }
 
-export interface QuerySubLifeCycleOptions {
-  messageSeq?: string;
-  beId?: string;
+export interface SubscribeAppendantProductOptions extends CbsRequestOptions {
+  offeringId: string | number;
+  bundledFlag?: string;
+  offeringClass?: string;
+  status?: number | string;
+  effectiveMode?: string;
 }
+
+export interface SubscribeAppendantProductResponse extends CbsOperationResponse {
+  ChangeSubOfferingResult?: Record<string, unknown>;
+}
+
+export interface SubscribeAppendantProductData {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+  OfferingID?: string | number;
+  PurchaseSeq?: string | number;
+  EffectiveTime?: string | number;
+  ExpirationTime?: string | number;
+  RentDeductionStatus?: string | number;
+  BalanceChanges?: Record<string, unknown> | Record<string, unknown>[];
+  FreeUnitChanges?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+export interface SubscribeAppendantProductOutput {
+  metadata: SubscribeAppendantProductResponse;
+  data: SubscribeAppendantProductData;
+}
+
+export interface UnsubscribeAppendantProductOptions extends CbsRequestOptions {
+  offeringId: string | number;
+  purchaseSeq: string | number;
+}
+
+export interface UnsubscribeAppendantProductResponse extends CbsOperationResponse {
+  ChangeSubOfferingResult?: Record<string, unknown>;
+}
+
+export interface UnsubscribeAppendantProductData {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+}
+
+export interface UnsubscribeAppendantProductOutput {
+  metadata: UnsubscribeAppendantProductResponse;
+  data: UnsubscribeAppendantProductData;
+}
+
+export interface AdjustAccountOptions extends CbsRequestOptions {
+  adjustmentAmt?: number | string;
+  balanceType?: string;
+  adjustmentType?: number | string;
+  currencyId?: number | string;
+  adjustmentReasonCode?: string;
+  opType?: number | string;
+  adjustmentSerialNo?: string;
+}
+
+export interface AdjustAccountResult {
+  AdjustmentSerialNo?: string;
+  AcctKey?: string;
+  CustKey?: string;
+  AdjustmentInfo?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface AdjustAccountResponse extends CbsOperationResponse {
+  AdjustmentResult?: AdjustAccountResult;
+}
+
+export interface AdjustAccountData {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+  OldBalanceAmt?: number | string;
+  NewBalanceAmt?: number | string;
+  BalanceType?: string;
+  BalanceTypeName?: string;
+}
+
+export interface AdjustAccountOutput {
+  metadata: AdjustAccountResponse;
+  data: AdjustAccountData;
+}
+
+export interface QuerySubLifeCycleOptions extends CbsRequestOptions {}
 
 export interface QuerySubLifeCycleStatus {
   StatusName?: string;
@@ -248,14 +345,8 @@ export interface QuerySubLifeCycleOutput {
   data: QuerySubLifeCycleData;
 }
 
-export interface SubDeactivationOptions {
+export interface SubDeactivationOptions extends CbsRequestOptions {
   opType: string;
-  messageSeq?: string;
-  beId?: string;
-  operatorId?: string;
-  accessMode?: number;
-  msgLanguageCode?: number;
-  timeType?: number;
   subscriberKey?: string;
   effectiveTime?: string;
 }
@@ -271,9 +362,7 @@ export interface SubDeactivationOutput {
   metadata: SubDeactivationResponse;
 }
 
-export interface QueryXTransactionOptions {
-  messageSeq?: string;
-  beId?: string;
+export interface QueryXTransactionOptions extends CbsRequestOptions {
   subscriberKey?: string;
 }
 
@@ -290,14 +379,7 @@ export interface QueryXTransactionOutput {
   data: QueryXTransactionResult;
 }
 
-export interface QueryCdrDetailOptions {
-  messageSeq?: string;
-  beId?: string;
-  operatorId?: string;
-  accessMode?: number;
-  msgLanguageCode?: number;
-  timeType?: number;
-}
+export interface QueryCdrDetailOptions extends CbsRequestOptions {}
 
 export interface QueryCdrDetailResult {
   [key: string]: unknown;
@@ -312,16 +394,10 @@ export interface QueryCdrDetailOutput {
   data: QueryCdrDetailResult;
 }
 
-export interface CustActivationOptions {
+export interface CustActivationOptions extends CbsRequestOptions {
   primaryIdentity?: string;
   customerKey?: string | number;
   customerCode?: string;
-  messageSeq?: string;
-  beId?: string;
-  operatorId?: string;
-  accessMode?: number;
-  msgLanguageCode?: number;
-  timeType?: number;
 }
 
 export interface CustActivationResponse extends CbsOperationResponse {}
@@ -330,17 +406,11 @@ export interface CustActivationOutput {
   metadata: CustActivationResponse;
 }
 
-export interface CustDeactivationOptions {
+export interface CustDeactivationOptions extends CbsRequestOptions {
   opType: string;
   primaryIdentity?: string;
   customerKey?: string | number;
   customerCode?: string;
-  messageSeq?: string;
-  beId?: string;
-  operatorId?: string;
-  accessMode?: number;
-  msgLanguageCode?: number;
-  timeType?: number;
   effectiveTime?: string;
 }
 
@@ -349,3 +419,35 @@ export interface CustDeactivationResponse extends CbsOperationResponse {}
 export interface CustDeactivationOutput {
   metadata: CustDeactivationResponse;
 }
+
+/** Readable aliases for values returned by CBS. */
+export const PaymentModeCode = {
+  PREPAID: 0,
+  POSTPAID: 1,
+  HYBRID: 2,
+} as const;
+
+export const SubscriberStatusCode = {
+  IDLE: 1,
+  ACTIVE: 2,
+  CALL_BARRING: 3,
+  SUSPEND: 4,
+  TESTED: 6,
+  IN_STOCK: 7,
+  PRE_DEREGISTRATION: 8,
+} as const;
+
+/** Named aliases for the defaults used by this client’s deployment. */
+export const CbsRequestDefaults = {
+  VERSION: 1,
+  BE_ID: '101',
+  OPERATOR_ID: '101',
+  ACCESS_MODE: 3,
+  MSG_LANGUAGE_CODE: 2002,
+  TIME_TYPE: 1,
+  QUERY_MODE: 0,
+  CUSTOMER_MASK: '1100',
+  ACCOUNT_MASK: '11',
+  SUBSCRIBER_MASK: '11111110',
+  GROUP_MASK: '00000',
+} as const;

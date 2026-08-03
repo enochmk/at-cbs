@@ -32,15 +32,145 @@ import type {
   CustDeactivationOptions,
   CustDeactivationOutput,
   CustDeactivationResponse,
+  SubscribeAppendantProductOptions,
+  SubscribeAppendantProductOutput,
+  SubscribeAppendantProductResponse,
+  UnsubscribeAppendantProductOptions,
+  UnsubscribeAppendantProductOutput,
+  UnsubscribeAppendantProductResponse,
 } from '../types';
 import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
 
 import { CbsServiceBase } from './cbs-service-base';
 import { getXmlField } from '../utils';
+import { CbsRequestDefaults } from '../types';
 
 export class BcServices extends CbsServiceBase {
   protected readonly servicePath = '/services/BcServices';
+
+  async unsubscribeAppendantProduct(
+    msisdn: string,
+    opts: UnsubscribeAppendantProductOptions,
+  ): Promise<UnsubscribeAppendantProductOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    this.log('verbose', 'unsubscribeAppendantProduct - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:ChangeSubOfferingRequestMsg>
+            ${this.requestHeader(opts, 'ChangeSubOffering', messageSeq)}
+            <ChangeSubOfferingRequest>
+              <bcs:SubAccessCode><bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity></bcs:SubAccessCode>
+              <bcs:SupplementaryOffering>
+                <bcs:DelOffering>
+                  <bcs:OfferingKey>
+                    <bcc:OfferingID>${opts.offeringId}</bcc:OfferingID>
+                    <bcc:PurchaseSeq>${opts.purchaseSeq}</bcc:PurchaseSeq>
+                  </bcs:OfferingKey>
+                </bcs:DelOffering>
+              </bcs:SupplementaryOffering>
+            </ChangeSubOfferingRequest>
+          </bcs:ChangeSubOfferingRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'unsubscribeAppendantProduct',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } =
+      this.transport.parse<UnsubscribeAppendantProductResponse>(response, this.transport.parser);
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('unsubscribeAppendantProduct', msisdn, resultCode, resultDesc);
+    }
+
+    this.log('verbose', 'unsubscribeAppendantProduct - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: {
+        ResultCode: resultCode,
+        ResultDesc: resultDesc,
+      },
+    };
+  }
+
+  async subscribeAppendantProduct(
+    msisdn: string,
+    opts: SubscribeAppendantProductOptions,
+  ): Promise<SubscribeAppendantProductOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    this.log('verbose', 'subscribeAppendantProduct - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:ChangeSubOfferingRequestMsg>
+            ${this.requestHeader(opts, 'ChangeSubOffering', messageSeq)}
+            <ChangeSubOfferingRequest>
+              <bcs:SubAccessCode><bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity></bcs:SubAccessCode>
+              <bcs:SupplementaryOffering>
+                <bcs:AddOffering>
+                  <bcc:OfferingKey><bcc:OfferingID>${opts.offeringId}</bcc:OfferingID></bcc:OfferingKey>
+                  <bcc:BundledFlag>${opts.bundledFlag ?? 'S'}</bcc:BundledFlag>
+                  <bcc:OfferingClass>${opts.offeringClass ?? 'I'}</bcc:OfferingClass>
+                  <bcc:Status>${opts.status ?? 2}</bcc:Status>
+                  <bcs:EffectiveTime><bcc:Mode>${opts.effectiveMode ?? 'I'}</bcc:Mode></bcs:EffectiveTime>
+                </bcs:AddOffering>
+              </bcs:SupplementaryOffering>
+            </ChangeSubOfferingRequest>
+          </bcs:ChangeSubOfferingRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'subscribeAppendantProduct',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } =
+      this.transport.parse<SubscribeAppendantProductResponse>(response, this.transport.parser);
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('subscribeAppendantProduct', msisdn, resultCode, resultDesc);
+    }
+
+    const result = getXmlField<Record<string, unknown>>(resultMsg, 'ChangeSubOfferingResult');
+    const addOffering = getXmlField<Record<string, unknown>>(result, 'AddOffering');
+    const offeringKey = getXmlField<Record<string, unknown>>(addOffering, 'OfferingKey');
+    const rentDeduction = getXmlField<Record<string, unknown>>(result, 'RentDeductionResult');
+    const balanceChanges = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+      rentDeduction,
+      'AcctBalanceChangeList',
+    );
+    const freeUnitChanges = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+      rentDeduction,
+      'FreeUnitChangeList',
+    );
+
+    this.log('verbose', 'subscribeAppendantProduct - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: {
+        ResultCode: resultCode,
+        ResultDesc: resultDesc,
+        OfferingID: getXmlField(offeringKey, 'OfferingID'),
+        PurchaseSeq: getXmlField(offeringKey, 'PurchaseSeq'),
+        EffectiveTime: getXmlField(addOffering, 'EffectiveTime'),
+        ExpirationTime: getXmlField(addOffering, 'ExpirationTime'),
+        RentDeductionStatus: getXmlField(addOffering, 'RentDeductionStatus'),
+        BalanceChanges: balanceChanges,
+        FreeUnitChanges: freeUnitChanges,
+      },
+    };
+  }
 
   async queryCustomerInfo(
     msisdn: string,
@@ -55,37 +185,18 @@ export class BcServices extends CbsServiceBase {
       <soapenv:Header/>
       <soapenv:Body>
           <bcs:QueryCustomerInfoRequestMsg>
-            <RequestHeader>
-                <cbs:Version>1</cbs:Version>
-                <cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode>
-                <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-                <cbs:OwnershipInfo>
-                  <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
-                </cbs:OwnershipInfo>
-                <cbs:AccessSecurity>
-                  <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                  <cbs:Password>${this.opts.password}</cbs:Password>
-                </cbs:AccessSecurity>
-                <cbs:OperatorInfo>
-                  <cbs:OperatorID>${opts?.operatorId ?? '101'}</cbs:OperatorID>
-                </cbs:OperatorInfo>
-                <cbs:AccessMode>${opts?.accessMode ?? 3}</cbs:AccessMode>
-                <cbs:MsgLanguageCode>${opts?.msgLanguageCode ?? 2002}</cbs:MsgLanguageCode>
-                <cbs:TimeFormat>
-                  <cbs:TimeType>${opts?.timeType ?? 1}</cbs:TimeType>
-                </cbs:TimeFormat>
-            </RequestHeader>
+            ${this.requestHeader(opts, 'QueryCustomerInfo', messageSeq, { operatorId: CbsRequestDefaults.OPERATOR_ID, accessMode: CbsRequestDefaults.ACCESS_MODE, msgLanguageCode: CbsRequestDefaults.MSG_LANGUAGE_CODE, timeType: CbsRequestDefaults.TIME_TYPE })}
             <QueryCustomerInfoRequest>
               <bcs:QueryObj>
                 <bcs:SubAccessCode>
                   <bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity>
                 </bcs:SubAccessCode>
               </bcs:QueryObj>
-              <bcs:QueryMode>0</bcs:QueryMode>
-              <bcs:CustomerMask>1100</bcs:CustomerMask>
-              <bcs:AccountMask>11</bcs:AccountMask>
-              <bcs:SubscriberMask>11111110</bcs:SubscriberMask>
-              <bcs:GroupMask>00000</bcs:GroupMask>
+              <bcs:QueryMode>${opts?.queryMode ?? CbsRequestDefaults.QUERY_MODE}</bcs:QueryMode>
+              <bcs:CustomerMask>${opts?.customerMask ?? CbsRequestDefaults.CUSTOMER_MASK}</bcs:CustomerMask>
+              <bcs:AccountMask>${opts?.accountMask ?? CbsRequestDefaults.ACCOUNT_MASK}</bcs:AccountMask>
+              <bcs:SubscriberMask>${opts?.subscriberMask ?? CbsRequestDefaults.SUBSCRIBER_MASK}</bcs:SubscriberMask>
+              <bcs:GroupMask>${opts?.groupMask ?? CbsRequestDefaults.GROUP_MASK}</bcs:GroupMask>
             </QueryCustomerInfoRequest>
           </bcs:QueryCustomerInfoRequestMsg>
         </soapenv:Body>
@@ -115,6 +226,30 @@ export class BcServices extends CbsServiceBase {
     const customer = getXmlField<Record<string, unknown>>(queryResult, 'Customer');
     const subscriber = getXmlField<Record<string, unknown>>(queryResult, 'Subscriber');
     const subscriberInfo = getXmlField<Record<string, unknown>>(subscriber, 'SubscriberInfo');
+    const primaryOffering = getXmlField<Record<string, unknown>>(subscriber, 'PrimaryOffering');
+    const supplementaryOfferingsValue = getXmlField<
+      Record<string, unknown> | Record<string, unknown>[]
+    >(subscriber, 'SupplementaryOffering');
+    const supplementaryOfferings = supplementaryOfferingsValue
+      ? Array.isArray(supplementaryOfferingsValue)
+        ? supplementaryOfferingsValue
+        : [supplementaryOfferingsValue]
+      : [];
+    const mapOffering = (offering: Record<string, unknown>) => {
+      const offeringKey = getXmlField<Record<string, unknown>>(offering, 'OfferingKey');
+      return {
+        ...offering,
+        OfferingID: getXmlField<string | number>(offeringKey, 'OfferingID'),
+        PurchaseSeq: getXmlField<string | number>(offeringKey, 'PurchaseSeq'),
+        BundledFlag: getXmlField<string>(offering, 'BundledFlag'),
+        OfferingClass: getXmlField<string>(offering, 'OfferingClass'),
+        Status: getXmlField<number | string>(offering, 'Status'),
+        EffectiveTime: getXmlField<string | number>(offering, 'EffectiveTime'),
+        ExpirationTime: getXmlField<string | number>(offering, 'ExpirationTime'),
+        ActivationMode: getXmlField<string>(offering, 'ActivationMode'),
+        ActivationTime: getXmlField<string | number>(offering, 'ActivationTime'),
+      };
+    };
     const account = getXmlField<QueryCustomerInfoAccount>(queryResult, 'Account');
     const individualInfo = getXmlField<Record<string, unknown>>(customer, 'IndividualInfo');
     const lifecycleDetail = getXmlField<Record<string, unknown>>(subscriber, 'LifeCycleDetail');
@@ -203,6 +338,8 @@ export class BcServices extends CbsServiceBase {
         },
         BirthdayDate: getXmlField<string>(individualInfo, 'Birthday'),
         MainBalance: mainBalance,
+        PrimaryOffering: primaryOffering ? mapOffering(primaryOffering) : undefined,
+        SupplementaryOfferings: supplementaryOfferings.map(mapOffering),
         'bcs:BillCycleType': getXmlField(accountInfo, 'BillCycleType'),
         'bcs:AcctType': getXmlField(accountInfo, 'AcctType'),
         'bcs:PaymentType': getXmlField(accountInfo, 'PaymentType'),
@@ -228,18 +365,7 @@ export class BcServices extends CbsServiceBase {
         <soapenv:Header/>
         <soapenv:Body>
           <bcs:QuerySubLifeCycleRequestMsg>
-            <RequestHeader>
-              <cbs:Version>1</cbs:Version>
-              <cbs:BusinessCode>QuerySubLifeCycle</cbs:BusinessCode>
-              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-              <cbs:OwnershipInfo>
-                <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
-              </cbs:OwnershipInfo>
-              <cbs:AccessSecurity>
-                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                <cbs:Password>${this.opts.password}</cbs:Password>
-              </cbs:AccessSecurity>
-            </RequestHeader>
+            ${this.requestHeader(opts, 'QuerySubLifeCycle', messageSeq)}
             <QuerySubLifeCycleRequest>
               <bcs:SubAccessCode>
                 <bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity>
@@ -324,22 +450,7 @@ export class BcServices extends CbsServiceBase {
         <soapenv:Header/>
         <soapenv:Body>
           <bcs:SubDeactivationRequestMsg>
-            <RequestHeader>
-              <cbs:Version>1</cbs:Version>
-              <cbs:BusinessCode>SubDeactivation</cbs:BusinessCode>
-              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-              <cbs:OwnershipInfo>
-                <cbs:BEID>${opts.beId ?? '101'}</cbs:BEID>
-              </cbs:OwnershipInfo>
-              <cbs:AccessSecurity>
-                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                <cbs:Password>${this.opts.password}</cbs:Password>
-              </cbs:AccessSecurity>
-              ${opts.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
-              ${opts.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
-              ${opts.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
-              ${opts.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
-            </RequestHeader>
+            ${this.requestHeader(opts, 'SubDeactivation', messageSeq)}
             <SubDeactivationRequest>
               <bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode>
               <bcs:OpType>${opts.opType}</bcs:OpType>
@@ -385,18 +496,7 @@ export class BcServices extends CbsServiceBase {
         <soapenv:Header/>
         <soapenv:Body>
           <bcs:QueryLastXTransactionRequestMsg>
-            <RequestHeader>
-              <cbs:Version>1</cbs:Version>
-              <cbs:BusinessCode>QueryLastXTransaction</cbs:BusinessCode>
-              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-              <cbs:OwnershipInfo>
-                <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
-              </cbs:OwnershipInfo>
-              <cbs:AccessSecurity>
-                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                <cbs:Password>${this.opts.password}</cbs:Password>
-              </cbs:AccessSecurity>
-            </RequestHeader>
+            ${this.requestHeader(opts, 'QueryLastXTransaction', messageSeq)}
             <QueryLastXTransactionRequest>
               <bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode>
             </QueryLastXTransactionRequest>
@@ -448,22 +548,7 @@ export class BcServices extends CbsServiceBase {
         <soapenv:Header/>
         <soapenv:Body>
           <bcs:CustActivationRequestMsg>
-            <RequestHeader>
-              <cbs:Version>1</cbs:Version>
-              <cbs:BusinessCode>CustActivation</cbs:BusinessCode>
-              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-              <cbs:OwnershipInfo>
-                <cbs:BEID>${opts.beId ?? '101'}</cbs:BEID>
-              </cbs:OwnershipInfo>
-              <cbs:AccessSecurity>
-                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                <cbs:Password>${this.opts.password}</cbs:Password>
-              </cbs:AccessSecurity>
-              ${opts.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
-              ${opts.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
-              ${opts.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
-              ${opts.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
-            </RequestHeader>
+            ${this.requestHeader(opts, 'CustActivation', messageSeq)}
             <CustActivationRequest>
               <bcs:CustAccessCode>${customerAccessCode}</bcs:CustAccessCode>
             </CustActivationRequest>
@@ -505,22 +590,7 @@ export class BcServices extends CbsServiceBase {
         <soapenv:Header/>
         <soapenv:Body>
           <bcs:CustDeactivationRequestMsg>
-            <RequestHeader>
-              <cbs:Version>1</cbs:Version>
-              <cbs:BusinessCode>CustDeactivation</cbs:BusinessCode>
-              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-              <cbs:OwnershipInfo>
-                <cbs:BEID>${opts.beId ?? '101'}</cbs:BEID>
-              </cbs:OwnershipInfo>
-              <cbs:AccessSecurity>
-                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                <cbs:Password>${this.opts.password}</cbs:Password>
-              </cbs:AccessSecurity>
-              ${opts.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
-              ${opts.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
-              ${opts.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
-              ${opts.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
-            </RequestHeader>
+            ${this.requestHeader(opts, 'CustDeactivation', messageSeq)}
             <CustDeactivationRequest>
               <bcs:CustAccessCode>${customerAccessCode}</bcs:CustAccessCode>
               <bcs:OpType>${opts.opType}</bcs:OpType>

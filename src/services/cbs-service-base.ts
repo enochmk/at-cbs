@@ -1,6 +1,12 @@
 import createHttpError from 'http-errors';
 
-import type { CbsClientOptions, CustActivationOptions, CustDeactivationOptions } from '../types';
+import type {
+  CbsClientOptions,
+  CbsRequestOptions,
+  CustActivationOptions,
+  CustDeactivationOptions,
+} from '../types';
+import { CbsRequestDefaults } from '../types';
 import { CbsTransport } from '../cbs-transport';
 
 export abstract class CbsServiceBase {
@@ -49,5 +55,41 @@ export abstract class CbsServiceBase {
       return `<bcc:CustomerKey>${opts.customerKey}</bcc:CustomerKey>`;
     }
     return `<bcc:CustomerCode>${opts.customerCode}</bcc:CustomerCode>`;
+  }
+
+  protected requestHeader(
+    opts: CbsRequestOptions | undefined,
+    businessCode: string,
+    messageSeq: string,
+    defaults: Partial<
+      Pick<CbsRequestOptions, 'operatorId' | 'accessMode' | 'msgLanguageCode' | 'timeType'>
+    > = {},
+  ): string {
+    const version = opts?.version ?? CbsRequestDefaults.VERSION;
+    const beId = opts?.beId ?? CbsRequestDefaults.BE_ID;
+    const operatorId = opts?.operatorId ?? defaults.operatorId;
+    const accessMode = opts?.accessMode ?? defaults.accessMode;
+    const msgLanguageCode = opts?.msgLanguageCode ?? defaults.msgLanguageCode;
+    const timeType = opts?.timeType ?? defaults.timeType;
+
+    return `
+      <RequestHeader>
+        <cbs:Version>${version}</cbs:Version>
+        <cbs:BusinessCode>${businessCode}</cbs:BusinessCode>
+        <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+        <cbs:OwnershipInfo>
+          <cbs:BEID>${beId}</cbs:BEID>
+        </cbs:OwnershipInfo>
+        <cbs:AccessSecurity>
+          <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+          <cbs:Password>${this.opts.password}</cbs:Password>
+        </cbs:AccessSecurity>
+        ${operatorId !== undefined ? `<cbs:OperatorInfo><cbs:OperatorID>${operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
+        ${accessMode !== undefined ? `<cbs:AccessMode>${accessMode}</cbs:AccessMode>` : ''}
+        ${msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
+        ${timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
+        ${opts?.remoteAddress !== undefined ? `<cbs:RemoteAddress>${opts.remoteAddress}</cbs:RemoteAddress>` : ''}
+        ${opts?.remark !== undefined ? `<cbs:Remark>${opts.remark}</cbs:Remark>` : ''}
+      </RequestHeader>`;
   }
 }

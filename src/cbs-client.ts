@@ -16,6 +16,12 @@ import type {
   CustActivationOutput,
   CustDeactivationOptions,
   CustDeactivationOutput,
+  AdjustAccountOptions,
+  AdjustAccountOutput,
+  SubscribeAppendantProductOptions,
+  SubscribeAppendantProductOutput,
+  UnsubscribeAppendantProductOptions,
+  UnsubscribeAppendantProductOutput,
 } from './types';
 import { CbsTransport } from './cbs-transport';
 import { ArServices } from './services/ar-services';
@@ -52,6 +58,24 @@ export class CbsClient {
 
   queryBalance(msisdn: string, opts?: QueryBalanceOptions): Promise<QueryBalanceOutput> {
     return this.arServices.queryBalance(msisdn, opts);
+  }
+
+  adjustAccount(msisdn: string, opts?: AdjustAccountOptions): Promise<AdjustAccountOutput> {
+    return this.arServices.adjustAccount(msisdn, opts);
+  }
+
+  subscribeAppendantProduct(
+    msisdn: string,
+    opts: SubscribeAppendantProductOptions,
+  ): Promise<SubscribeAppendantProductOutput> {
+    return this.bcServices.subscribeAppendantProduct(msisdn, opts);
+  }
+
+  unsubscribeAppendantProduct(
+    msisdn: string,
+    opts: UnsubscribeAppendantProductOptions,
+  ): Promise<UnsubscribeAppendantProductOutput> {
+    return this.bcServices.unsubscribeAppendantProduct(msisdn, opts);
   }
 
   querySubLifeCycle(

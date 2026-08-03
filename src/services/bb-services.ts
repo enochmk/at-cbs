@@ -65,22 +65,7 @@ export class BbServices extends CbsServiceBase {
         <soapenv:Header/>
         <soapenv:Body>
           <bbs:QueryCDRDetailRequestMsg>
-            <RequestHeader>
-              <cbs:Version>1</cbs:Version>
-              <cbs:BusinessCode>QueryCDRDetail</cbs:BusinessCode>
-              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
-              <cbs:OwnershipInfo>
-                <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
-              </cbs:OwnershipInfo>
-              <cbs:AccessSecurity>
-                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
-                <cbs:Password>${this.opts.password}</cbs:Password>
-              </cbs:AccessSecurity>
-              ${opts?.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
-              ${opts?.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
-              ${opts?.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
-              ${opts?.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
-            </RequestHeader>
+            ${this.requestHeader(opts, 'QueryCDRDetail', messageSeq)}
             <QueryCDRDetailRequest>
               <bbs:PrimaryIdentity>${cbsMsisdn}</bbs:PrimaryIdentity>
               <bbs:CdrSeq>${cdrSeq}</bbs:CdrSeq>

@@ -1,6 +1,7 @@
 export { CbsClient } from './cbs-client';
 export type {
   CbsClientOptions,
+  CbsRequestOptions,
   QueryCustomerInfoOptions,
   QueryCustomerInfoResultHeader,
   QueryCustomerInfoIndividualInfo,
@@ -26,6 +27,19 @@ export type {
   QueryBalanceResponse,
   QueryBalanceData,
   QueryBalanceOutput,
+  AdjustAccountOptions,
+  AdjustAccountResult,
+  AdjustAccountResponse,
+  AdjustAccountData,
+  AdjustAccountOutput,
+  SubscribeAppendantProductOptions,
+  SubscribeAppendantProductResponse,
+  SubscribeAppendantProductData,
+  SubscribeAppendantProductOutput,
+  UnsubscribeAppendantProductOptions,
+  UnsubscribeAppendantProductResponse,
+  UnsubscribeAppendantProductData,
+  UnsubscribeAppendantProductOutput,
   QuerySubLifeCycleOptions,
   QuerySubLifeCycleStatus,
   QuerySubLifeCycleResult,
@@ -52,3 +66,4 @@ export type {
   CustDeactivationOutput,
   Logger,
 } from './types';
+export { CbsRequestDefaults, PaymentModeCode, SubscriberStatusCode } from './types';
