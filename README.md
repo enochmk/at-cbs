@@ -14,7 +14,7 @@ npm install @enochmk/cbs-client
 import { CbsClient } from '@enochmk/cbs-client';
 
 const client = new CbsClient({
-  baseUrl: 'http://10.76.130.100:7782',
+  baseUrl: 'https://10.40.14.26:8081',
   username: 'your-username',
   password: 'your-password',
 });
@@ -22,21 +22,38 @@ const client = new CbsClient({
 
 ## API
 
-### `integrationEnquiry(msisdn, options?)`
+### `queryCustomerInfo(msisdn, options?)`
 
-Query subscriber balance, state, products, and services.
+Query complete customer, subscriber, account, offering, lifecycle, and billing information.
 
 ```typescript
-const result = await client.integrationEnquiry('271004887');
+const result = await client.queryCustomerInfo('271004887');
 
-// Access balance records
-const balances = result.IntegrationEnquiryResult?.BalanceRecordList?.BalanceRecord;
+// The complete parsed CBS response
+const metadata = result.metadata;
 
-// Access subscriber state
-const state = result.IntegrationEnquiryResult?.SubscriberState;
+// Access normalized fields
+const offering = result.data.PrimaryOffering;
+const firstActive = result.data.FirstActive;
+const paymentMode = result.data.PaymentMode;
+const status = result.data.CurrentStatusIndex;
+const birthday = result.data.BirthdayDate;
+const billingInfo = result.data.billingInfo;
+```
 
-// Access products
-const products = result.IntegrationEnquiryResult?.SubscriberInfo?.Product;
+The normalized code mappings are:
+
+- `PaymentMode`: `0` prepaid, `1` postpaid, `2` hybrid
+- `CurrentStatusIndex`: `1` Idle, `2` Active, `3` Call Barring, `4` Suspend, `6` Tested, `7` In stock, `8` Pre-deregistration
+
+The `QueryCustomerInfo` request uses `POST /services/BcServices` and does not send a `SoapAction` header.
+
+The live test disables TLS certificate validation for the internal self-signed CBS certificate. Use `rejectUnauthorized: true` in production when the certificate can be trusted normally.
+
+To run the live test script, provide credentials through environment variables:
+
+```bash
+CBS_USERNAME=102 CBS_PASSWORD='your-password' npm run test:query-customer-info -- 261180256
 ```
 
 ### `createSubscriber(msisdn, options?)`
@@ -72,14 +89,15 @@ const customer = result.QueryBasicInfoResult?.Customer;
 
 ### CbsClientOptions
 
-| Property      | Type     | Required | Description                                                            |
-| ------------- | -------- | -------- | ---------------------------------------------------------------------- |
-| `baseUrl`     | `string` | Yes      | CBS server base URL (e.g., `http://10.76.130.100:7782`)                |
-| `username`    | `string` | Yes      | Authentication username                                                |
-| `password`    | `string` | Yes      | Authentication password                                                |
-| `timeout`     | `number` | No       | Request timeout in ms (default: `15000`)                               |
-| `successCode` | `string` | No       | Success result code (default: `405000000`)                             |
-| `logger`      | `Logger` | No       | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
+| Property             | Type      | Required | Description                                                            |
+| -------------------- | --------- | -------- | ---------------------------------------------------------------------- |
+| `baseUrl`            | `string`  | Yes      | CBS server base URL (e.g., `https://10.40.14.26:8081`)                 |
+| `username`           | `string`  | Yes      | Authentication username                                                |
+| `password`           | `string`  | Yes      | Authentication password                                                |
+| `timeout`            | `number`  | No       | Request timeout in ms (default: `15000`)                               |
+| `successCode`        | `string`  | No       | Success result code (default: `405000000`)                             |
+| `rejectUnauthorized` | `boolean` | No       | TLS certificate validation (default: `true`)                           |
+| `logger`             | `Logger`  | No       | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
 
 ### MSISDN Format
 
@@ -95,7 +113,7 @@ All response types are fully typed:
 
 ```typescript
 import type {
-  IntegrationEnquiryResponse,
+  QueryCustomerInfoOutput,
   NewSubscriberResponse,
   DeleteSubscriberResponse,
   QueryBasicInfoResponse,
@@ -113,7 +131,7 @@ The client throws `HttpError` on failures:
 
 ```typescript
 try {
-  const result = await client.integrationEnquiry('271004887');
+  const result = await client.queryCustomerInfo('271004887');
 } catch (err: any) {
   if (err.status === 400) {
     // Invalid MSISDN

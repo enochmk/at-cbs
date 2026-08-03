@@ -1,11 +1,10 @@
 import axios, { type AxiosResponse } from 'axios';
 import { XMLParser } from 'fast-xml-parser';
 import createHttpError from 'http-errors';
+import https from 'node:https';
 
 import type {
   CbsClientOptions,
-  IntegrationEnquiryOptions,
-  IntegrationEnquiryResponse,
   CreateSubscriberOptions,
   DeleteSubscriberOptions,
   DeleteSubscriberResponse,
@@ -16,8 +15,14 @@ import type {
   SubscribeAppendantProductResponse,
   UnSubscribeAppendantProductOptions,
   UnSubscribeAppendantProductResponse,
+  QueryCustomerInfoOptions,
+  QueryCustomerInfoOutput,
+  QueryCustomerInfoResponse,
+  QueryCustomerInfoAccount,
+  QueryCustomerInfoPrimaryOffering,
+  CurrentStatusLabel,
 } from './types';
-import { parseSoapResponse } from './utils';
+import { getXmlField, parseSoapResponse } from './utils';
 
 export class CbsClient {
   private parser: XMLParser;
@@ -25,12 +30,13 @@ export class CbsClient {
   private successCode: string;
 
   private static BUSINESS_MGR = '/services/CBSInterfaceBusinessMgrService';
-  private static ACCOUNT_MGR = '/services/CBSInterfaceAccountMgrService';
+  private static BC_SERVICES = '/services/BcServices';
 
   constructor(options: CbsClientOptions) {
     this.opts = {
       timeout: 15000,
       successCode: '405000000',
+      rejectUnauthorized: true,
       logger: {},
       ...options,
     };
@@ -59,73 +65,143 @@ export class CbsClient {
     return digits.slice(-9);
   }
 
-  async integrationEnquiry(
+  async queryCustomerInfo(
     msisdn: string,
-    opts?: IntegrationEnquiryOptions,
-  ): Promise<IntegrationEnquiryResponse> {
+    opts?: QueryCustomerInfoOptions,
+  ): Promise<QueryCustomerInfoOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const requestId = opts?.requestId ?? Date.now();
-    this.log('verbose', 'integrationEnquiry - sending request', { msisdn, opts });
+    const messageSeq = opts?.messageSeq ?? new Date().toISOString();
+    this.log('verbose', 'queryCustomerInfo - sending request', { msisdn, opts });
 
     const soapPayload = `
-      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bus="http://www.huawei.com/bme/cbsinterface/cbs/businessmgrmsg" xmlns:com="http://www.huawei.com/bme/cbsinterface/common" xmlns:bus1="http://www.huawei.com/bme/cbsinterface/cbs/businessmgr">
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
       <soapenv:Header/>
       <soapenv:Body>
-          <bus:IntegrationEnquiryRequestMsg>
+          <bcs:QueryCustomerInfoRequestMsg>
             <RequestHeader>
-                <com:CommandId>IntegrationEnquiry</com:CommandId>
-                <com:Version>1</com:Version>
-                <com:TransactionId></com:TransactionId>
-                <com:SequenceId>1</com:SequenceId>
-                <com:RequestType>Event</com:RequestType>
-                <com:SessionEntity>
-                  <com:Name>${this.opts.username}</com:Name>
-                  <com:Password>${this.opts.password}</com:Password>
-                  <com:RemoteAddress>${opts?.remoteAddress ?? ''}</com:RemoteAddress>
-                </com:SessionEntity>
-                <com:SerialNo>${requestId}</com:SerialNo>
+                <cbs:Version>1</cbs:Version>
+                <cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode>
+                <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+                <cbs:OwnershipInfo>
+                  <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
+                </cbs:OwnershipInfo>
+                <cbs:AccessSecurity>
+                  <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                  <cbs:Password>${this.opts.password}</cbs:Password>
+                </cbs:AccessSecurity>
+                <cbs:OperatorInfo>
+                  <cbs:OperatorID>${opts?.operatorId ?? '101'}</cbs:OperatorID>
+                </cbs:OperatorInfo>
+                <cbs:AccessMode>${opts?.accessMode ?? 3}</cbs:AccessMode>
+                <cbs:MsgLanguageCode>${opts?.msgLanguageCode ?? 2002}</cbs:MsgLanguageCode>
+                <cbs:TimeFormat>
+                  <cbs:TimeType>${opts?.timeType ?? 1}</cbs:TimeType>
+                </cbs:TimeFormat>
             </RequestHeader>
-            <IntegrationEnquiryRequest>
-                <bus1:SubscriberNo>${cbsMsisdn}</bus1:SubscriberNo>
-                <bus1:QueryType>0</bus1:QueryType>
-            </IntegrationEnquiryRequest>
-            </bus:IntegrationEnquiryRequestMsg>
+            <QueryCustomerInfoRequest>
+              <bcs:QueryObj>
+                <bcs:SubAccessCode>
+                  <bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity>
+                </bcs:SubAccessCode>
+              </bcs:QueryObj>
+              <bcs:QueryMode>0</bcs:QueryMode>
+              <bcs:CustomerMask>1100</bcs:CustomerMask>
+              <bcs:AccountMask>11</bcs:AccountMask>
+              <bcs:SubscriberMask>11111110</bcs:SubscriberMask>
+              <bcs:GroupMask>00000</bcs:GroupMask>
+            </QueryCustomerInfoRequest>
+          </bcs:QueryCustomerInfoRequestMsg>
         </soapenv:Body>
       </soapenv:Envelope>
     `;
 
     let response: AxiosResponse<string>;
     try {
-      response = await axios.post<string>(this.getUrl(CbsClient.BUSINESS_MGR), soapPayload, {
-        headers: { 'Content-Type': 'text/xml', SoapAction: 'IntegrationEnquiry' },
+      response = await axios.post<string>(this.getUrl(CbsClient.BC_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
         timeout: this.opts.timeout,
       });
     } catch (err: any) {
-      this.log('error', 'integrationEnquiry - request failed', {
+      this.log('error', 'queryCustomerInfo - request failed', {
         msisdn,
-        requestId,
         error: err.message,
       });
       throw createHttpError(502, err.message ?? 'CBS request failed');
     }
 
-    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<IntegrationEnquiryResponse>(
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QueryCustomerInfoResponse>(
       response.data,
       this.parser,
     );
 
-    if (resultCode !== this.successCode) {
-      this.log('warn', 'integrationEnquiry - CBS error', {
+    if (resultCode !== '0') {
+      this.log('warn', 'queryCustomerInfo - CBS error', {
         msisdn,
-        requestId,
         resultCode,
         resultDesc,
       });
-      throw createHttpError(422, resultDesc || `CBS error code ${resultCode}`);
+      throw createHttpError(422, resultDesc);
     }
 
-    this.log('verbose', 'integrationEnquiry - success', { msisdn, requestId });
-    return resultMsg;
+    const queryResult = getXmlField<Record<string, unknown>>(
+      resultMsg as Record<string, unknown>,
+      'QueryCustomerInfoResult',
+    );
+    const customer = getXmlField<Record<string, unknown>>(queryResult, 'Customer');
+    const subscriber = getXmlField<Record<string, unknown>>(queryResult, 'Subscriber');
+    const account = getXmlField<QueryCustomerInfoAccount>(queryResult, 'Account');
+    const individualInfo = getXmlField<Record<string, unknown>>(customer, 'IndividualInfo');
+    const lifecycleDetail = getXmlField<Record<string, unknown>>(subscriber, 'LifeCycleDetail');
+    const primaryOffering = getXmlField<QueryCustomerInfoPrimaryOffering>(
+      subscriber,
+      'PrimaryOffering',
+    );
+    const subscriberAccounts = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+      subscriber,
+      'AcctList',
+    );
+    const paymentMode = Number(getXmlField(subscriber, 'PaymentMode'));
+    const currentStatusIndex = Number(getXmlField(lifecycleDetail, 'CurrentStatusIndex'));
+
+    this.log('verbose', 'queryCustomerInfo - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: {
+        FirstActive: getXmlField<string>(subscriber, 'ActivationTime'),
+        PaymentMode: {
+          code: paymentMode,
+          label:
+            (
+              { 0: 'prepaid', 1: 'postpaid', 2: 'hybrid' } as Record<
+                number,
+                'prepaid' | 'postpaid' | 'hybrid'
+              >
+            )[paymentMode] ?? 'unknown',
+        },
+        CurrentStatusIndex: {
+          code: currentStatusIndex,
+          label:
+            (
+              {
+                1: 'Idle',
+                2: 'Active',
+                3: 'Call Barring',
+                4: 'Suspend',
+                6: 'Tested',
+                7: 'In stock',
+                8: 'Pre-deregistration',
+              } as Record<number, CurrentStatusLabel>
+            )[currentStatusIndex] ?? 'Unknown',
+        },
+        BirthdayDate: getXmlField<string>(individualInfo, 'Birthday'),
+        PrimaryOffering: primaryOffering,
+        billingInfo: {
+          subscriberAccounts,
+          account,
+        },
+      },
+    };
   }
 
   async createSubscriber(

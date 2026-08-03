@@ -1,5 +1,17 @@
 import { XMLParser } from 'fast-xml-parser';
 
+export function getXmlField<T = unknown>(
+  data: Record<string, unknown> | undefined,
+  field: string,
+): T | undefined {
+  if (!data) return undefined;
+
+  const key = Object.keys(data).find(
+    (candidate) => candidate === field || candidate.endsWith(`:${field}`),
+  );
+  return key ? (data[key] as T) : undefined;
+}
+
 export function sanitizeXml(data: string): string {
   return data.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;').replace(/-/g, '&#45;');
 }
@@ -34,11 +46,12 @@ export function parseSoapResponse<T = Record<string, unknown>>(
   }
 
   const resultMsg = body[resultMsgKey] as T;
-  const resultHeader = (resultMsg as Record<string, unknown>)?.ResultHeader as
-    | Record<string, unknown>
-    | undefined;
-  const resultCode: string = String(resultHeader?.ResultCode ?? '');
-  const resultDesc: string = String(resultHeader?.ResultDesc ?? '');
+  const resultHeader = getXmlField<Record<string, unknown>>(
+    resultMsg as Record<string, unknown>,
+    'ResultHeader',
+  );
+  const resultCode: string = String(getXmlField(resultHeader, 'ResultCode') ?? '');
+  const resultDesc: string = String(getXmlField(resultHeader, 'ResultDesc') ?? '');
 
   return { body, resultMsgKey, resultMsg, resultCode, resultDesc };
 }

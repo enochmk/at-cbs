@@ -1,9 +1,18 @@
-import { CbsClient } from './src';
+import { CbsClient } from '../../src';
+
+const baseUrl = process.env.CBS_LEGACY_BASE_URL ?? 'http://10.76.130.100:7782';
+const username = process.env.CBS_USERNAME;
+const password = process.env.CBS_PASSWORD;
+const msisdn = process.argv[2] ?? process.env.MSISDN ?? '271004887';
+
+if (!username || !password) {
+  throw new Error('Set CBS_USERNAME and CBS_PASSWORD before running this test.');
+}
 
 const client = new CbsClient({
-  baseUrl: 'http://10.76.130.100:7782',
-  username: 'dwdev',
-  password: 'C591D9B26FE9B27F5F01246252578E5FA8E6C4E26356DC7AF3CBDDD998E1D3EA',
+  baseUrl,
+  username,
+  password,
   logger: {
     info: (msg, ctx) => console.log('[INFO]', msg, ctx),
     warn: (msg, ctx) => console.warn('[WARN]', msg, ctx),
@@ -12,26 +21,13 @@ const client = new CbsClient({
   },
 });
 
-const MSISDN = process.argv[2] || '271004887';
-
 async function main() {
-  console.log('=== Testing CBS Client ===');
-  console.log(`MSISDN: ${MSISDN}\n`);
+  console.log('=== Testing legacy CBS operations ===');
+  console.log(`MSISDN: ${msisdn}\n`);
 
-  console.log('--- Integration Enquiry ---');
+  console.log('--- Query Basic Info ---');
   try {
-    const enquiry = await client.integrationEnquiry(MSISDN);
-    console.log('Result Code:', enquiry.ResultHeader?.ResultCode);
-    console.log('Balance:', enquiry.IntegrationEnquiryResult?.BalanceRecordList?.BalanceRecord);
-    console.log('Subscriber State:', enquiry.IntegrationEnquiryResult?.SubscriberState);
-    console.log('Customer:', enquiry.IntegrationEnquiryResult?.Customer);
-  } catch (err: any) {
-    console.error('Failed:', err.message);
-  }
-
-  console.log('\n--- Query Basic Info ---');
-  try {
-    const info = await client.queryBasicInfo(MSISDN);
+    const info = await client.queryBasicInfo(msisdn);
     console.log('Result Code:', info.ResultHeader?.ResultCode);
     console.log('Customer:', info.QueryBasicInfoResult?.Customer);
   } catch (err: any) {
@@ -40,7 +36,7 @@ async function main() {
 
   console.log('\n--- Create Subscriber ---');
   try {
-    const created = await client.createSubscriber(MSISDN);
+    const created = await client.createSubscriber(msisdn);
     console.log('Result Code:', created.ResultHeader?.ResultCode);
     console.log('Product Orders:', created.NewSubscriberResult?.ProductOrderInfo);
   } catch (err: any) {
@@ -49,16 +45,17 @@ async function main() {
 
   console.log('\n--- Delete Subscriber ---');
   try {
-    const deleted = await client.deleteSubscriber(MSISDN);
+    const deleted = await client.deleteSubscriber(msisdn);
     console.log('Result Code:', deleted.ResultHeader?.ResultCode);
   } catch (err: any) {
     console.error('Failed:', err.message);
   }
 
+  const productId = process.argv[3] ?? process.env.PRODUCT_ID ?? '2020847001';
+
   console.log('\n--- Subscribe Appendant Product ---');
   try {
-    const productId = process.argv[3] || '2020847001';
-    const subscribed = await client.subscribeAppendantProduct(MSISDN, productId);
+    const subscribed = await client.subscribeAppendantProduct(msisdn, productId);
     console.log('Result Code:', subscribed.ResultHeader?.ResultCode);
     console.log('Product Orders:', subscribed.SubscribeAppendantProductResult?.ProductOrderInfo);
   } catch (err: any) {
@@ -67,8 +64,7 @@ async function main() {
 
   console.log('\n--- UnSubscribe Appendant Product ---');
   try {
-    const productId = process.argv[3] || '2020847001';
-    const unsubscribed = await client.unSubscribeAppendantProduct(MSISDN, productId);
+    const unsubscribed = await client.unSubscribeAppendantProduct(msisdn, productId);
     console.log('Result Code:', unsubscribed.ResultHeader?.ResultCode);
   } catch (err: any) {
     console.error('Failed:', err.message);

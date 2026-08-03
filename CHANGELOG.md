@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - Unreleased
+
+### Breaking changes
+
+- Replaced `integrationEnquiry()` with `queryCustomerInfo()`.
+- Migrated the enquiry request to `POST /services/BcServices` using `QueryCustomerInfo`.
+- Removed the SOAP action header from the new query request.
+- Changed the query result to return the full response as `metadata` and normalized fields as `data`.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added

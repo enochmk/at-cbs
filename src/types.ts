@@ -4,6 +4,7 @@ export interface CbsClientOptions {
   password: string;
   timeout?: number;
   successCode?: string;
+  rejectUnauthorized?: boolean;
   logger?: Logger;
 }
 
@@ -13,11 +14,6 @@ export interface Logger {
   error?: (msg: string, ctx?: Record<string, unknown>) => void;
   debug?: (msg: string, ctx?: Record<string, unknown>) => void;
   verbose?: (msg: string, ctx?: Record<string, unknown>) => void;
-}
-
-export interface IntegrationEnquiryOptions {
-  requestId?: number;
-  remoteAddress?: string;
 }
 
 export interface ResultHeader {
@@ -130,23 +126,114 @@ export interface CumulativeItem {
   CumulativeAmt?: number;
 }
 
-export interface IntegrationEnquiryResult {
-  BalanceRecordList?: {
-    BalanceRecord?: BalanceRecord[];
-  };
-  SubscriberState?: SubscriberState;
-  BillingCycleDate?: BillingCycleDate;
-  SubscriberInfo?: SubscriberInfo;
-  CumulativeItemList?: {
-    CumulativeItem?: CumulativeItem[];
-  };
-  SubAttachedInfo?: SubAttachedInfo;
-  Customer?: Customer;
+export interface QueryCustomerInfoOptions {
+  messageSeq?: string;
+  beId?: string;
+  operatorId?: string;
+  accessMode?: number;
+  msgLanguageCode?: number;
+  timeType?: number;
 }
 
-export interface IntegrationEnquiryResponse {
-  ResultHeader?: ResultHeader;
-  IntegrationEnquiryResult?: IntegrationEnquiryResult;
+export interface QueryCustomerInfoResultHeader {
+  Version?: number | string;
+  ResultCode?: number | string;
+  MsgLanguageCode?: number | string;
+  ResultDesc?: string;
+}
+
+export interface QueryCustomerInfoIndividualInfo {
+  Birthday?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoCustomer {
+  CustKey?: string | number;
+  CustInfo?: Record<string, unknown>;
+  IndividualInfo?: QueryCustomerInfoIndividualInfo;
+  SiteInfo?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoPrimaryOffering {
+  OfferingKey?: Record<string, unknown>;
+  BundledFlag?: string;
+  OfferingClass?: string;
+  Status?: number | string;
+  ProductInst?: Record<string, unknown> | Record<string, unknown>[];
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoLifeCycleDetail {
+  StatusDetail?: string;
+  RBlacklistStatus?: number | string;
+  CurrentStatusIndex?: number | string;
+  LifeCycleStatus?: Record<string, unknown> | Record<string, unknown>[];
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoSubscriber {
+  SubscriberKey?: string | number;
+  SubscriberInfo?: Record<string, unknown>;
+  PaymentMode?: number | string;
+  PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
+  LifeCycleDetail?: QueryCustomerInfoLifeCycleDetail;
+  ActivationTime?: string;
+  AcctList?: Record<string, unknown> | Record<string, unknown>[];
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoAccount {
+  AcctKey?: string | number;
+  AcctInfo?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoResult {
+  Customer?: QueryCustomerInfoCustomer;
+  Subscriber?: QueryCustomerInfoSubscriber;
+  Account?: QueryCustomerInfoAccount;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoResponse {
+  ResultHeader?: QueryCustomerInfoResultHeader;
+  QueryCustomerInfoResult?: QueryCustomerInfoResult;
+  [key: string]: unknown;
+}
+
+export type PaymentModeLabel = 'prepaid' | 'postpaid' | 'hybrid' | 'unknown';
+
+export type CurrentStatusLabel =
+  | 'Idle'
+  | 'Active'
+  | 'Call Barring'
+  | 'Suspend'
+  | 'Tested'
+  | 'In stock'
+  | 'Pre-deregistration'
+  | 'Unknown';
+
+export interface MappedCode<T extends string> {
+  code: number;
+  label: T;
+}
+
+export interface QueryCustomerInfoData {
+  FirstActive?: string;
+  PaymentMode?: MappedCode<PaymentModeLabel>;
+  CurrentStatusIndex?: MappedCode<CurrentStatusLabel>;
+  BirthdayDate?: string;
+  PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
+  billingInfo?: {
+    subscriberAccounts?: Record<string, unknown> | Record<string, unknown>[];
+    account?: QueryCustomerInfoAccount;
+  };
+}
+
+export interface QueryCustomerInfoOutput {
+  metadata: QueryCustomerInfoResponse;
+  data: QueryCustomerInfoData;
 }
 
 export interface CreateSubscriberOptions {
