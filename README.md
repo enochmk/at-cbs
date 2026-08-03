@@ -20,6 +20,37 @@ const client = new CbsClient({
 });
 ```
 
+### Request options and defaults
+
+Every operation accepts optional request-header overrides. Values supplied in an operation’s
+options take precedence over the client defaults and the operation defaults.
+
+```typescript
+import {
+  CbsClient,
+  CbsRequestDefaults,
+  PaymentModeCode,
+  SubscriberStatusCode,
+} from '@enochmk/cbs-client';
+
+await client.queryCustomerInfo('271004887', {
+  messageSeq: 'customer-info-2026-08-03-001',
+  beId: '205',
+  remoteAddress: '10.20.30.40',
+  remark: 'Customer support lookup',
+  msgLanguageCode: CbsRequestDefaults.MSG_LANGUAGE_CODE,
+  customerMask: '1100',
+});
+```
+
+Supported shared overrides include `messageSeq`, `version`, `beId`, `operatorId`, `accessMode`,
+`msgLanguageCode`, `timeType`, `remoteAddress`, and `remark`. `queryCustomerInfo` additionally
+supports `queryMode`, `customerMask`, `accountMask`, `subscriberMask`, and `groupMask`.
+
+Use `CbsRequestDefaults` for the named defaults used by this client, `PaymentModeCode` for
+payment-mode values, and `SubscriberStatusCode` for lifecycle status values. Numeric values remain
+supported for deployment-specific CBS codes.
+
 ## API
 
 ### `queryCustomerInfo(msisdn, options?)`
@@ -34,6 +65,7 @@ const metadata = result.metadata;
 
 // Access normalized fields
 const offering = result.data.PrimaryOffering;
+const supplementaryOfferings = result.data.SupplementaryOfferings;
 const firstActive = result.data.FirstActive;
 const paymentMode = result.data.PaymentMode;
 const status = result.data.CurrentStatusIndex;
