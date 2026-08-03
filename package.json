@@ -38,7 +38,6 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/manual/legacy-cbs.ts",
     "test:query-customer-info": "tsx tests/manual/query-customer-info.ts",
     "test:query-balance": "tsx tests/manual/query-balance.ts",
     "release": "npm version patch && git push --tags",

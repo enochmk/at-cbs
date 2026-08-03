@@ -70,35 +70,6 @@ npm run test:query-customer-info
 npm run test:query-balance
 ```
 
-### `createSubscriber(msisdn, options?)`
-
-Create a new subscriber.
-
-```typescript
-const result = await client.createSubscriber('271004887', {
-  lang: 1,
-  paidMode: '0',
-  mainProductId: '2018254719',
-});
-```
-
-### `deleteSubscriber(msisdn, options?)`
-
-Delete a subscriber.
-
-```typescript
-const result = await client.deleteSubscriber('271004887');
-```
-
-### `queryBasicInfo(msisdn, options?)`
-
-Query basic subscriber information.
-
-```typescript
-const result = await client.queryBasicInfo('271004887');
-const customer = result.QueryBasicInfoResult?.Customer;
-```
-
 ## Options
 
 ### CbsClientOptions
@@ -109,7 +80,6 @@ const customer = result.QueryBasicInfoResult?.Customer;
 | `username`           | `string`  | Yes      | Authentication username                                                |
 | `password`           | `string`  | Yes      | Authentication password                                                |
 | `timeout`            | `number`  | No       | Request timeout in ms (default: `15000`)                               |
-| `successCode`        | `string`  | No       | Success result code (default: `405000000`)                             |
 | `rejectUnauthorized` | `boolean` | No       | TLS certificate validation (default: `true`)                           |
 | `logger`             | `Logger`  | No       | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
 
@@ -126,17 +96,7 @@ MSISDNs are automatically normalized to 9 digits. Accepts:
 All response types are fully typed:
 
 ```typescript
-import type {
-  QueryCustomerInfoOutput,
-  NewSubscriberResponse,
-  DeleteSubscriberResponse,
-  QueryBasicInfoResponse,
-  BalanceRecord,
-  Subscriber,
-  Product,
-  Service,
-  Customer,
-} from '@enochmk/cbs-client';
+import type { QueryCustomerInfoOutput, QueryBalanceOutput } from '@enochmk/cbs-client';
 ```
 
 ## Error Handling
