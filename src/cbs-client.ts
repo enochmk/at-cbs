@@ -28,6 +28,9 @@ import type {
   QueryXTransactionOutput,
   QueryXTransactionResponse,
   QueryXTransactionResult,
+  CustActivationOptions,
+  CustActivationOutput,
+  CustActivationResponse,
   CustDeactivationOptions,
   CustDeactivationOutput,
   CustDeactivationResponse,
@@ -85,7 +88,7 @@ export class CbsClient {
     return `<bcc:PrimaryIdentity>${this.normalizeMsisdn(msisdn)}</bcc:PrimaryIdentity>`;
   }
 
-  private getCustomerAccessCode(opts: CustDeactivationOptions): string {
+  private getCustomerAccessCode(opts: CustActivationOptions | CustDeactivationOptions): string {
     const accessCodes = [opts.primaryIdentity, opts.customerKey, opts.customerCode].filter(
       (value) => value !== undefined && value !== '',
     );
@@ -645,6 +648,71 @@ export class CbsClient {
       metadata: resultMsg,
       data: queryResult ?? {},
     };
+  }
+
+  async custActivation(opts: CustActivationOptions): Promise<CustActivationOutput> {
+    if (!opts) {
+      throw createHttpError(400, 'Customer access code is required for CustActivation');
+    }
+
+    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const customerAccessCode = this.getCustomerAccessCode(opts);
+
+    this.log('verbose', 'custActivation - sending request', { opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:CustActivationRequestMsg>
+            <RequestHeader>
+              <cbs:Version>1</cbs:Version>
+              <cbs:BusinessCode>CustActivation</cbs:BusinessCode>
+              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+              <cbs:OwnershipInfo>
+                <cbs:BEID>${opts.beId ?? '101'}</cbs:BEID>
+              </cbs:OwnershipInfo>
+              <cbs:AccessSecurity>
+                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                <cbs:Password>${this.opts.password}</cbs:Password>
+              </cbs:AccessSecurity>
+              ${opts.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
+              ${opts.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
+              ${opts.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
+              ${opts.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
+            </RequestHeader>
+            <CustActivationRequest>
+              <bcs:CustAccessCode>${customerAccessCode}</bcs:CustAccessCode>
+            </CustActivationRequest>
+          </bcs:CustActivationRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BC_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'custActivation - request failed', { error: err.message });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<CustActivationResponse>(
+      response.data,
+      this.stringParser,
+    );
+
+    if (resultCode !== '0') {
+      this.log('warn', 'custActivation - CBS error', { resultCode, resultDesc });
+      throw createHttpError(422, resultDesc);
+    }
+
+    this.log('verbose', 'custActivation - success', { messageSeq });
+    return { metadata: resultMsg };
   }
 
   async custDeactivation(opts: CustDeactivationOptions): Promise<CustDeactivationOutput> {

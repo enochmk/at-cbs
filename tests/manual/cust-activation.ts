@@ -4,15 +4,12 @@ import { CbsClient } from '../../src';
 const baseUrl = process.env.CBS_BASE_URL;
 const username = process.env.CBS_USERNAME;
 const password = process.env.CBS_PASSWORD;
-const opType = process.env.CBS_CUST_DEACTIVATION_OP_TYPE;
 const primaryIdentity = process.env.CUSTOMER_PRIMARY_IDENTITY;
 const customerKey = process.env.CUSTOMER_KEY;
 const customerCode = process.env.CUSTOMER_CODE;
 
-if (!baseUrl || !username || !password || !opType) {
-  throw new Error(
-    'Set CBS_BASE_URL, CBS_USERNAME, CBS_PASSWORD, and CBS_CUST_DEACTIVATION_OP_TYPE in .env.',
-  );
+if (!baseUrl || !username || !password) {
+  throw new Error('Set CBS_BASE_URL, CBS_USERNAME, and CBS_PASSWORD in .env.');
 }
 
 if ([primaryIdentity, customerKey, customerCode].filter(Boolean).length !== 1) {
@@ -29,17 +26,15 @@ const client = new CbsClient({
 });
 
 try {
-  const result = await client.custDeactivation({
-    opType,
+  const result = await client.custActivation({
     primaryIdentity,
     customerKey,
     customerCode,
-    effectiveTime: process.env.CBS_EFFECTIVE_TIME,
   });
-  console.log('\n=== CustDeactivation metadata ===');
+  console.log('\n=== CustActivation metadata ===');
   console.dir(result.metadata, { depth: null });
 } catch (error: any) {
-  console.error('CustDeactivation failed:', error.message);
+  console.error('CustActivation failed:', error.message);
   if (error.status) console.error('HTTP status:', error.status);
   process.exitCode = 1;
 }

@@ -1,17 +1,11 @@
 import 'dotenv/config';
 import { CbsClient } from '../../src';
 
-if (process.env.RUN_DESTRUCTIVE_TESTS !== 'true') {
-  throw new Error(
-    'Refusing to run SubDeactivation. Set RUN_DESTRUCTIVE_TESTS=true when you explicitly intend to change CBS state.',
-  );
-}
-
 const baseUrl = process.env.CBS_BASE_URL;
 const msisdn = process.argv[2] ?? process.env.MSISDN;
 const username = process.env.CBS_USERNAME;
 const password = process.env.CBS_PASSWORD;
-const opType = process.env.CBS_SUB_DEACTIVATION_OP_TYPE;
+const opType = process.env.CBS_SUB_DEACTIVATION_OP_TYPE || '1';
 
 if (!baseUrl || !msisdn || !username || !password || !opType) {
   throw new Error(

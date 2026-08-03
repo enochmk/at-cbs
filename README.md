@@ -71,6 +71,31 @@ const result = await client.queryXTransaction('261180256');
 console.dir(result.data, { depth: null });
 ```
 
+### Customer versus subscriber operations
+
+`SubActivation` and `SubDeactivation` target one subscriber, normally identified by an MSISDN or `SubscriberKey`. `CustActivation` and `CustDeactivation` target the customer entity and may affect all subscribers and services belonging to that customer. Customer operations accept exactly one of `primaryIdentity`, `customerKey`, or `customerCode`.
+
+Use the smallest scope that matches the change:
+
+| Operation          | Target                    | Typical identifier                                           | `opType`                      |
+| ------------------ | ------------------------- | ------------------------------------------------------------ | ----------------------------- |
+| `SubActivation`    | One subscriber            | MSISDN or `SubscriberKey`                                    | Not used by this request      |
+| `SubDeactivation`  | One subscriber            | MSISDN or `SubscriberKey`                                    | Required; deployment-specific |
+| `CustActivation`   | Customer and its services | `customerKey`, `customerCode`, or customer `primaryIdentity` | Not used by this request      |
+| `CustDeactivation` | Customer and its services | `customerKey`, `customerCode`, or customer `primaryIdentity` | Required; deployment-specific |
+
+Do not use an MSISDN as a customer `primaryIdentity` unless your CBS configuration defines that MSISDN as the customer's primary identity. Prefer `customerKey` or `customerCode` when available.
+
+### `custActivation(options)`
+
+Activate a customer using the R25 `CustActivation` operation.
+
+```typescript
+await client.custActivation({
+  customerKey: '123456',
+});
+```
+
 ### `subDeactivation(msisdn, options)`
 
 Deactivate a subscriber using the R25 `SubDeactivation` operation. `opType` is required and must be a value configured in your CBS deployment; the collection does not define a universal value.
@@ -92,7 +117,73 @@ await client.custDeactivation({
 });
 ```
 
-The deactivation methods mutate CBS state. The manual deactivation scripts require `RUN_DESTRUCTIVE_TESTS=true`.
+`effectiveTime` is optional and uses the CBS timestamp format `YYYYMMDDhhmmss`:
+
+```typescript
+await client.subDeactivation('261180256', {
+  opType: process.env.CBS_SUB_DEACTIVATION_OP_TYPE!,
+  effectiveTime: '20260803235959',
+});
+```
+
+### Recommended state-change workflow
+
+Before changing state, query the subscriber and record the current status:
+
+```typescript
+const before = await client.querySubLifeCycle('261180256');
+console.dir(before.data, { depth: null });
+```
+
+After a successful activation or deactivation, query the lifecycle again. A normal active subscriber should report `CurrentStatusIndex` `2` (`Active`). A `SubDeactivation` can move a subscriber into `Pool`. In that state, CBS may reject `ChangeSubStatus` and `SubActivation` with:
+
+```text
+The subscriber is in Pool state, and service handling is not allowed.
+```
+
+That is not an `opType` or XML formatting error. The subscriber must first be restored from Pool through the CBS provisioning or administration workflow supported by your deployment. Once it is restored to an eligible state, use the appropriate activation or lifecycle operation.
+
+### Manual test setup
+
+Copy the example environment file and fill in the credentials and identifiers:
+
+```bash
+cp .env.example .env
+```
+
+The manual scripts use these variables:
+
+| Variable                                                     | Used by              | Notes                                                     |
+| ------------------------------------------------------------ | -------------------- | --------------------------------------------------------- |
+| `CBS_BASE_URL`                                               | All scripts          | Use the host only, for example `https://10.40.14.26:8081` |
+| `CBS_USERNAME` / `CBS_PASSWORD`                              | All scripts          | CBS access credentials                                    |
+| `MSISDN`                                                     | Subscriber scripts   | Can be overridden by a command-line argument              |
+| `CBS_SUB_DEACTIVATION_OP_TYPE`                               | `SubDeactivation`    | Must be configured in CBS; there is no universal value    |
+| `CBS_CUST_DEACTIVATION_OP_TYPE`                              | `CustDeactivation`   | Must be configured in CBS                                 |
+| `CUSTOMER_PRIMARY_IDENTITY`, `CUSTOMER_KEY`, `CUSTOMER_CODE` | Customer scripts     | Set exactly one                                           |
+| `CBS_EFFECTIVE_TIME`                                         | Deactivation scripts | Optional `YYYYMMDDhhmmss` value                           |
+
+Run the read-only checks first:
+
+```bash
+npm run test:query-sub-life-cycle -- 261180256
+npm run test:query-x-transaction -- 261180256
+```
+
+Run subscriber operations with an optional MSISDN argument:
+
+```bash
+npm run test:sub-deactivation -- 261180256
+```
+
+Run customer operations using the customer identifier from `.env`:
+
+```bash
+npm run test:cust-activation
+npm run test:cust-deactivation
+```
+
+Activation and deactivation scripts change CBS state and do not have an extra confirmation prompt. Verify the identifier and operation code before running them.
 
 The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
 
@@ -103,20 +194,7 @@ The normalized code mappings are:
 
 The `QueryCustomerInfo` request uses `POST /services/BcServices` and does not send a `SoapAction` header.
 
-The live test disables TLS certificate validation for the internal self-signed CBS certificate. Use `rejectUnauthorized: true` in production when the certificate can be trusted normally.
-
-To run the live test scripts, copy `.env.example` to `.env` and fill in the local credentials. The `.env` file is git-ignored.
-
-```bash
-npm run test:query-customer-info
-npm run test:query-balance
-npm run test:query-sub-life-cycle
-npm run test:query-x-transaction
-
-# Requires RUN_DESTRUCTIVE_TESTS=true and a configured opType
-npm run test:sub-deactivation
-npm run test:cust-deactivation
-```
+The live test scripts disable TLS certificate validation for the internal self-signed CBS certificate. Use `rejectUnauthorized: true` in production when the certificate can be trusted normally. The `.env` file is git-ignored.
 
 ## Options
 
