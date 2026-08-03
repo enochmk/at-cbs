@@ -183,6 +183,16 @@ export interface QueryCustomerInfoSubscriber {
   [key: string]: unknown;
 }
 
+export interface QueryCustomerInfoMainBalance {
+  BalanceType: 'C_MAIN_ACCOUNT';
+  BalanceTypeName: 'PPS_MainAccount';
+  TotalAmount?: number | string;
+  InitialAmount?: number | string;
+  EffectiveTime?: string | number;
+  ExpireTime?: string | number;
+  LastUpdateTime?: string | number;
+}
+
 export interface QueryCustomerInfoAccount {
   AcctKey?: string | number;
   AcctInfo?: Record<string, unknown>;
@@ -224,16 +234,83 @@ export interface QueryCustomerInfoData {
   PaymentMode?: MappedCode<PaymentModeLabel>;
   CurrentStatusIndex?: MappedCode<CurrentStatusLabel>;
   BirthdayDate?: string;
-  PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
-  billingInfo?: {
-    subscriberAccounts?: Record<string, unknown> | Record<string, unknown>[];
-    account?: QueryCustomerInfoAccount;
-  };
+  MainBalance?: QueryCustomerInfoMainBalance;
+  'bcs:BillCycleType'?: number | string;
+  'bcs:AcctType'?: number | string;
+  'bcs:PaymentType'?: number | string;
+  'bcs:AcctClass'?: number | string;
+  'bcs:CurrencyID'?: number | string;
+  'bcs:AcctPayMethod'?: number | string;
+  'bcs:BillCycleOpenDate'?: number | string;
+  'bcs:BillCycleEndDate'?: number | string;
 }
 
 export interface QueryCustomerInfoOutput {
   metadata: QueryCustomerInfoResponse;
   data: QueryCustomerInfoData;
+}
+
+export interface QueryBalanceOptions {
+  messageSeq?: string;
+  beId?: string;
+}
+
+export interface QueryBalanceDetail {
+  BalanceInstanceID?: string | number;
+  Amount?: number | string;
+  InitialAmount?: number | string;
+  EffectiveTime?: string | number;
+  ExpireTime?: string | number;
+  AcctBalOriginal?: Record<string, unknown>;
+  LastUpdateTime?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryBalanceResultItem {
+  BalanceType?: string;
+  BalanceTypeName?: string;
+  TotalAmount?: number | string;
+  ReservedAmount?: number | string;
+  DepositFlag?: string;
+  RefundFlag?: number | string;
+  CurrencyID?: number | string;
+  BalanceDetail?: QueryBalanceDetail;
+  [key: string]: unknown;
+}
+
+export interface QueryBalanceAccountCredit {
+  TotalCreditAmount?: number | string;
+  TotalUsageAmount?: number | string;
+  TotalRemainAmount?: number | string;
+  CurrencyID?: number | string;
+  [key: string]: unknown;
+}
+
+export interface QueryBalanceAcctList {
+  AcctKey?: string | number;
+  BalanceResult?: QueryBalanceResultItem | QueryBalanceResultItem[];
+  AccountCredit?: QueryBalanceAccountCredit;
+  [key: string]: unknown;
+}
+
+export interface QueryBalanceResult {
+  AcctList?: QueryBalanceAcctList | QueryBalanceAcctList[];
+  [key: string]: unknown;
+}
+
+export interface QueryBalanceResponse {
+  ResultHeader?: QueryCustomerInfoResultHeader;
+  QueryBalanceResult?: QueryBalanceResult;
+  [key: string]: unknown;
+}
+
+export interface QueryBalanceData {
+  AcctList?: QueryBalanceAcctList | QueryBalanceAcctList[];
+}
+
+export interface QueryBalanceOutput {
+  metadata: QueryBalanceResponse;
+  data: QueryBalanceData;
 }
 
 export interface CreateSubscriberOptions {

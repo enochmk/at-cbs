@@ -19,8 +19,12 @@ import type {
   QueryCustomerInfoOutput,
   QueryCustomerInfoResponse,
   QueryCustomerInfoAccount,
-  QueryCustomerInfoPrimaryOffering,
+  QueryCustomerInfoMainBalance,
   CurrentStatusLabel,
+  QueryBalanceOptions,
+  QueryBalanceOutput,
+  QueryBalanceResponse,
+  QueryBalanceResult,
 } from './types';
 import { getXmlField, parseSoapResponse } from './utils';
 
@@ -31,6 +35,7 @@ export class CbsClient {
 
   private static BUSINESS_MGR = '/services/CBSInterfaceBusinessMgrService';
   private static BC_SERVICES = '/services/BcServices';
+  private static AR_SERVICES = '/services/ArServices';
 
   constructor(options: CbsClientOptions) {
     this.opts = {
@@ -150,17 +155,60 @@ export class CbsClient {
     );
     const customer = getXmlField<Record<string, unknown>>(queryResult, 'Customer');
     const subscriber = getXmlField<Record<string, unknown>>(queryResult, 'Subscriber');
+    const subscriberInfo = getXmlField<Record<string, unknown>>(subscriber, 'SubscriberInfo');
     const account = getXmlField<QueryCustomerInfoAccount>(queryResult, 'Account');
     const individualInfo = getXmlField<Record<string, unknown>>(customer, 'IndividualInfo');
     const lifecycleDetail = getXmlField<Record<string, unknown>>(subscriber, 'LifeCycleDetail');
-    const primaryOffering = getXmlField<QueryCustomerInfoPrimaryOffering>(
-      subscriber,
-      'PrimaryOffering',
-    );
     const subscriberAccounts = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
       subscriber,
       'AcctList',
     );
+    const accountRecords = subscriberAccounts
+      ? Array.isArray(subscriberAccounts)
+        ? subscriberAccounts
+        : [subscriberAccounts]
+      : [];
+    const mainBalanceResult = accountRecords
+      .flatMap((acctList) => {
+        const balanceResult = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+          acctList,
+          'BalanceResult',
+        );
+        return balanceResult
+          ? Array.isArray(balanceResult)
+            ? balanceResult
+            : [balanceResult]
+          : [];
+      })
+      .find(
+        (balance) =>
+          getXmlField(balance, 'BalanceType') === 'C_MAIN_ACCOUNT' &&
+          getXmlField(balance, 'BalanceTypeName') === 'PPS_MainAccount',
+      );
+    const mainBalance = mainBalanceResult
+      ? ({
+          BalanceType: 'C_MAIN_ACCOUNT',
+          BalanceTypeName: 'PPS_MainAccount',
+          TotalAmount: getXmlField<number | string>(mainBalanceResult, 'TotalAmount'),
+          InitialAmount: getXmlField<number | string>(
+            getXmlField<Record<string, unknown>>(mainBalanceResult, 'BalanceDetail'),
+            'InitialAmount',
+          ),
+          EffectiveTime: getXmlField<string | number>(
+            getXmlField<Record<string, unknown>>(mainBalanceResult, 'BalanceDetail'),
+            'EffectiveTime',
+          ),
+          ExpireTime: getXmlField<string | number>(
+            getXmlField<Record<string, unknown>>(mainBalanceResult, 'BalanceDetail'),
+            'ExpireTime',
+          ),
+          LastUpdateTime: getXmlField<string | number>(
+            getXmlField<Record<string, unknown>>(mainBalanceResult, 'BalanceDetail'),
+            'LastUpdateTime',
+          ),
+        } satisfies QueryCustomerInfoMainBalance)
+      : undefined;
+    const accountInfo = getXmlField<Record<string, unknown>>(account, 'AcctInfo');
     const paymentMode = Number(getXmlField(subscriber, 'PaymentMode'));
     const currentStatusIndex = Number(getXmlField(lifecycleDetail, 'CurrentStatusIndex'));
 
@@ -168,7 +216,7 @@ export class CbsClient {
     return {
       metadata: resultMsg,
       data: {
-        FirstActive: getXmlField<string>(subscriber, 'ActivationTime'),
+        FirstActive: getXmlField<string>(subscriberInfo, 'ActivationTime'),
         PaymentMode: {
           code: paymentMode,
           label:
@@ -195,11 +243,95 @@ export class CbsClient {
             )[currentStatusIndex] ?? 'Unknown',
         },
         BirthdayDate: getXmlField<string>(individualInfo, 'Birthday'),
-        PrimaryOffering: primaryOffering,
-        billingInfo: {
-          subscriberAccounts,
-          account,
-        },
+        MainBalance: mainBalance,
+        'bcs:BillCycleType': getXmlField(accountInfo, 'BillCycleType'),
+        'bcs:AcctType': getXmlField(accountInfo, 'AcctType'),
+        'bcs:PaymentType': getXmlField(accountInfo, 'PaymentType'),
+        'bcs:AcctClass': getXmlField(accountInfo, 'AcctClass'),
+        'bcs:CurrencyID': getXmlField(accountInfo, 'CurrencyID'),
+        'bcs:AcctPayMethod': getXmlField(accountInfo, 'AcctPayMethod'),
+        'bcs:BillCycleOpenDate': getXmlField(accountInfo, 'BillCycleOpenDate'),
+        'bcs:BillCycleEndDate': getXmlField(accountInfo, 'BillCycleEndDate'),
+      },
+    };
+  }
+
+  async queryBalance(msisdn: string, opts?: QueryBalanceOptions): Promise<QueryBalanceOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts?.messageSeq ?? '1';
+    this.log('verbose', 'queryBalance - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ars="http://www.huawei.com/bme/cbsinterface/arservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:arc="http://cbs.huawei.com/ar/wsservice/arcommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <ars:QueryBalanceRequestMsg>
+            <RequestHeader>
+              <cbs:Version>1</cbs:Version>
+              <cbs:BusinessCode>QueryBalance</cbs:BusinessCode>
+              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+              <cbs:OwnershipInfo>
+                <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
+              </cbs:OwnershipInfo>
+              <cbs:AccessSecurity>
+                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                <cbs:Password>${this.opts.password}</cbs:Password>
+              </cbs:AccessSecurity>
+            </RequestHeader>
+            <QueryBalanceRequest>
+              <ars:QueryObj>
+                <ars:SubAccessCode>
+                  <arc:SubscriberKey>${cbsMsisdn}</arc:SubscriberKey>
+                </ars:SubAccessCode>
+              </ars:QueryObj>
+            </QueryBalanceRequest>
+          </ars:QueryBalanceRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.AR_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'queryBalance - request failed', {
+        msisdn,
+        error: err.message,
+      });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QueryBalanceResponse>(
+      response.data,
+      this.parser,
+    );
+
+    if (resultCode !== '0') {
+      this.log('warn', 'queryBalance - CBS error', {
+        msisdn,
+        resultCode,
+        resultDesc,
+      });
+      throw createHttpError(422, resultDesc);
+    }
+
+    const queryResult = getXmlField<QueryBalanceResult>(
+      resultMsg as Record<string, unknown>,
+      'QueryBalanceResult',
+    );
+
+    this.log('verbose', 'queryBalance - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: {
+        AcctList: getXmlField<QueryBalanceResult['AcctList']>(
+          queryResult as Record<string, unknown> | undefined,
+          'AcctList',
+        ),
       },
     };
   }

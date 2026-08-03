@@ -38,8 +38,20 @@ const firstActive = result.data.FirstActive;
 const paymentMode = result.data.PaymentMode;
 const status = result.data.CurrentStatusIndex;
 const birthday = result.data.BirthdayDate;
-const billingInfo = result.data.billingInfo;
+const mainBalance = result.data.MainBalance;
+const billCycleEndDate = result.data['bcs:BillCycleEndDate'];
 ```
+
+### `queryBalance(msisdn, options?)`
+
+Query subscriber account balances through `POST /services/ArServices`.
+
+```typescript
+const result = await client.queryBalance('261180256');
+const accounts = result.data.AcctList;
+```
+
+The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
 
 The normalized code mappings are:
 
