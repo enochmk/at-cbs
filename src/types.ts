@@ -290,6 +290,28 @@ export interface QueryXTransactionOutput {
   data: QueryXTransactionResult;
 }
 
+export interface QueryCdrDetailOptions {
+  messageSeq?: string;
+  beId?: string;
+  operatorId?: string;
+  accessMode?: number;
+  msgLanguageCode?: number;
+  timeType?: number;
+}
+
+export interface QueryCdrDetailResult {
+  [key: string]: unknown;
+}
+
+export interface QueryCdrDetailResponse extends CbsOperationResponse {
+  QueryCDRDetailResult?: QueryCdrDetailResult;
+}
+
+export interface QueryCdrDetailOutput {
+  metadata: QueryCdrDetailResponse;
+  data: QueryCdrDetailResult;
+}
+
 export interface CustActivationOptions {
   primaryIdentity?: string;
   customerKey?: string | number;

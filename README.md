@@ -71,6 +71,17 @@ const result = await client.queryXTransaction('261180256');
 console.dir(result.data, { depth: null });
 ```
 
+### `queryCdrDetail(primaryIdentity, cdrSeq, options?)`
+
+Query one CDR in detail using the R25 `QueryCDRDetail` operation. This request uses `POST /services/BbServices`, not `BcServices` or `ArServices`, and returns the CBS result body without assuming a fixed CDR schema.
+
+```typescript
+const result = await client.queryCdrDetail('261180256', '123456789');
+console.dir(result.data, { depth: null });
+```
+
+`cdrSeq` is the CDR sequence identifier, not a date or MSISDN. Obtain it from your transaction/reporting flow or from a response that exposes CDR sequence values.
+
 ### Customer versus subscriber operations
 
 `SubActivation` and `SubDeactivation` target one subscriber, normally identified by an MSISDN or `SubscriberKey`. `CustActivation` and `CustDeactivation` target the customer entity and may affect all subscribers and services belonging to that customer. Customer operations accept exactly one of `primaryIdentity`, `customerKey`, or `customerCode`.
@@ -158,6 +169,7 @@ The manual scripts use these variables:
 | `CBS_BASE_URL`                                               | All scripts          | Use the host only, for example `https://10.40.14.26:8081` |
 | `CBS_USERNAME` / `CBS_PASSWORD`                              | All scripts          | CBS access credentials                                    |
 | `MSISDN`                                                     | Subscriber scripts   | Can be overridden by a command-line argument              |
+| `CDR_SEQ`                                                    | `QueryCDRDetail`     | Can be overridden by the second command-line argument     |
 | `CBS_SUB_DEACTIVATION_OP_TYPE`                               | `SubDeactivation`    | Must be configured in CBS; there is no universal value    |
 | `CBS_CUST_DEACTIVATION_OP_TYPE`                              | `CustDeactivation`   | Must be configured in CBS                                 |
 | `CUSTOMER_PRIMARY_IDENTITY`, `CUSTOMER_KEY`, `CUSTOMER_CODE` | Customer scripts     | Set exactly one                                           |
@@ -168,6 +180,7 @@ Run the read-only checks first:
 ```bash
 npm run test:query-sub-life-cycle -- 261180256
 npm run test:query-x-transaction -- 261180256
+npm run test:query-cdr-detail -- 261180256 123456789
 ```
 
 Run subscriber operations with an optional MSISDN argument:
