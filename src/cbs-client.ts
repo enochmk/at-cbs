@@ -16,6 +16,10 @@ import type {
   QueryBalanceResponse,
   QueryBalanceResult,
   QueryBalanceAcctList,
+  QuerySubLifeCycleOptions,
+  QuerySubLifeCycleOutput,
+  QuerySubLifeCycleResponse,
+  QuerySubLifeCycleResult,
 } from './types';
 import { getXmlField, parseSoapResponse } from './utils';
 
@@ -345,6 +349,106 @@ export class CbsClient {
         EffectiveTime: getXmlField<string | number>(balanceDetail, 'EffectiveTime'),
         ExpireTime: getXmlField<string | number>(balanceDetail, 'ExpireTime'),
         LastUpdateTime: getXmlField<string | number>(balanceDetail, 'LastUpdateTime'),
+      },
+    };
+  }
+
+  async querySubLifeCycle(
+    msisdn: string,
+    opts?: QuerySubLifeCycleOptions,
+  ): Promise<QuerySubLifeCycleOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts?.messageSeq ?? new Date().toISOString();
+    this.log('verbose', 'querySubLifeCycle - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:QuerySubLifeCycleRequestMsg>
+            <RequestHeader>
+              <cbs:Version>1</cbs:Version>
+              <cbs:BusinessCode>QuerySubLifeCycle</cbs:BusinessCode>
+              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+              <cbs:OwnershipInfo>
+                <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
+              </cbs:OwnershipInfo>
+              <cbs:AccessSecurity>
+                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                <cbs:Password>${this.opts.password}</cbs:Password>
+              </cbs:AccessSecurity>
+            </RequestHeader>
+            <QuerySubLifeCycleRequest>
+              <bcs:SubAccessCode>
+                <bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity>
+              </bcs:SubAccessCode>
+            </QuerySubLifeCycleRequest>
+          </bcs:QuerySubLifeCycleRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BC_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'querySubLifeCycle - request failed', {
+        msisdn,
+        error: err.message,
+      });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QuerySubLifeCycleResponse>(
+      response.data,
+      this.parser,
+    );
+
+    if (resultCode !== '0') {
+      this.log('warn', 'querySubLifeCycle - CBS error', {
+        msisdn,
+        resultCode,
+        resultDesc,
+      });
+      throw createHttpError(422, resultDesc);
+    }
+
+    const queryResult = getXmlField<QuerySubLifeCycleResult>(
+      resultMsg as Record<string, unknown>,
+      'QuerySubLifeCycleResult',
+    );
+    const currentStatusIndex = Number(getXmlField(queryResult, 'CurrentStatusIndex'));
+
+    this.log('verbose', 'querySubLifeCycle - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: {
+        CurrentStatusIndex: {
+          code: currentStatusIndex,
+          label:
+            (
+              {
+                1: 'Idle',
+                2: 'Active',
+                3: 'Call Barring',
+                4: 'Suspend',
+                6: 'Tested',
+                7: 'In stock',
+                8: 'Pre-deregistration',
+              } as Record<number, CurrentStatusLabel>
+            )[currentStatusIndex] ?? 'Unknown',
+        },
+        LifeCycleStatus: getXmlField<QuerySubLifeCycleResult['LifeCycleStatus']>(
+          queryResult,
+          'LifeCycleStatus',
+        ),
+        RBlacklistStatus: getXmlField(queryResult, 'RBlacklistStatus'),
+        FraudTimes: getXmlField(queryResult, 'FraudTimes'),
+        StatusDetail: getXmlField(queryResult, 'StatusDetail'),
       },
     };
   }

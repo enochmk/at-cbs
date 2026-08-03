@@ -207,3 +207,43 @@ export interface QueryBalanceOutput {
   metadata: QueryBalanceResponse;
   data: QueryBalanceData;
 }
+
+export interface QuerySubLifeCycleOptions {
+  messageSeq?: string;
+  beId?: string;
+}
+
+export interface QuerySubLifeCycleStatus {
+  StatusName?: string;
+  StatusExpireTime?: string | number;
+  StatusIndex?: number | string;
+  [key: string]: unknown;
+}
+
+export interface QuerySubLifeCycleResult {
+  CurrentStatusIndex?: number | string;
+  LifeCycleStatus?: QuerySubLifeCycleStatus | QuerySubLifeCycleStatus[];
+  RBlacklistStatus?: number | string;
+  FraudTimes?: number | string;
+  StatusDetail?: string;
+  [key: string]: unknown;
+}
+
+export interface QuerySubLifeCycleResponse {
+  ResultHeader?: QueryCustomerInfoResultHeader;
+  QuerySubLifeCycleResult?: QuerySubLifeCycleResult;
+  [key: string]: unknown;
+}
+
+export interface QuerySubLifeCycleData {
+  CurrentStatusIndex?: MappedCode<CurrentStatusLabel>;
+  LifeCycleStatus?: QuerySubLifeCycleStatus | QuerySubLifeCycleStatus[];
+  RBlacklistStatus?: number | string;
+  FraudTimes?: number | string;
+  StatusDetail?: string;
+}
+
+export interface QuerySubLifeCycleOutput {
+  metadata: QuerySubLifeCycleResponse;
+  data: QuerySubLifeCycleData;
+}

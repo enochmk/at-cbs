@@ -26,5 +26,11 @@ export type {
   QueryBalanceResponse,
   QueryBalanceData,
   QueryBalanceOutput,
+  QuerySubLifeCycleOptions,
+  QuerySubLifeCycleStatus,
+  QuerySubLifeCycleResult,
+  QuerySubLifeCycleResponse,
+  QuerySubLifeCycleData,
+  QuerySubLifeCycleOutput,
   Logger,
 } from './types';

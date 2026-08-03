@@ -52,6 +52,18 @@ const totalAmount = result.data.TotalAmount;
 const expiresAt = result.data.ExpireTime;
 ```
 
+### `querySubLifeCycle(msisdn, options?)`
+
+Query subscriber lifecycle state through `POST /services/BcServices`.
+
+```typescript
+const result = await client.querySubLifeCycle('261180256');
+const status = result.data.CurrentStatusIndex;
+const lifecycle = result.data.LifeCycleStatus;
+```
+
+The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
+
 The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
 
 The normalized code mappings are:
@@ -68,6 +80,7 @@ To run the live test scripts, copy `.env.example` to `.env` and fill in the loca
 ```bash
 npm run test:query-customer-info
 npm run test:query-balance
+npm run test:query-sub-life-cycle
 ```
 
 ## Options
