@@ -305,7 +305,13 @@ export interface QueryBalanceResponse {
 }
 
 export interface QueryBalanceData {
-  AcctList?: QueryBalanceAcctList | QueryBalanceAcctList[];
+  BalanceType?: string;
+  BalanceTypeName?: string;
+  TotalAmount?: number | string;
+  InitialAmount?: number | string;
+  EffectiveTime?: string | number;
+  ExpireTime?: string | number;
+  LastUpdateTime?: string | number;
 }
 
 export interface QueryBalanceOutput {

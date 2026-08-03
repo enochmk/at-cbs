@@ -25,6 +25,7 @@ import type {
   QueryBalanceOutput,
   QueryBalanceResponse,
   QueryBalanceResult,
+  QueryBalanceAcctList,
 } from './types';
 import { getXmlField, parseSoapResponse } from './utils';
 
@@ -323,15 +324,41 @@ export class CbsClient {
       resultMsg as Record<string, unknown>,
       'QueryBalanceResult',
     );
+    const accountLists = getXmlField<QueryBalanceResult['AcctList']>(
+      queryResult as Record<string, unknown> | undefined,
+      'AcctList',
+    );
+    const accountListRecords = accountLists
+      ? Array.isArray(accountLists)
+        ? accountLists
+        : [accountLists]
+      : [];
+    const balanceResult = accountListRecords
+      .flatMap((accountList) => {
+        const balances = getXmlField<QueryBalanceAcctList['BalanceResult']>(
+          accountList,
+          'BalanceResult',
+        );
+        return balances ? (Array.isArray(balances) ? balances : [balances]) : [];
+      })
+      .find(
+        (balance) =>
+          getXmlField(balance, 'BalanceType') === 'C_MAIN_ACCOUNT' &&
+          getXmlField(balance, 'BalanceTypeName') === 'PPS_MainAccount',
+      );
+    const balanceDetail = getXmlField<Record<string, unknown>>(balanceResult, 'BalanceDetail');
 
     this.log('verbose', 'queryBalance - success', { msisdn, messageSeq });
     return {
       metadata: resultMsg,
       data: {
-        AcctList: getXmlField<QueryBalanceResult['AcctList']>(
-          queryResult as Record<string, unknown> | undefined,
-          'AcctList',
-        ),
+        BalanceType: getXmlField<string>(balanceResult, 'BalanceType'),
+        BalanceTypeName: getXmlField<string>(balanceResult, 'BalanceTypeName'),
+        TotalAmount: getXmlField<number | string>(balanceResult, 'TotalAmount'),
+        InitialAmount: getXmlField<number | string>(balanceDetail, 'InitialAmount'),
+        EffectiveTime: getXmlField<string | number>(balanceDetail, 'EffectiveTime'),
+        ExpireTime: getXmlField<string | number>(balanceDetail, 'ExpireTime'),
+        LastUpdateTime: getXmlField<string | number>(balanceDetail, 'LastUpdateTime'),
       },
     };
   }

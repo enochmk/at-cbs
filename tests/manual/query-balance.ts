@@ -1,16 +1,13 @@
+import 'dotenv/config';
 import { CbsClient } from '../../src';
 
+const baseUrl = process.env.CBS_BASE_URL;
 const msisdn = process.argv[2] ?? process.env.MSISDN;
-const baseUrl = process.env.CBS_BASE_URL ?? 'https://10.40.14.26:8081';
-const username = process.env.CBS_USERNAME ?? '102';
+const username = process.env.CBS_USERNAME;
 const password = process.env.CBS_PASSWORD;
 
-if (!msisdn) {
-  throw new Error('Provide an MSISDN as the first argument or set MSISDN.');
-}
-
-if (!password) {
-  throw new Error('Set CBS_PASSWORD before running this test.');
+if (!baseUrl || !msisdn || !username || !password) {
+  throw new Error('Set CBS_BASE_URL, MSISDN, CBS_USERNAME, and CBS_PASSWORD in .env.');
 }
 
 const client = new CbsClient({

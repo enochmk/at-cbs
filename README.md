@@ -48,7 +48,8 @@ Query subscriber account balances through `POST /services/ArServices`.
 
 ```typescript
 const result = await client.queryBalance('261180256');
-const accounts = result.data.AcctList;
+const totalAmount = result.data.TotalAmount;
+const expiresAt = result.data.ExpireTime;
 ```
 
 The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
@@ -62,10 +63,11 @@ The `QueryCustomerInfo` request uses `POST /services/BcServices` and does not se
 
 The live test disables TLS certificate validation for the internal self-signed CBS certificate. Use `rejectUnauthorized: true` in production when the certificate can be trusted normally.
 
-To run the live test script, provide credentials through environment variables:
+To run the live test scripts, copy `.env.example` to `.env` and fill in the local credentials. The `.env` file is git-ignored.
 
 ```bash
-CBS_USERNAME=102 CBS_PASSWORD='your-password' npm run test:query-customer-info -- 261180256
+npm run test:query-customer-info
+npm run test:query-balance
 ```
 
 ### `createSubscriber(msisdn, options?)`
