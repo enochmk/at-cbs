@@ -2,6 +2,7 @@ import axios, { type AxiosResponse } from 'axios';
 import { XMLParser } from 'fast-xml-parser';
 import createHttpError from 'http-errors';
 import https from 'node:https';
+import { randomUUID } from 'node:crypto';
 
 import type {
   CbsClientOptions,
@@ -20,11 +21,22 @@ import type {
   QuerySubLifeCycleOutput,
   QuerySubLifeCycleResponse,
   QuerySubLifeCycleResult,
+  SubDeactivationOptions,
+  SubDeactivationOutput,
+  SubDeactivationResponse,
+  QueryXTransactionOptions,
+  QueryXTransactionOutput,
+  QueryXTransactionResponse,
+  QueryXTransactionResult,
+  CustDeactivationOptions,
+  CustDeactivationOutput,
+  CustDeactivationResponse,
 } from './types';
 import { getXmlField, parseSoapResponse } from './utils';
 
 export class CbsClient {
   private parser: XMLParser;
+  private stringParser: XMLParser;
   private opts: Required<CbsClientOptions>;
 
   private static BC_SERVICES = '/services/BcServices';
@@ -40,6 +52,11 @@ export class CbsClient {
     this.parser = new XMLParser({
       ignoreAttributes: true,
       parseTagValue: true,
+      trimValues: true,
+    });
+    this.stringParser = new XMLParser({
+      ignoreAttributes: true,
+      parseTagValue: false,
       trimValues: true,
     });
   }
@@ -59,6 +76,34 @@ export class CbsClient {
       throw createHttpError(400, 'MSISDN must be 9, 10, or 12 digits');
     }
     return digits.slice(-9);
+  }
+
+  private getSubscriberAccessCode(msisdn: string, subscriberKey?: string): string {
+    if (subscriberKey) {
+      return `<bcc:SubscriberKey>${subscriberKey}</bcc:SubscriberKey>`;
+    }
+    return `<bcc:PrimaryIdentity>${this.normalizeMsisdn(msisdn)}</bcc:PrimaryIdentity>`;
+  }
+
+  private getCustomerAccessCode(opts: CustDeactivationOptions): string {
+    const accessCodes = [opts.primaryIdentity, opts.customerKey, opts.customerCode].filter(
+      (value) => value !== undefined && value !== '',
+    );
+
+    if (accessCodes.length !== 1) {
+      throw createHttpError(
+        400,
+        'Provide exactly one of primaryIdentity, customerKey, or customerCode',
+      );
+    }
+
+    if (opts.primaryIdentity !== undefined && opts.primaryIdentity !== '') {
+      return `<bcc:PrimaryIdentity>${opts.primaryIdentity}</bcc:PrimaryIdentity>`;
+    }
+    if (opts.customerKey !== undefined && opts.customerKey !== '') {
+      return `<bcc:CustomerKey>${opts.customerKey}</bcc:CustomerKey>`;
+    }
+    return `<bcc:CustomerCode>${opts.customerCode}</bcc:CustomerCode>`;
   }
 
   async queryCustomerInfo(
@@ -405,7 +450,7 @@ export class CbsClient {
 
     const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QuerySubLifeCycleResponse>(
       response.data,
-      this.parser,
+      this.stringParser,
     );
 
     if (resultCode !== '0') {
@@ -451,5 +496,224 @@ export class CbsClient {
         StatusDetail: getXmlField(queryResult, 'StatusDetail'),
       },
     };
+  }
+
+  async subDeactivation(
+    msisdn: string,
+    opts: SubDeactivationOptions,
+  ): Promise<SubDeactivationOutput> {
+    if (!opts?.opType) {
+      throw createHttpError(400, 'opType is required for SubDeactivation');
+    }
+
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    const effectiveTime = opts.effectiveTime
+      ? `<bcs:EffectiveTime>${opts.effectiveTime}</bcs:EffectiveTime>`
+      : '';
+    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts.subscriberKey);
+
+    this.log('verbose', 'subDeactivation - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:SubDeactivationRequestMsg>
+            <RequestHeader>
+              <cbs:Version>1</cbs:Version>
+              <cbs:BusinessCode>SubDeactivation</cbs:BusinessCode>
+              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+              <cbs:OwnershipInfo>
+                <cbs:BEID>${opts.beId ?? '101'}</cbs:BEID>
+              </cbs:OwnershipInfo>
+              <cbs:AccessSecurity>
+                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                <cbs:Password>${this.opts.password}</cbs:Password>
+              </cbs:AccessSecurity>
+              ${opts.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
+              ${opts.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
+              ${opts.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
+              ${opts.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
+            </RequestHeader>
+            <SubDeactivationRequest>
+              <bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode>
+              <bcs:OpType>${opts.opType}</bcs:OpType>
+              ${effectiveTime}
+            </SubDeactivationRequest>
+          </bcs:SubDeactivationRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BC_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'subDeactivation - request failed', {
+        msisdn,
+        error: err.message,
+      });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<SubDeactivationResponse>(
+      response.data,
+      this.stringParser,
+    );
+
+    if (resultCode !== '0') {
+      this.log('warn', 'subDeactivation - CBS error', { msisdn, resultCode, resultDesc });
+      throw createHttpError(422, resultDesc);
+    }
+
+    this.log('verbose', 'subDeactivation - success', { msisdn, messageSeq });
+    return { metadata: resultMsg };
+  }
+
+  async queryXTransaction(
+    msisdn: string,
+    opts?: QueryXTransactionOptions,
+  ): Promise<QueryXTransactionOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts?.subscriberKey);
+
+    this.log('verbose', 'queryXTransaction - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:QueryLastXTransactionRequestMsg>
+            <RequestHeader>
+              <cbs:Version>1</cbs:Version>
+              <cbs:BusinessCode>QueryLastXTransaction</cbs:BusinessCode>
+              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+              <cbs:OwnershipInfo>
+                <cbs:BEID>${opts?.beId ?? '101'}</cbs:BEID>
+              </cbs:OwnershipInfo>
+              <cbs:AccessSecurity>
+                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                <cbs:Password>${this.opts.password}</cbs:Password>
+              </cbs:AccessSecurity>
+            </RequestHeader>
+            <QueryLastXTransactionRequest>
+              <bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode>
+            </QueryLastXTransactionRequest>
+          </bcs:QueryLastXTransactionRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BC_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'queryXTransaction - request failed', {
+        msisdn,
+        error: err.message,
+      });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<QueryXTransactionResponse>(
+      response.data,
+      this.stringParser,
+    );
+
+    if (resultCode !== '0') {
+      this.log('warn', 'queryXTransaction - CBS error', { msisdn, resultCode, resultDesc });
+      throw createHttpError(422, resultDesc);
+    }
+
+    const queryResult = getXmlField<QueryXTransactionResult>(
+      resultMsg as Record<string, unknown>,
+      'QueryLastXTransactionResult',
+    );
+
+    this.log('verbose', 'queryXTransaction - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: queryResult ?? {},
+    };
+  }
+
+  async custDeactivation(opts: CustDeactivationOptions): Promise<CustDeactivationOutput> {
+    if (!opts?.opType) {
+      throw createHttpError(400, 'opType is required for CustDeactivation');
+    }
+
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    const effectiveTime = opts.effectiveTime
+      ? `<bcs:EffectiveTime>${opts.effectiveTime}</bcs:EffectiveTime>`
+      : '';
+    const customerAccessCode = this.getCustomerAccessCode(opts);
+
+    this.log('verbose', 'custDeactivation - sending request', { opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:CustDeactivationRequestMsg>
+            <RequestHeader>
+              <cbs:Version>1</cbs:Version>
+              <cbs:BusinessCode>CustDeactivation</cbs:BusinessCode>
+              <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+              <cbs:OwnershipInfo>
+                <cbs:BEID>${opts.beId ?? '101'}</cbs:BEID>
+              </cbs:OwnershipInfo>
+              <cbs:AccessSecurity>
+                <cbs:LoginSystemCode>${this.opts.username}</cbs:LoginSystemCode>
+                <cbs:Password>${this.opts.password}</cbs:Password>
+              </cbs:AccessSecurity>
+              ${opts.operatorId ? `<cbs:OperatorInfo><cbs:OperatorID>${opts.operatorId}</cbs:OperatorID></cbs:OperatorInfo>` : ''}
+              ${opts.accessMode !== undefined ? `<cbs:AccessMode>${opts.accessMode}</cbs:AccessMode>` : ''}
+              ${opts.msgLanguageCode !== undefined ? `<cbs:MsgLanguageCode>${opts.msgLanguageCode}</cbs:MsgLanguageCode>` : ''}
+              ${opts.timeType !== undefined ? `<cbs:TimeFormat><cbs:TimeType>${opts.timeType}</cbs:TimeType></cbs:TimeFormat>` : ''}
+            </RequestHeader>
+            <CustDeactivationRequest>
+              <bcs:CustAccessCode>${customerAccessCode}</bcs:CustAccessCode>
+              <bcs:OpType>${opts.opType}</bcs:OpType>
+              ${effectiveTime}
+            </CustDeactivationRequest>
+          </bcs:CustDeactivationRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    let response: AxiosResponse<string>;
+    try {
+      response = await axios.post<string>(this.getUrl(CbsClient.BC_SERVICES), soapPayload, {
+        headers: { 'Content-Type': 'text/xml' },
+        httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
+        timeout: this.opts.timeout,
+      });
+    } catch (err: any) {
+      this.log('error', 'custDeactivation - request failed', { error: err.message });
+      throw createHttpError(502, err.message ?? 'CBS request failed');
+    }
+
+    const { resultMsg, resultCode, resultDesc } = parseSoapResponse<CustDeactivationResponse>(
+      response.data,
+      this.stringParser,
+    );
+
+    if (resultCode !== '0') {
+      this.log('warn', 'custDeactivation - CBS error', { resultCode, resultDesc });
+      throw createHttpError(422, resultDesc);
+    }
+
+    this.log('verbose', 'custDeactivation - success', { messageSeq });
+    return { metadata: resultMsg };
   }
 }

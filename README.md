@@ -62,7 +62,37 @@ const status = result.data.CurrentStatusIndex;
 const lifecycle = result.data.LifeCycleStatus;
 ```
 
-The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
+### `queryXTransaction(msisdn, options?)`
+
+Query the last subscriber transactions using the R25 `QueryLastXTransaction` operation. The response is returned raw because the collection does not include a response example.
+
+```typescript
+const result = await client.queryXTransaction('261180256');
+console.dir(result.data, { depth: null });
+```
+
+### `subDeactivation(msisdn, options)`
+
+Deactivate a subscriber using the R25 `SubDeactivation` operation. `opType` is required and must be a value configured in your CBS deployment; the collection does not define a universal value.
+
+```typescript
+await client.subDeactivation('261180256', {
+  opType: process.env.CBS_SUB_DEACTIVATION_OP_TYPE!,
+});
+```
+
+### `custDeactivation(options)`
+
+Deactivate a customer using exactly one of `primaryIdentity`, `customerKey`, or `customerCode`, plus the deployment-specific `opType`.
+
+```typescript
+await client.custDeactivation({
+  customerKey: '123456',
+  opType: process.env.CBS_CUST_DEACTIVATION_OP_TYPE!,
+});
+```
+
+The deactivation methods mutate CBS state. The manual deactivation scripts require `RUN_DESTRUCTIVE_TESTS=true`.
 
 The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
 
@@ -81,6 +111,11 @@ To run the live test scripts, copy `.env.example` to `.env` and fill in the loca
 npm run test:query-customer-info
 npm run test:query-balance
 npm run test:query-sub-life-cycle
+npm run test:query-x-transaction
+
+# Requires RUN_DESTRUCTIVE_TESTS=true and a configured opType
+npm run test:sub-deactivation
+npm run test:cust-deactivation
 ```
 
 ## Options

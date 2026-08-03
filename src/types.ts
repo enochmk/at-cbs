@@ -247,3 +247,65 @@ export interface QuerySubLifeCycleOutput {
   metadata: QuerySubLifeCycleResponse;
   data: QuerySubLifeCycleData;
 }
+
+export interface SubDeactivationOptions {
+  opType: string;
+  messageSeq?: string;
+  beId?: string;
+  operatorId?: string;
+  accessMode?: number;
+  msgLanguageCode?: number;
+  timeType?: number;
+  subscriberKey?: string;
+  effectiveTime?: string;
+}
+
+export interface CbsOperationResponse {
+  ResultHeader?: QueryCustomerInfoResultHeader;
+  [key: string]: unknown;
+}
+
+export interface SubDeactivationResponse extends CbsOperationResponse {}
+
+export interface SubDeactivationOutput {
+  metadata: SubDeactivationResponse;
+}
+
+export interface QueryXTransactionOptions {
+  messageSeq?: string;
+  beId?: string;
+  subscriberKey?: string;
+}
+
+export interface QueryXTransactionResult {
+  [key: string]: unknown;
+}
+
+export interface QueryXTransactionResponse extends CbsOperationResponse {
+  QueryLastXTransactionResult?: QueryXTransactionResult;
+}
+
+export interface QueryXTransactionOutput {
+  metadata: QueryXTransactionResponse;
+  data: QueryXTransactionResult;
+}
+
+export interface CustDeactivationOptions {
+  opType: string;
+  primaryIdentity?: string;
+  customerKey?: string | number;
+  customerCode?: string;
+  messageSeq?: string;
+  beId?: string;
+  operatorId?: string;
+  accessMode?: number;
+  msgLanguageCode?: number;
+  timeType?: number;
+  effectiveTime?: string;
+}
+
+export interface CustDeactivationResponse extends CbsOperationResponse {}
+
+export interface CustDeactivationOutput {
+  metadata: CustDeactivationResponse;
+}
