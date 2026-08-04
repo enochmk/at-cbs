@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { CbsTransport } from '../src/cbs-transport';
+import { parseSoapResponse, sanitizeXml } from '../src/utils';
 
 const resultMessage = (resultCode: string, resultDesc: string) => `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
@@ -138,4 +139,49 @@ test('turns timeout failures into a useful 502 transport error', async () => {
       );
     },
   );
+});
+
+test('keeps readable hyphens and escapes unsafe ResultDesc characters', () => {
+  const resultDesc =
+    'Subscriber information verification error: Product management verification failed. <-- The offering 987865631 does not exist.';
+  const parser = transport('http://127.0.0.1').parser;
+  const parsed = parseSoapResponse(resultMessage('1001', resultDesc), parser);
+
+  assert.equal(parsed.resultDesc, resultDesc);
+  assert.equal(sanitizeXml(resultDesc).includes('&#45;'), false);
+  assert.equal(sanitizeXml(resultDesc).includes('&lt;--'), true);
+  assert.throws(
+    () =>
+      transport('http://127.0.0.1').throwCbsError(
+        'subscribeAppendantProduct',
+        '271000000',
+        parsed.resultCode,
+        parsed.resultDesc,
+      ),
+    (error: unknown) => {
+      assert.equal((error as Error).message, resultDesc);
+      return true;
+    },
+  );
+
+  const ampersandParsed = parseSoapResponse(resultMessage('1001', 'A & B'), parser);
+  assert.equal(ampersandParsed.resultDesc, 'A & B');
+});
+
+test('preserves SOAP comments and CDATA content', () => {
+  const xml = `
+    <!-- comment-with-hyphen -->
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+      <soapenv:Body>
+        <bcs:ChangeSubOfferingResultMsg xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices">
+          <bcs:ResultHeader>
+            <cbs:ResultCode xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">1001</cbs:ResultCode>
+            <cbs:ResultDesc xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon"><![CDATA[failed-product -- unavailable & still readable]]></cbs:ResultDesc>
+          </bcs:ResultHeader>
+        </bcs:ChangeSubOfferingResultMsg>
+      </soapenv:Body>
+    </soapenv:Envelope>`;
+
+  const parsed = parseSoapResponse(xml, transport('http://127.0.0.1').parser);
+  assert.equal(parsed.resultDesc, 'failed-product -- unavailable & still readable');
 });

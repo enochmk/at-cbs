@@ -13,7 +13,51 @@ export function getXmlField<T = unknown>(
 }
 
 export function sanitizeXml(data: string): string {
-  return data.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;').replace(/-/g, '&#45;');
+  const validEntity = /^&(amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/i;
+  let sanitized = '';
+
+  for (let index = 0; index < data.length; index += 1) {
+    if (data.startsWith('<![CDATA[', index)) {
+      const end = data.indexOf(']]>', index + 9);
+      if (end === -1) return sanitized + data.slice(index);
+
+      sanitized += data.slice(index, end + 3);
+      index = end + 2;
+      continue;
+    }
+
+    if (data.startsWith('<!--', index)) {
+      const end = data.indexOf('-->', index + 4);
+      if (end === -1) return sanitized + data.slice(index);
+
+      sanitized += data.slice(index, end + 3);
+      index = end + 2;
+      continue;
+    }
+
+    const character = data[index];
+    if (character === '&') {
+      const entity = data.slice(index).match(validEntity)?.[0];
+      if (entity) {
+        sanitized += entity;
+        index += entity.length - 1;
+      } else {
+        sanitized += '&amp;';
+      }
+      continue;
+    }
+
+    if (character === '<') {
+      const next = data[index + 1] ?? '';
+      const startsTag = /[A-Za-z_?!/]/.test(next);
+      sanitized += startsTag ? '<' : '&lt;';
+      continue;
+    }
+
+    sanitized += character;
+  }
+
+  return sanitized;
 }
 
 export function parseSoapResponse<T = Record<string, unknown>>(
