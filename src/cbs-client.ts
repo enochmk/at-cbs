@@ -22,6 +22,16 @@ import type {
   SubscribeAppendantProductOutput,
   UnsubscribeAppendantProductOptions,
   UnsubscribeAppendantProductOutput,
+  DeleteNumberOptions,
+  DeleteNumberOutput,
+  CreateSubscriberOptions,
+  CreateSubscriberOutput,
+  SubActivationOptions,
+  SubActivationOutput,
+  PoolActivationOptions,
+  PoolActivationOutput,
+  ChangeSubscriberStatusOptions,
+  ChangeSubscriberStatusOutput,
 } from './types';
 import { CbsTransport } from './cbs-transport';
 import { ArServices } from './services/ar-services';
@@ -87,6 +97,46 @@ export class CbsClient {
 
   subDeactivation(msisdn: string, opts: SubDeactivationOptions): Promise<SubDeactivationOutput> {
     return this.bcServices.subDeactivation(msisdn, opts);
+  }
+
+  deleteNumber(msisdn: string, opts?: DeleteNumberOptions): Promise<DeleteNumberOutput> {
+    return this.bcServices.deleteNumber(msisdn, opts);
+  }
+
+  createPrepaidSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.bcServices.createPrepaidSubscriber(msisdn, opts);
+  }
+
+  createHybridSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.bcServices.createHybridSubscriber(msisdn, opts);
+  }
+
+  createPostpaidSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.bcServices.createPostpaidSubscriber(msisdn, opts);
+  }
+
+  subActivate(msisdn: string, opts?: SubActivationOptions): Promise<SubActivationOutput> {
+    return this.bcServices.subActivate(msisdn, opts);
+  }
+
+  poolActivation(msisdn: string, opts: PoolActivationOptions): Promise<PoolActivationOutput> {
+    return this.bcServices.poolActivation(msisdn, opts);
+  }
+
+  changeSubscriberStatus(
+    msisdn: string,
+    opts: ChangeSubscriberStatusOptions,
+  ): Promise<ChangeSubscriberStatusOutput> {
+    return this.bcServices.changeSubscriberStatus(msisdn, opts);
   }
 
   queryXTransaction(

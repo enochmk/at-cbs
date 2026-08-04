@@ -362,6 +362,107 @@ export interface SubDeactivationOutput {
   metadata: SubDeactivationResponse;
 }
 
+export interface DeleteNumberOptions extends CbsRequestOptions {
+  subscriberKey?: string;
+}
+
+export interface DeleteNumberAmount {
+  Amount?: number | string;
+  CurrencyID?: number | string;
+  BalanceType?: string;
+  BalanceInstanceID?: string | number;
+  EffectiveTime?: string | number;
+  ExpireTime?: string | number;
+  [key: string]: unknown;
+}
+
+export interface DeleteNumberResult {
+  AcctBalance?: {
+    AcctKey?: string | number;
+    AmountList?: DeleteNumberAmount | DeleteNumberAmount[];
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface DeleteNumberResponse extends CbsOperationResponse {
+  SubDeactivationResult?: DeleteNumberResult;
+}
+
+export interface DeleteNumberData {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+  AmountList?: DeleteNumberAmount[];
+}
+
+export interface DeleteNumberOutput {
+  metadata: DeleteNumberResponse;
+  data: DeleteNumberData;
+}
+
+export interface CreateSubscriberOptions extends CbsRequestOptions {
+  offeringId: string | number;
+  customerKey?: string;
+  accountKey?: string;
+  subscriberKey?: string;
+  primaryIdentity?: string;
+  secondaryIdentity?: string;
+  initialBalance?: number | string;
+  creditLimit?: number | string;
+}
+
+export interface CreateSubscriberResponse extends CbsOperationResponse {
+  CreateSubscriberResult?: Record<string, unknown>;
+}
+
+export interface CreateSubscriberData {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+}
+
+export interface CreateSubscriberOutput {
+  metadata: CreateSubscriberResponse;
+  data: CreateSubscriberData;
+}
+
+export interface SubActivationOptions extends CbsRequestOptions {
+  subscriberKey?: string;
+}
+
+export interface SubActivationResponse extends CbsOperationResponse {}
+
+export interface SubActivationOutput {
+  metadata: SubActivationResponse;
+  data: { ResultCode?: number | string; ResultDesc?: string };
+}
+
+export interface PoolActivationOptions extends CreateSubscriberOptions {
+  subscriberKey?: string;
+}
+
+export interface PoolActivationOutput {
+  query: QueryCustomerInfoOutput;
+  deletion: DeleteNumberOutput;
+  creation: CreateSubscriberOutput;
+  activation: SubActivationOutput;
+}
+
+export type SubscriberStatus = 'ACTIVE' | 'CALL_BARRING' | 'SUSPEND';
+
+export interface ChangeSubscriberStatusOptions extends CbsRequestOptions {
+  status: SubscriberStatus;
+  subscriberKey?: string;
+}
+
+export interface ChangeSubscriberStatusResponse extends CbsOperationResponse {
+  ChangeSubStatusResult?: Record<string, unknown>;
+}
+
+export interface ChangeSubscriberStatusOutput {
+  metadata: ChangeSubscriberStatusResponse;
+  data: { ResultCode?: number | string; ResultDesc?: string; Status?: number };
+}
+
 export interface QueryXTransactionOptions extends CbsRequestOptions {
   subscriberKey?: string;
 }

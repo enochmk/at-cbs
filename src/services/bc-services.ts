@@ -38,6 +38,22 @@ import type {
   UnsubscribeAppendantProductOptions,
   UnsubscribeAppendantProductOutput,
   UnsubscribeAppendantProductResponse,
+  DeleteNumberOptions,
+  DeleteNumberOutput,
+  DeleteNumberResponse,
+  DeleteNumberResult,
+  DeleteNumberData,
+  CreateSubscriberOptions,
+  CreateSubscriberOutput,
+  CreateSubscriberResponse,
+  SubActivationOptions,
+  SubActivationOutput,
+  SubActivationResponse,
+  PoolActivationOptions,
+  PoolActivationOutput,
+  ChangeSubscriberStatusOptions,
+  ChangeSubscriberStatusOutput,
+  ChangeSubscriberStatusResponse,
 } from '../types';
 import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
@@ -48,6 +64,78 @@ import { CbsRequestDefaults } from '../types';
 
 export class BcServices extends CbsServiceBase {
   protected readonly servicePath = '/services/BcServices';
+
+  private async createSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+    mode: 'prepaid' | 'hybrid' | 'postpaid',
+  ): Promise<CreateSubscriberOutput> {
+    const identity = this.normalizeMsisdn(msisdn);
+    const customerKey = opts.customerKey ?? identity;
+    const accountKey = opts.accountKey ?? identity;
+    const subscriberKey = opts.subscriberKey ?? identity;
+    const primaryIdentity = opts.primaryIdentity ?? identity;
+    const secondaryIdentity = opts.secondaryIdentity ?? `123${identity}`;
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    const postpaid = mode === 'postpaid';
+    const accountInfo = postpaid
+      ? `<bcc:PaymentType>1</bcc:PaymentType><bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>${opts.creditLimit ?? 10000000000}</bcc:LimitValue></bcc:CreditLimit>`
+      : `<bcc:AcctCode>${accountKey}</bcc:AcctCode><bcc:BillCycleType>01</bcc:BillCycleType><bcc:AcctType>1</bcc:AcctType><bcc:PaymentType>0</bcc:PaymentType><bcc:AcctClass>1</bcc:AcctClass><bcc:CurrencyID>1054</bcc:CurrencyID><bcc:InitBalance>${opts.initialBalance ?? 100000000}</bcc:InitBalance><bcc:AcctPayMethod>1</bcc:AcctPayMethod>`;
+    const customerInfo = `<bcs:CustInfo><bcc:CustType>1</bcc:CustType><bcc:CustNodeType>1</bcc:CustNodeType><bcc:CustClass>1</bcc:CustClass><bcc:CustCode>${customerKey}</bcc:CustCode></bcs:CustInfo>`;
+    const subscriberInfo = postpaid
+      ? `<bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>${primaryIdentity}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:SubClass>1</bcc:SubClass><bcc:Status>2</bcc:Status>`
+      : `<bcc:SubBasicInfo/><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>${primaryIdentity}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:SubIdentity><bcc:SubIdentityType>2</bcc:SubIdentityType><bcc:SubIdentity>${secondaryIdentity}</bcc:SubIdentity><bcc:PrimaryFlag>2</bcc:PrimaryFlag></bcc:SubIdentity><bcc:SubClass>2</bcc:SubClass><bcc:NetworkType>1</bcc:NetworkType><bcc:Status>1</bcc:Status>`;
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">
+        <soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg>
+          ${this.requestHeader(opts, 'CreateSubscriber', messageSeq)}
+          <CreateSubscriberRequest>
+            <bcs:RegisterCustomer OpType="1"><bcs:CustKey>${customerKey}</bcs:CustKey>${customerInfo}</bcs:RegisterCustomer>
+            <bcs:Account><bcs:AcctKey>${accountKey}</bcs:AcctKey><bcs:AcctInfo>${accountInfo}</bcs:AcctInfo></bcs:Account>
+            <bcs:Subscriber><bcs:SubscriberKey>${subscriberKey}</bcs:SubscriberKey><bcs:SubscriberInfo>${subscriberInfo}</bcs:SubscriberInfo>
+              <bcs:SubPaymentMode><bcs:PaymentMode>${postpaid ? 1 : 0}</bcs:PaymentMode><bcs:PayRelationKey>${postpaid ? accountKey : `PR_${subscriberKey}`}</bcs:PayRelationKey><bcs:AcctKey>${accountKey}</bcs:AcctKey></bcs:SubPaymentMode>
+            </bcs:Subscriber>
+            <bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${opts.offeringId}</bcc:OfferingID></bcc:OfferingKey><bcc:BundledFlag>S</bcc:BundledFlag><bcc:OfferingClass>I</bcc:OfferingClass><bcc:Status>${postpaid ? 2 : 1}</bcc:Status></bcs:PrimaryOffering>
+          </CreateSubscriberRequest>
+        </bcs:CreateSubscriberRequestMsg></soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      `create${mode}Subscriber`,
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<CreateSubscriberResponse>(
+      response,
+      this.transport.parser,
+    );
+    if (resultCode !== '0')
+      this.transport.throwCbsError(`create${mode}Subscriber`, msisdn, resultCode, resultDesc);
+    return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
+  }
+
+  createPrepaidSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.createSubscriber(msisdn, opts, 'prepaid');
+  }
+
+  createHybridSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.createSubscriber(msisdn, opts, 'hybrid');
+  }
+
+  createPostpaidSubscriber(
+    msisdn: string,
+    opts: CreateSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.createSubscriber(msisdn, opts, 'postpaid');
+  }
 
   async unsubscribeAppendantProduct(
     msisdn: string,
@@ -479,6 +567,133 @@ export class BcServices extends CbsServiceBase {
 
     this.log('verbose', 'subDeactivation - success', { msisdn, messageSeq });
     return { metadata: resultMsg };
+  }
+
+  async deleteNumber(msisdn: string, opts?: DeleteNumberOptions): Promise<DeleteNumberOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts?.subscriberKey);
+
+    this.log('verbose', 'deleteNumber - sending request', { msisdn, opts });
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:SubDeactivationRequestMsg>
+            ${this.requestHeader(opts, 'SubDeactivation', messageSeq)}
+            <SubDeactivationRequest>
+              <bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode>
+              <bcs:OpType>3</bcs:OpType>
+            </SubDeactivationRequest>
+          </bcs:SubDeactivationRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'deleteNumber',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<DeleteNumberResponse>(
+      response,
+      this.transport.stringParser,
+    );
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('deleteNumber', msisdn, resultCode, resultDesc);
+    }
+
+    const result = getXmlField<DeleteNumberResult>(resultMsg, 'SubDeactivationResult');
+    const acctBalance = getXmlField<Record<string, unknown>>(result, 'AcctBalance');
+    const amountList = getXmlField<DeleteNumberData['AmountList']>(acctBalance, 'AmountList');
+
+    this.log('verbose', 'deleteNumber - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: {
+        ResultCode: resultCode,
+        ResultDesc: resultDesc,
+        AmountList: amountList ? (Array.isArray(amountList) ? amountList : [amountList]) : [],
+      },
+    };
+  }
+
+  async subActivate(msisdn: string, opts?: SubActivationOptions): Promise<SubActivationOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts?.subscriberKey);
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/><soapenv:Body><bcs:SubActivationRequestMsg>
+          ${this.requestHeader(opts, 'SubActivation', messageSeq)}
+          <SubActivationRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode></SubActivationRequest>
+        </bcs:SubActivationRequestMsg></soapenv:Body>
+      </soapenv:Envelope>`;
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'subActivate',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<SubActivationResponse>(
+      response,
+      this.transport.stringParser,
+    );
+    if (resultCode !== '0')
+      this.transport.throwCbsError('subActivate', msisdn, resultCode, resultDesc);
+    return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
+  }
+
+  async poolActivation(msisdn: string, opts: PoolActivationOptions): Promise<PoolActivationOutput> {
+    const query = await this.queryCustomerInfo(msisdn);
+    if (String(query.data['bcs:PaymentType']) !== '0') {
+      throw createHttpError(400, 'Pool activation requires a prepaid subscriber');
+    }
+    if (String(query.data.CurrentStatusIndex?.code) !== '8') {
+      throw createHttpError(400, 'Pool activation requires subscriber lifecycle status 8');
+    }
+    const deletion = await this.deleteNumber(msisdn, opts);
+    const creation = await this.createPrepaidSubscriber(msisdn, opts);
+    const activation = await this.subActivate(msisdn, opts);
+    return { query, deletion, creation, activation };
+  }
+
+  async changeSubscriberStatus(
+    msisdn: string,
+    opts: ChangeSubscriberStatusOptions,
+  ): Promise<ChangeSubscriberStatusOutput> {
+    const statusMap = {
+      ACTIVE: { opType: 10, status: 2 },
+      CALL_BARRING: { opType: 11, status: 3 },
+      SUSPEND: { opType: 12, status: 4 },
+    } as const;
+    const selected = statusMap[opts.status];
+    if (!selected) throw createHttpError(400, 'Unsupported subscriber status');
+
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts.subscriberKey);
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/><soapenv:Body><bcs:ChangeSubStatusRequestMsg>
+          ${this.requestHeader(opts, 'ChangeSubStatus', messageSeq)}
+          <ChangeSubStatusRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode><bcs:OpType>${selected.opType}</bcs:OpType><bcs:Status>${selected.status}</bcs:Status></ChangeSubStatusRequest>
+        </bcs:ChangeSubStatusRequestMsg></soapenv:Body>
+      </soapenv:Envelope>`;
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'changeSubscriberStatus',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } =
+      this.transport.parse<ChangeSubscriberStatusResponse>(response, this.transport.stringParser);
+    if (resultCode !== '0')
+      this.transport.throwCbsError('changeSubscriberStatus', msisdn, resultCode, resultDesc);
+    return {
+      metadata: resultMsg,
+      data: { ResultCode: resultCode, ResultDesc: resultDesc, Status: selected.status },
+    };
   }
 
   async queryXTransaction(
