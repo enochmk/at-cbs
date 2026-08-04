@@ -1,6 +1,6 @@
 {
   "name": "@enochmk/cbs-client",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "CBS (Core Billing System) SOAP API client for AirtelTigo",
   "private": false,
   "author": "Enoch Klufio",
@@ -43,6 +43,7 @@
     "test:query-sub-life-cycle": "tsx tests/manual/query-sub-life-cycle.ts",
     "test:query-x-transaction": "tsx tests/manual/query-x-transaction.ts",
     "test:query-cdr-detail": "tsx tests/manual/query-cdr-detail.ts",
+    "test:subscribe-appendant-product": "tsx tests/manual/subscribe-appendant-product.ts",
     "test:cust-activation": "tsx tests/manual/cust-activation.ts",
     "test:sub-deactivation": "tsx tests/manual/sub-deactivation.ts",
     "test:cust-deactivation": "tsx tests/manual/cust-deactivation.ts",
