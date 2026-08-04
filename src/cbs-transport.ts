@@ -43,11 +43,16 @@ export class CbsTransport {
         timeout: this.opts.timeout,
         // CBS can return a SOAP ResultMsg with a non-2xx HTTP status. Let the
         // operation parser inspect that body so it can expose ResultDesc.
-        validateStatus: (status) => status < 600,
+        validateStatus: (status) => status >= 200 && status < 600,
       });
       return response.data;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'CBS request failed';
+      const message =
+        axios.isAxiosError(err) && !err.response
+          ? `CBS service is unreachable: ${err.message}`
+          : err instanceof Error
+            ? err.message
+            : 'CBS request failed';
       this.log('error', `${operation} - request failed`, { msisdn, error: message });
       // Keep the original AxiosError available for callers and diagnostics,
       // while presenting transport failures as a bad-gateway response.

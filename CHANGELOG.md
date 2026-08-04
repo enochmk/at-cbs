@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Propagated CBS SOAP error descriptions from non-2xx responses.
-- Preserved transport failures as HTTP 502 errors with their original cause.
+- Preserved SOAP faults and transport causes for diagnostic handling.
 
 ## [2.0.1] - 2026-08-04
 
