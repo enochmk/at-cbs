@@ -26,7 +26,7 @@ const client = new CbsClient({
 
 try {
   const result = await client.subscribeAppendantProduct(msisdn, {
-    offeringId,
+    offeringId: '987865631',
     bundledFlag,
     offeringClass,
     status,

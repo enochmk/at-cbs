@@ -226,7 +226,9 @@ export class BcServices extends CbsServiceBase {
     );
     const { resultMsg, resultCode, resultDesc } =
       this.transport.parse<SubscribeAppendantProductResponse>(response, this.transport.parser);
+
     if (resultCode !== '0') {
+      console.log({ resultCode, resultDesc });
       this.transport.throwCbsError('subscribeAppendantProduct', msisdn, resultCode, resultDesc);
     }
 

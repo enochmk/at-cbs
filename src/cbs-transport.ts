@@ -41,12 +41,17 @@ export class CbsTransport {
         headers: { 'Content-Type': 'text/xml' },
         httpsAgent: new https.Agent({ rejectUnauthorized: this.opts.rejectUnauthorized }),
         timeout: this.opts.timeout,
+        // CBS can return a SOAP ResultMsg with a non-2xx HTTP status. Let the
+        // operation parser inspect that body so it can expose ResultDesc.
+        validateStatus: (status) => status < 600,
       });
       return response.data;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'CBS request failed';
       this.log('error', `${operation} - request failed`, { msisdn, error: message });
-      throw createHttpError(502, message);
+      // Keep the original AxiosError available for callers and diagnostics,
+      // while presenting transport failures as a bad-gateway response.
+      throw createHttpError(502, message, { cause: err });
     }
   }
 
@@ -55,8 +60,9 @@ export class CbsTransport {
   }
 
   throwCbsError(operation: string, msisdn: string, resultCode: string, resultDesc: string): void {
-    this.log('warn', `${operation} - CBS error`, { msisdn, resultCode, resultDesc });
-    throw createHttpError(422, resultDesc);
+    const context = { operation, msisdn, resultCode, resultDesc };
+    this.log('warn', `${operation} - CBS error`, context);
+    throw createHttpError(422, resultDesc, context);
   }
 
   get options(): CbsTransportOptions {

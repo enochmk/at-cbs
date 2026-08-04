@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-08-04
+
+### Fixed
+
+- Propagated CBS SOAP error descriptions from non-2xx responses.
+- Preserved transport failures as HTTP 502 errors with their original cause.
+
 ## [2.0.1] - 2026-08-04
 
 ### Added
