@@ -123,7 +123,7 @@ export class ArServices extends CbsServiceBase {
             <QueryBalanceRequest>
               <ars:QueryObj>
                 <ars:SubAccessCode>
-                  <arc:SubscriberKey>${cbsMsisdn}</arc:SubscriberKey>
+                  <arc:PrimaryIdentity>${cbsMsisdn}</arc:PrimaryIdentity>
                 </ars:SubAccessCode>
               </ars:QueryObj>
             </QueryBalanceRequest>
