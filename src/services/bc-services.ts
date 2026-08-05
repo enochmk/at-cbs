@@ -71,8 +71,9 @@ export class BcServices extends CbsServiceBase {
     mode: 'prepaid' | 'hybrid' | 'postpaid',
   ): Promise<CreateSubscriberOutput> {
     const identity = this.normalizeMsisdn(msisdn);
-    const customerKey = opts.customerKey ?? identity;
-    const accountKey = opts.accountKey ?? identity;
+    const creationId = `${identity}_${new Date().toISOString().replace(/\D/g, '')}`;
+    const customerKey = creationId;
+    const accountKey = creationId;
     const subscriberKey = opts.subscriberKey ?? identity;
     const primaryIdentity = opts.primaryIdentity ?? identity;
     const secondaryIdentity = opts.secondaryIdentity ?? `123${identity}`;
