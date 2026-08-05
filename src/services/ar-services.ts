@@ -41,7 +41,7 @@ import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
 
 import { CbsServiceBase } from './cbs-service-base';
-import { getXmlField } from '../utils';
+import { getXmlField, normalizeBalanceAmount } from '../utils';
 
 export class ArServices extends CbsServiceBase {
   protected readonly servicePath = '/services/ArServices';
@@ -103,6 +103,7 @@ export class ArServices extends CbsServiceBase {
         ResultDesc: resultDesc,
         OldBalanceAmt: getXmlField(info, 'OldBalanceAmt'),
         NewBalanceAmt: getXmlField(info, 'NewBalanceAmt'),
+        amountInGhc: normalizeBalanceAmount(getXmlField(info, 'NewBalanceAmt')),
         BalanceType: getXmlField(info, 'BalanceType'),
         BalanceTypeName: getXmlField(info, 'BalanceTypeName'),
       },
@@ -184,6 +185,9 @@ export class ArServices extends CbsServiceBase {
         BalanceTypeName: getXmlField<string>(balanceResult, 'BalanceTypeName'),
         TotalAmount: getXmlField<number | string>(balanceResult, 'TotalAmount'),
         InitialAmount: getXmlField<number | string>(balanceDetail, 'InitialAmount'),
+        amountInGhc: normalizeBalanceAmount(
+          getXmlField<number | string>(balanceResult, 'TotalAmount'),
+        ),
         EffectiveTime: getXmlField<string | number>(balanceDetail, 'EffectiveTime'),
         ExpireTime: getXmlField<string | number>(balanceDetail, 'ExpireTime'),
         LastUpdateTime: getXmlField<string | number>(balanceDetail, 'LastUpdateTime'),

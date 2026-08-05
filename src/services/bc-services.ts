@@ -59,7 +59,7 @@ import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
 
 import { CbsServiceBase } from './cbs-service-base';
-import { getXmlField } from '../utils';
+import { addAmountInGhc, getXmlField, normalizeBalanceAmount } from '../utils';
 import { CbsRequestDefaults } from '../types';
 
 export class BcServices extends CbsServiceBase {
@@ -255,7 +255,7 @@ export class BcServices extends CbsServiceBase {
         EffectiveTime: getXmlField(addOffering, 'EffectiveTime'),
         ExpirationTime: getXmlField(addOffering, 'ExpirationTime'),
         RentDeductionStatus: getXmlField(addOffering, 'RentDeductionStatus'),
-        BalanceChanges: balanceChanges,
+        BalanceChanges: addAmountInGhc(balanceChanges),
         FreeUnitChanges: freeUnitChanges,
       },
     };
@@ -376,6 +376,9 @@ export class BcServices extends CbsServiceBase {
           InitialAmount: getXmlField<number | string>(
             getXmlField<Record<string, unknown>>(mainBalanceResult, 'BalanceDetail'),
             'InitialAmount',
+          ),
+          amountInGhc: normalizeBalanceAmount(
+            getXmlField<number | string>(mainBalanceResult, 'TotalAmount'),
           ),
           EffectiveTime: getXmlField<string | number>(
             getXmlField<Record<string, unknown>>(mainBalanceResult, 'BalanceDetail'),
@@ -614,7 +617,13 @@ export class BcServices extends CbsServiceBase {
       data: {
         ResultCode: resultCode,
         ResultDesc: resultDesc,
-        AmountList: amountList ? (Array.isArray(amountList) ? amountList : [amountList]) : [],
+        AmountList: amountList
+          ? (Array.isArray(amountList) ? amountList : [amountList]).map((amount) => ({
+              ...amount,
+              Amount: amount.Amount,
+              amountInGhc: normalizeBalanceAmount(amount.Amount),
+            }))
+          : [],
       },
     };
   }

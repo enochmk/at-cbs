@@ -94,6 +94,7 @@ export interface QueryCustomerInfoMainBalance {
   BalanceTypeName: 'PPS_MainAccount';
   TotalAmount?: number | string;
   InitialAmount?: number | string;
+  amountInGhc?: number | string;
   EffectiveTime?: string | number;
   ExpireTime?: string | number;
   LastUpdateTime?: string | number;
@@ -214,6 +215,7 @@ export interface QueryBalanceData {
   BalanceTypeName?: string;
   TotalAmount?: number | string;
   InitialAmount?: number | string;
+  amountInGhc?: number | string;
   EffectiveTime?: string | number;
   ExpireTime?: string | number;
   LastUpdateTime?: string | number;
@@ -299,6 +301,7 @@ export interface AdjustAccountData {
   ResultDesc?: string;
   OldBalanceAmt?: number | string;
   NewBalanceAmt?: number | string;
+  amountInGhc?: number | string;
   BalanceType?: string;
   BalanceTypeName?: string;
 }
@@ -368,6 +371,7 @@ export interface DeleteNumberOptions extends CbsRequestOptions {
 
 export interface DeleteNumberAmount {
   Amount?: number | string;
+  amountInGhc?: number | string;
   CurrencyID?: number | string;
   BalanceType?: string;
   BalanceInstanceID?: string | number;

@@ -1,5 +1,51 @@
 import { XMLParser } from 'fast-xml-parser';
 
+export type BalanceAmount = number | string;
+
+export const CBS_BALANCE_DIVISOR = 100_000;
+
+const balanceAmountFieldPriority = [
+  'TotalAmount',
+  'Amount',
+  'BalanceAfterChange',
+  'BalanceAfterChangeAmount',
+  'BalanceAmount',
+  'BalanceChange',
+  'BalanceChangeAmount',
+];
+
+export function normalizeBalanceAmount(
+  value: BalanceAmount | undefined,
+): BalanceAmount | undefined {
+  if (value === undefined) return undefined;
+
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount / CBS_BALANCE_DIVISOR : value;
+}
+
+/** Add a Ghana cedi amount while leaving the original CBS-unit values untouched. */
+export function addAmountInGhc<T>(data: T): T {
+  if (Array.isArray(data)) {
+    return data.map((item) => addAmountInGhc(item)) as T;
+  }
+
+  if (!data || typeof data !== 'object') return data;
+
+  const copied = Object.fromEntries(
+    Object.entries(data as Record<string, unknown>).map(([key, value]) => [
+      key,
+      addAmountInGhc(value),
+    ]),
+  );
+  const amountField = balanceAmountFieldPriority.find((field) => field in copied);
+
+  if (!('amountInGhc' in copied) && amountField) {
+    copied.amountInGhc = normalizeBalanceAmount(copied[amountField] as BalanceAmount | undefined);
+  }
+
+  return copied as T;
+}
+
 export function getXmlField<T = unknown>(
   data: Record<string, unknown> | undefined,
   field: string,

@@ -72,6 +72,9 @@ const status = result.data.CurrentStatusIndex;
 const birthday = result.data.BirthdayDate;
 const mainBalance = result.data.MainBalance;
 const billCycleEndDate = result.data['bcs:BillCycleEndDate'];
+
+// MainBalance.amountInGhc is the main account balance in Ghana cedis.
+// MainBalance.TotalAmount remains available in the original CBS units.
 ```
 
 ### `queryBalance(msisdn, options?)`
@@ -81,6 +84,7 @@ Query subscriber account balances through `POST /services/ArServices`.
 ```typescript
 const result = await client.queryBalance('261180256');
 const totalAmount = result.data.TotalAmount;
+const amountInGhc = result.data.amountInGhc;
 const expiresAt = result.data.ExpireTime;
 ```
 
