@@ -35,6 +35,133 @@ export interface QueryCustomerInfoOptions extends CbsRequestOptions {
   groupMask?: string;
 }
 
+export type QueryCustomerInfoKey =
+  | { primaryIdentity: string }
+  | { customerKey: string }
+  | { customerCode: string }
+  | { subscriberKey: string }
+  | { accountKey: string }
+  | { accountCode: string };
+
+export type CbsEntityKey = QueryCustomerInfoKey;
+
+export interface CbsMutationOutput {
+  metadata: CbsOperationResponse;
+  data: { ResultCode?: number | string; ResultDesc?: string };
+}
+
+export interface CreateCustomerOptions extends CbsRequestOptions {
+  registerCustKey: string;
+  customerKey: string;
+  customerCode?: string;
+  customerType?: number | string;
+  customerNodeType?: number | string;
+  customerClass?: number | string;
+  customerSegment?: string;
+  individual?: {
+    idType?: string;
+    idNumber?: string;
+    title?: string;
+    firstName?: string;
+    lastName?: string;
+    gender?: string;
+    nationality?: string;
+    birthday?: string;
+    mobilePhone?: string;
+    email?: string;
+  };
+  organization?: {
+    idType?: string;
+    idNumber?: string;
+    organizationType?: string;
+    name?: string;
+    industry?: string;
+    phoneNumber?: string;
+    email?: string;
+  };
+}
+
+export interface CreateAccountOptions extends CbsRequestOptions {
+  registerCustKey: string;
+  accountKey: string;
+  accountCode?: string;
+  userCustomerKey?: string;
+  parentAccountKey?: string;
+  accountName?: string;
+  billCycleType?: string | number;
+  accountType?: string | number;
+  paymentType?: string | number;
+  accountClass?: string | number;
+  currencyId?: string | number;
+  initialBalance?: string | number;
+  creditLimit?: string | number;
+  creditLimitType?: string;
+  accountPaymentMethod?: string | number;
+}
+
+export interface CreateSubscriberRequestOptions extends CbsRequestOptions {
+  customerKey?: string;
+  accountKey?: string;
+  subscriberKey: string;
+  primaryIdentity: string;
+  secondaryIdentity?: string;
+  paymentMode: 0 | 1 | 2;
+  offeringId: string | number;
+  offeringClass?: string;
+  subscriberClass?: string | number;
+  status?: string | number;
+  initialBalance?: string | number;
+  creditLimit?: string | number;
+}
+
+export interface ChangeSubscriberOfferingOptions extends CbsRequestOptions {
+  subscriberKey?: string;
+  primaryIdentity?: string;
+  oldOfferingId?: string | number;
+  newOfferingId: string | number;
+  purchaseSeq?: string | number;
+  offeringClass?: string;
+  effectiveTime?: string;
+}
+
+export interface ChangeSubscriberPaymentModeOptions extends CbsRequestOptions {
+  subscriberKey?: string;
+  primaryIdentity?: string;
+  paymentMode: 0 | 1 | 2;
+  oldOfferingId?: string | number;
+  newOfferingId?: string | number;
+  accountKey?: string;
+  paymentRelationKey?: string;
+  initialBalance?: string | number;
+  creditLimit?: string | number;
+  effectiveTime?: string;
+}
+
+export interface ChangeAccountCreditLimitOptions extends CbsRequestOptions {
+  accountKey?: string;
+  accountCode?: string;
+  primaryIdentity?: string;
+  creditLimitType?: string;
+  newLimitAmount: string | number;
+  effectiveTime?: string;
+}
+
+export interface ChangePaymentRelationOptions extends CbsRequestOptions {
+  accountKey?: string;
+  subscriberKey?: string;
+  primaryIdentity?: string;
+  customerKey?: string;
+  customerCode?: string;
+  addPayRelation?: {
+    payRelationKey: string;
+    accountKey?: string;
+    priority?: number;
+    onlyPayRelationFlag?: 'Y' | 'N';
+    paymentLimitKey?: string;
+  };
+  deletePayRelationKey?: string;
+}
+
 export interface QueryCustomerInfoResultHeader {
   Version?: number | string;
   ResultCode?: number | string;

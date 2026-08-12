@@ -2,6 +2,15 @@ import type {
   CbsClientOptions,
   QueryCustomerInfoOptions,
   QueryCustomerInfoOutput,
+  QueryCustomerInfoKey,
+  CreateCustomerOptions,
+  CreateAccountOptions,
+  CreateSubscriberRequestOptions,
+  ChangeSubscriberOfferingOptions,
+  ChangeSubscriberPaymentModeOptions,
+  ChangeAccountCreditLimitOptions,
+  ChangePaymentRelationOptions,
+  CbsMutationOutput,
   QueryBalanceOptions,
   QueryBalanceOutput,
   QuerySubLifeCycleOptions,
@@ -64,6 +73,43 @@ export class CbsClient {
     opts?: QueryCustomerInfoOptions,
   ): Promise<QueryCustomerInfoOutput> {
     return this.bcServices.queryCustomerInfo(msisdn, opts);
+  }
+
+  queryCustomerInfoByKey(
+    key: QueryCustomerInfoKey,
+    opts?: QueryCustomerInfoOptions,
+  ): Promise<QueryCustomerInfoOutput> {
+    return this.bcServices.queryCustomerInfoByKey(key, opts);
+  }
+
+  createCustomer(opts: CreateCustomerOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.createCustomer(opts);
+  }
+
+  createAccount(opts: CreateAccountOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.createAccount(opts);
+  }
+
+  createSubscriberForAccount(opts: CreateSubscriberRequestOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.createSubscriberForAccount(opts);
+  }
+
+  changeSubscriberOffering(opts: ChangeSubscriberOfferingOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.changeSubscriberOffering(opts);
+  }
+
+  changeSubscriberPaymentMode(
+    opts: ChangeSubscriberPaymentModeOptions,
+  ): Promise<CbsMutationOutput> {
+    return this.bcServices.changeSubscriberPaymentMode(opts);
+  }
+
+  changeAccountCreditLimit(opts: ChangeAccountCreditLimitOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.changeAccountCreditLimit(opts);
+  }
+
+  changePaymentRelation(opts: ChangePaymentRelationOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.changePaymentRelation(opts);
   }
 
   queryBalance(msisdn: string, opts?: QueryBalanceOptions): Promise<QueryBalanceOutput> {

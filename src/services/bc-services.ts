@@ -1,6 +1,16 @@
 import type {
   CbsClientOptions,
   QueryCustomerInfoOptions,
+  QueryCustomerInfoKey,
+  CbsMutationOutput,
+  CbsOperationResponse,
+  CreateCustomerOptions,
+  CreateAccountOptions,
+  CreateSubscriberRequestOptions,
+  ChangeSubscriberOfferingOptions,
+  ChangeSubscriberPaymentModeOptions,
+  ChangeAccountCreditLimitOptions,
+  ChangePaymentRelationOptions,
   QueryCustomerInfoOutput,
   QueryCustomerInfoResponse,
   QueryCustomerInfoAccount,
@@ -61,6 +71,39 @@ import { randomUUID } from 'node:crypto';
 import { CbsServiceBase } from './cbs-service-base';
 import { addAmountInGhc, getXmlField, normalizeBalanceAmount } from '../utils';
 import { CbsRequestDefaults } from '../types';
+
+function xmlEscape(value: string | number): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function tag(name: string, value: string | number | undefined): string {
+  return value === undefined ? '' : `<${name}>${xmlEscape(value)}</${name}>`;
+}
+
+function keyXml(prefix: 'Cust' | 'Acct' | 'Sub', key: QueryCustomerInfoKey): string {
+  const entries = Object.entries(key).filter(([, value]) => value !== undefined && value !== '');
+  if (entries.length !== 1)
+    throw createHttpError(400, `Provide exactly one ${prefix.toLowerCase()} key`);
+  const [name, value] = entries[0];
+  const suffix =
+    name === 'primaryIdentity' ? 'PrimaryIdentity' : name[0].toUpperCase() + name.slice(1);
+  const allowed =
+    prefix === 'Cust'
+      ? ['customerKey', 'customerCode', 'primaryIdentity']
+      : prefix === 'Acct'
+        ? ['accountKey', 'accountCode', 'primaryIdentity']
+        : ['subscriberKey', 'primaryIdentity'];
+  if (!allowed.includes(name))
+    throw createHttpError(400, `Unsupported ${prefix.toLowerCase()} key`);
+  const container =
+    prefix === 'Cust' ? 'CustAccessCode' : prefix === 'Acct' ? 'AcctAccessCode' : 'SubAccessCode';
+  return `<bcs:${container}><bcc:${suffix}>${xmlEscape(String(value))}</bcc:${suffix}></bcs:${container}>`;
+}
 
 export class BcServices extends CbsServiceBase {
   protected readonly servicePath = '/services/BcServices';
@@ -189,6 +232,146 @@ export class BcServices extends CbsServiceBase {
     };
   }
 
+  async createCustomer(opts: CreateCustomerOptions): Promise<CbsMutationOutput> {
+    const individual = opts.individual
+      ? `<bcs:IndividualInfo>${tag('bcc:IDType', opts.individual.idType)}${tag('bcc:IDNumber', opts.individual.idNumber)}${tag('bcc:Title', opts.individual.title)}${tag('bcc:FirstName', opts.individual.firstName)}${tag('bcc:LastName', opts.individual.lastName)}${tag('bcc:Gender', opts.individual.gender)}${tag('bcc:Nationality', opts.individual.nationality)}${tag('bcc:Birthday', opts.individual.birthday)}${tag('bcc:MobilePhone', opts.individual.mobilePhone)}${tag('bcc:Email', opts.individual.email)}</bcs:IndividualInfo>`
+      : '';
+    const organization = opts.organization
+      ? `<bcs:OrgInfo>${tag('bcc:IDType', opts.organization.idType)}${tag('bcc:IDNumber', opts.organization.idNumber)}${tag('bcc:OrgType', opts.organization.organizationType)}${tag('bcc:OrgName', opts.organization.name)}${tag('bcc:Industry', opts.organization.industry)}${tag('bcc:OrgPhoneNumber', opts.organization.phoneNumber)}${tag('bcc:OrgEmail', opts.organization.email)}</bcs:OrgInfo>`
+      : '';
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:CreateCustomerRequestMsg>${this.requestHeader(opts, 'CreateCustomer', opts.messageSeq ?? randomUUID())}<CreateCustomerRequest><bcs:RegisterCustKey>${xmlEscape(opts.registerCustKey)}</bcs:RegisterCustKey><bcs:Customer><bcs:CustKey>${xmlEscape(opts.customerKey)}</bcs:CustKey><bcs:CustInfo>${tag('bcc:CustType', opts.customerType)}${tag('bcc:CustNodeType', opts.customerNodeType)}${tag('bcc:CustClass', opts.customerClass)}${tag('bcc:CustCode', opts.customerCode)}${opts.customerSegment === undefined ? '' : `<bcc:CustBasicInfo>${tag('bcc:CustSegment', opts.customerSegment)}</bcc:CustBasicInfo>`}</bcs:CustInfo>${individual}${organization}</bcs:Customer></CreateCustomerRequest></bcs:CreateCustomerRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation('createCustomer', payload, opts.customerKey);
+  }
+
+  async createAccount(opts: CreateAccountOptions): Promise<CbsMutationOutput> {
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:CreateAccountRequestMsg>${this.requestHeader(opts, 'CreateAccount', opts.messageSeq ?? randomUUID())}<CreateAccountRequest><bcs:RegisterCustKey>${xmlEscape(opts.registerCustKey)}</bcs:RegisterCustKey><bcs:Account><bcs:AcctKey>${xmlEscape(opts.accountKey)}</bcs:AcctKey><bcs:AcctInfo>${tag('bcc:AcctCode', opts.accountCode)}${tag('bcc:UserCustomerKey', opts.userCustomerKey)}${tag('bcc:ParentAcctKey', opts.parentAccountKey)}<bcc:AcctBasicInfo>${tag('bcc:AcctName', opts.accountName)}</bcc:AcctBasicInfo>${tag('bcc:BillCycleType', opts.billCycleType)}${tag('bcc:AcctType', opts.accountType)}${tag('bcc:PaymentType', opts.paymentType)}${tag('bcc:AcctClass', opts.accountClass)}${tag('bcc:CurrencyID', opts.currencyId)}${tag('bcc:InitBalance', opts.initialBalance)}${opts.creditLimit === undefined ? '' : `<bcc:CreditLimit>${tag('bcc:LimitType', opts.creditLimitType ?? 'C_INITIAL_CREDIT_LIMIT')}${tag('bcc:LimitValue', opts.creditLimit)}</bcc:CreditLimit>`}${tag('bcc:AcctPayMethod', opts.accountPaymentMethod)}</bcs:AcctInfo></bcs:Account></CreateAccountRequest></bcs:CreateAccountRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation('createAccount', payload, opts.accountKey);
+  }
+
+  async createSubscriberForAccount(
+    opts: CreateSubscriberRequestOptions,
+  ): Promise<CbsMutationOutput> {
+    if (opts.paymentMode !== 0 && opts.creditLimit === undefined) {
+      throw createHttpError(400, 'creditLimit is required for postpaid and hybrid subscribers');
+    }
+    const customer = opts.customerKey
+      ? `<bcs:UserCustomer><bcs:CustKey>${xmlEscape(opts.customerKey)}</bcs:CustKey></bcs:UserCustomer>`
+      : '';
+    const account = opts.accountKey
+      ? `<bcs:Account><bcs:AcctKey>${xmlEscape(opts.accountKey)}</bcs:AcctKey></bcs:Account>`
+      : '';
+    const secondary = opts.secondaryIdentity
+      ? `<bcc:SubIdentity><bcc:SubIdentityType>2</bcc:SubIdentityType><bcc:SubIdentity>${xmlEscape(opts.secondaryIdentity)}</bcc:SubIdentity><bcc:PrimaryFlag>2</bcc:PrimaryFlag></bcc:SubIdentity>`
+      : '';
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg>${this.requestHeader(opts, 'CreateSubscriber', opts.messageSeq ?? randomUUID())}<CreateSubscriberRequest>${customer}${account}<bcs:Subscriber><bcs:SubscriberKey>${xmlEscape(opts.subscriberKey)}</bcs:SubscriberKey><bcs:SubscriberInfo>${tag('bcc:SubClass', opts.subscriberClass)}${tag('bcc:Status', opts.status)}<bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>${xmlEscape(opts.primaryIdentity)}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity>${secondary}</bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>${opts.paymentMode}</bcs:PaymentMode>${tag('bcs:AcctKey', opts.accountKey)}${tag('bcs:PayRelationKey', opts.accountKey)}</bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${xmlEscape(opts.offeringId)}</bcc:OfferingID></bcc:OfferingKey>${tag('bcc:OfferingClass', opts.offeringClass)}</bcs:PrimaryOffering>${opts.initialBalance === undefined && opts.creditLimit === undefined ? '' : `<bcs:Account><bcs:AccountInfo>${tag('bcc:InitBalance', opts.initialBalance)}${opts.creditLimit === undefined ? '' : `<bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>${xmlEscape(opts.creditLimit)}</bcc:LimitValue></bcc:CreditLimit>`}</bcs:AccountInfo></bcs:Account>`}</CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation('createSubscriberForAccount', payload, opts.primaryIdentity);
+  }
+
+  async changeSubscriberOffering(
+    opts: ChangeSubscriberOfferingOptions,
+  ): Promise<CbsMutationOutput> {
+    const key = opts.subscriberKey
+      ? { subscriberKey: opts.subscriberKey }
+      : { primaryIdentity: opts.primaryIdentity ?? '' };
+    const oldOffering =
+      opts.oldOfferingId === undefined
+        ? ''
+        : `<bcs:OldPrimaryOffering><bcc:OfferingID>${xmlEscape(opts.oldOfferingId)}</bcc:OfferingID></bcs:OldPrimaryOffering>`;
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeSubOfferingRequestMsg>${this.requestHeader(opts, 'ChangeSubOffering', opts.messageSeq ?? randomUUID())}<ChangeSubOfferingRequest>${keyXml('Sub', key)}<bcs:PrimaryOffering>${oldOffering}<bcs:NewPrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${xmlEscape(opts.newOfferingId)}</bcc:OfferingID></bcc:OfferingKey>${tag('bcc:OfferingClass', opts.offeringClass)}</bcs:NewPrimaryOffering>${tag('bcs:EffectiveTime', opts.effectiveTime)}</bcs:PrimaryOffering></ChangeSubOfferingRequest></bcs:ChangeSubOfferingRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation(
+      'changeSubscriberOffering',
+      payload,
+      opts.primaryIdentity ?? opts.subscriberKey ?? '',
+    );
+  }
+
+  async changeSubscriberPaymentMode(
+    opts: ChangeSubscriberPaymentModeOptions,
+  ): Promise<CbsMutationOutput> {
+    const key = opts.subscriberKey
+      ? { subscriberKey: opts.subscriberKey }
+      : { primaryIdentity: opts.primaryIdentity ?? '' };
+    const oldOffering =
+      opts.oldOfferingId === undefined
+        ? ''
+        : `<bcs:OldPrimaryOffering><bcc:OfferingID>${xmlEscape(opts.oldOfferingId)}</bcc:OfferingID></bcs:OldPrimaryOffering>`;
+    const newOffering =
+      opts.newOfferingId === undefined
+        ? ''
+        : `<bcs:NewPrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${xmlEscape(opts.newOfferingId)}</bcc:OfferingID></bcc:OfferingKey></bcs:NewPrimaryOffering>`;
+    const account =
+      opts.accountKey || opts.initialBalance !== undefined || opts.creditLimit !== undefined
+        ? `<bcs:Account><bcs:AccountInfo>${tag('bcc:UserCustomerKey', opts.accountKey)}${tag('bcc:InitBalance', opts.initialBalance)}${opts.creditLimit === undefined ? '' : `<bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>${xmlEscape(opts.creditLimit)}</bcc:LimitValue></bcc:CreditLimit>`}</bcs:AccountInfo></bcs:Account>`
+        : '';
+    const paymentRelation = opts.paymentRelationKey
+      ? `<bcs:AddPayRelation><bcs:PayRelationKey>${xmlEscape(opts.paymentRelationKey)}</bcs:PayRelationKey></bcs:AddPayRelation>`
+      : '';
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeSubPaymentModeRequestMsg>${this.requestHeader(opts, 'ChangeSubPaymentMode', opts.messageSeq ?? randomUUID())}<ChangeSubPaymentModeRequest>${keyXml('Sub', key)}<bcs:OpType>1</bcs:OpType><bcs:PaymentModeChange><bcs:PrimaryOffering>${oldOffering}${newOffering}</bcs:PrimaryOffering><bcs:SubDFTAccount>${tag('bcs:AcctKey', opts.accountKey)}</bcs:SubDFTAccount><bcs:DFTPayRelation>${paymentRelation}</bcs:DFTPayRelation>${account}${tag('bcs:EffectiveTime', opts.effectiveTime)}</bcs:PaymentModeChange></ChangeSubPaymentModeRequest></bcs:ChangeSubPaymentModeRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation(
+      'changeSubscriberPaymentMode',
+      payload,
+      opts.primaryIdentity ?? opts.subscriberKey ?? '',
+    );
+  }
+
+  async changeAccountCreditLimit(
+    opts: ChangeAccountCreditLimitOptions,
+  ): Promise<CbsMutationOutput> {
+    const key = opts.accountKey
+      ? { accountKey: opts.accountKey }
+      : opts.accountCode
+        ? { accountCode: opts.accountCode }
+        : { primaryIdentity: opts.primaryIdentity ?? '' };
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeAcctCreditLimitRequestMsg>${this.requestHeader(opts, 'ChangeAcctCreditLimit', opts.messageSeq ?? randomUUID())}<ChangeAcctCreditLimitRequest>${keyXml('Acct', key)}<bcs:AccountCredit><bcs:CreditLimitType>${xmlEscape(opts.creditLimitType ?? 'C_INITIAL_CREDIT_LIMIT')}</bcs:CreditLimitType><bcs:CommonCreditLimit><bcs:NewLimitAmount>${xmlEscape(opts.newLimitAmount)}</bcs:NewLimitAmount>${tag('bcs:EffectiveTime', opts.effectiveTime)}</bcs:CommonCreditLimit></bcs:AccountCredit></ChangeAcctCreditLimitRequest></bcs:ChangeAcctCreditLimitRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation(
+      'changeAccountCreditLimit',
+      payload,
+      opts.accountKey ?? opts.accountCode ?? opts.primaryIdentity ?? '',
+    );
+  }
+
+  async changePaymentRelation(opts: ChangePaymentRelationOptions): Promise<CbsMutationOutput> {
+    const subscriber = opts.subscriberKey
+      ? keyXml('Sub', { subscriberKey: opts.subscriberKey })
+      : opts.primaryIdentity
+        ? keyXml('Sub', { primaryIdentity: opts.primaryIdentity })
+        : '';
+    const customer = opts.customerKey
+      ? keyXml('Cust', { customerKey: opts.customerKey })
+      : opts.customerCode
+        ? keyXml('Cust', { customerCode: opts.customerCode })
+        : '';
+    const add = opts.addPayRelation
+      ? `<bcs:AddPayRelation><bcs:PayRelation><bcs:PayRelationKey>${xmlEscape(opts.addPayRelation.payRelationKey)}</bcs:PayRelationKey>${tag('bcs:AcctKey', opts.addPayRelation.accountKey)}${tag('bcs:Priority', opts.addPayRelation.priority)}${tag('bcs:OnlyPayRelFlag', opts.addPayRelation.onlyPayRelationFlag)}</bcs:PayRelation></bcs:AddPayRelation>`
+      : '';
+    const del = opts.deletePayRelationKey
+      ? `<bcs:DelPayRelation><bcs:PayRelationKey>${xmlEscape(opts.deletePayRelationKey)}</bcs:PayRelationKey></bcs:DelPayRelation>`
+      : '';
+    if (!add && !del)
+      throw createHttpError(400, 'Provide an addPayRelation or deletePayRelationKey change');
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangePayRelationRequestMsg>${this.requestHeader(opts, 'ChangePayRelation', opts.messageSeq ?? randomUUID())}<ChangePayRelationRequest>${subscriber}${customer}${add}${del}</ChangePayRelationRequest></bcs:ChangePayRelationRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation(
+      'changePaymentRelation',
+      payload,
+      opts.primaryIdentity ?? opts.subscriberKey ?? opts.accountKey ?? '',
+    );
+  }
+
+  private async mutation<T extends CbsOperationResponse>(
+    operation: string,
+    payload: string,
+    subject: string,
+  ): Promise<CbsMutationOutput> {
+    const response = await this.transport.post(this.servicePath, payload, operation, subject);
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<T>(
+      response,
+      this.transport.parser,
+    );
+    if (resultCode !== '0')
+      this.transport.throwCbsError(operation, subject, resultCode, resultDesc);
+    return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
+  }
+
   async subscribeAppendantProduct(
     msisdn: string,
     opts: SubscribeAppendantProductOptions,
@@ -266,9 +449,29 @@ export class BcServices extends CbsServiceBase {
     msisdn: string,
     opts?: QueryCustomerInfoOptions,
   ): Promise<QueryCustomerInfoOutput> {
-    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    return this.queryCustomerInfoAccess(
+      { primaryIdentity: this.normalizeMsisdn(msisdn) },
+      opts,
+      'queryCustomerInfo',
+    );
+  }
+
+  async queryCustomerInfoByKey(
+    key: QueryCustomerInfoKey,
+    opts?: QueryCustomerInfoOptions,
+  ): Promise<QueryCustomerInfoOutput> {
+    return this.queryCustomerInfoAccess(key, opts, 'queryCustomerInfoByKey');
+  }
+
+  private async queryCustomerInfoAccess(
+    access: QueryCustomerInfoKey,
+    opts: QueryCustomerInfoOptions | undefined,
+    operation: string,
+  ): Promise<QueryCustomerInfoOutput> {
+    const accessXml = this.queryCustomerInfoAccessXml(access);
+    const accessValue = Object.values(access)[0];
     const messageSeq = opts?.messageSeq ?? new Date().toISOString();
-    this.log('verbose', 'queryCustomerInfo - sending request', { msisdn, opts });
+    this.log('verbose', `${operation} - sending request`, { access, opts });
 
     const soapPayload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
@@ -278,9 +481,7 @@ export class BcServices extends CbsServiceBase {
             ${this.requestHeader(opts, 'QueryCustomerInfo', messageSeq, { operatorId: CbsRequestDefaults.OPERATOR_ID, accessMode: CbsRequestDefaults.ACCESS_MODE, msgLanguageCode: CbsRequestDefaults.MSG_LANGUAGE_CODE, timeType: CbsRequestDefaults.TIME_TYPE })}
             <QueryCustomerInfoRequest>
               <bcs:QueryObj>
-                <bcs:SubAccessCode>
-                  <bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity>
-                </bcs:SubAccessCode>
+                ${accessXml}
               </bcs:QueryObj>
               <bcs:QueryMode>${opts?.queryMode ?? CbsRequestDefaults.QUERY_MODE}</bcs:QueryMode>
               <bcs:CustomerMask>${opts?.customerMask ?? CbsRequestDefaults.CUSTOMER_MASK}</bcs:CustomerMask>
@@ -296,8 +497,8 @@ export class BcServices extends CbsServiceBase {
     const response = await this.transport.post(
       this.servicePath,
       soapPayload,
-      'queryCustomerInfo',
-      msisdn,
+      operation,
+      accessValue,
     );
 
     const { resultMsg, resultCode, resultDesc } = this.transport.parse<QueryCustomerInfoResponse>(
@@ -306,7 +507,7 @@ export class BcServices extends CbsServiceBase {
     );
 
     if (resultCode !== '0') {
-      this.transport.throwCbsError('queryCustomerInfo', msisdn, resultCode, resultDesc);
+      this.transport.throwCbsError(operation, accessValue, resultCode, resultDesc);
     }
 
     const queryResult = getXmlField<Record<string, unknown>>(
@@ -399,7 +600,7 @@ export class BcServices extends CbsServiceBase {
     const paymentMode = Number(getXmlField(subscriber, 'PaymentMode'));
     const currentStatusIndex = Number(getXmlField(lifecycleDetail, 'CurrentStatusIndex'));
 
-    this.log('verbose', 'queryCustomerInfo - success', { msisdn, messageSeq });
+    this.log('verbose', `${operation} - success`, { access, messageSeq });
     return {
       metadata: resultMsg,
       data: {
@@ -443,6 +644,33 @@ export class BcServices extends CbsServiceBase {
         'bcs:BillCycleEndDate': getXmlField(accountInfo, 'BillCycleEndDate'),
       },
     };
+  }
+
+  private queryCustomerInfoAccessXml(access: QueryCustomerInfoKey): string {
+    const entries = Object.entries(access).filter(
+      ([, value]) => value !== undefined && value !== '',
+    );
+    if (entries.length !== 1) {
+      throw createHttpError(400, 'Provide exactly one CBS customer info access code');
+    }
+
+    const [type, value] = entries[0];
+    const escapedValue = String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const tags: Record<string, string> = {
+      primaryIdentity: `<bcs:SubAccessCode><bcc:PrimaryIdentity>${escapedValue}</bcc:PrimaryIdentity></bcs:SubAccessCode>`,
+      subscriberKey: `<bcs:SubAccessCode><bcc:SubscriberKey>${escapedValue}</bcc:SubscriberKey></bcs:SubAccessCode>`,
+      customerKey: `<bcs:CustAccessCode><bcc:CustomerKey>${escapedValue}</bcc:CustomerKey></bcs:CustAccessCode>`,
+      customerCode: `<bcs:CustAccessCode><bcc:CustomerCode>${escapedValue}</bcc:CustomerCode></bcs:CustAccessCode>`,
+      accountKey: `<bcs:AcctAccessCode><bcc:AccountKey>${escapedValue}</bcc:AccountKey></bcs:AcctAccessCode>`,
+      accountCode: `<bcs:AcctAccessCode><bcc:AccountCode>${escapedValue}</bcc:AccountCode></bcs:AcctAccessCode>`,
+    };
+
+    const xml = tags[type];
+    if (!xml) throw createHttpError(400, 'Unsupported CBS customer info access code');
+    return xml;
   }
 
   async querySubLifeCycle(
