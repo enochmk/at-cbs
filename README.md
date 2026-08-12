@@ -243,7 +243,7 @@ The normalized code mappings are:
 
 The `QueryCustomerInfo` request uses `POST /services/BcServices` and does not send a `SoapAction` header.
 
-The live test scripts disable TLS certificate validation for the internal self-signed CBS certificate. Use `rejectUnauthorized: true` in production when the certificate can be trusted normally. The `.env` file is git-ignored.
+TLS certificate validation is disabled by default because CBS deployments commonly use an internal/self-signed certificate. Set `rejectUnauthorized: true` when the certificate chain is trusted normally. The `.env` file is git-ignored.
 
 ## Options
 
@@ -255,7 +255,7 @@ The live test scripts disable TLS certificate validation for the internal self-s
 | `username`           | `string`  | Yes      | Authentication username                                                |
 | `password`           | `string`  | Yes      | Authentication password                                                |
 | `timeout`            | `number`  | No       | Request timeout in ms (default: `15000`)                               |
-| `rejectUnauthorized` | `boolean` | No       | TLS certificate validation (default: `true`)                           |
+| `rejectUnauthorized` | `boolean` | No       | TLS certificate validation (default: `false`)                          |
 | `logger`             | `Logger`  | No       | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
 
 ### MSISDN Format

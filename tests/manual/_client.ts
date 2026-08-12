@@ -12,7 +12,7 @@ export function client(): CbsClient {
     baseUrl: required('CBS_BASE_URL'),
     username: required('CBS_USERNAME'),
     password: required('CBS_PASSWORD'),
-    rejectUnauthorized: process.env.CBS_REJECT_UNAUTHORIZED !== 'false',
+    rejectUnauthorized: process.env.CBS_REJECT_UNAUTHORIZED === 'true',
     logger: {
       info: (message, context) => console.info('[INFO]', message, context ?? ''),
       warn: (message, context) => console.warn('[WARN]', message, context ?? ''),

@@ -58,7 +58,9 @@ export class CbsClient {
   constructor(options: CbsClientOptions) {
     this.opts = {
       timeout: 15000,
-      rejectUnauthorized: true,
+      // CBS deployments commonly use an internal/self-signed certificate.
+      // Callers can opt into strict TLS validation with true.
+      rejectUnauthorized: false,
       logger: {},
       ...options,
     };

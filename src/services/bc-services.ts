@@ -234,7 +234,7 @@ export class BcServices extends CbsServiceBase {
 
   async createCustomer(opts: CreateCustomerOptions): Promise<CbsMutationOutput> {
     const individual = opts.individual
-      ? `<bcs:IndividualInfo>${tag('bcc:IDType', opts.individual.idType)}${tag('bcc:IDNumber', opts.individual.idNumber)}${tag('bcc:Title', opts.individual.title)}${tag('bcc:FirstName', opts.individual.firstName)}${tag('bcc:LastName', opts.individual.lastName)}${tag('bcc:Gender', opts.individual.gender)}${tag('bcc:Nationality', opts.individual.nationality)}${tag('bcc:Birthday', opts.individual.birthday)}${tag('bcc:MobilePhone', opts.individual.mobilePhone)}${tag('bcc:Email', opts.individual.email)}</bcs:IndividualInfo>`
+      ? `<bcs:IndividualInfo>${tag('bcc:IDType', opts.individual.idType)}${tag('bcc:IDNumber', opts.individual.idNumber ?? '')}${tag('bcc:Title', opts.individual.title)}${tag('bcc:FirstName', opts.individual.firstName)}${tag('bcc:LastName', opts.individual.lastName)}${tag('bcc:Gender', opts.individual.gender)}${tag('bcc:Nationality', opts.individual.nationality)}${tag('bcc:Birthday', opts.individual.birthday)}${tag('bcc:MobilePhone', opts.individual.mobilePhone)}${tag('bcc:Email', opts.individual.email)}</bcs:IndividualInfo>`
       : '';
     const organization = opts.organization
       ? `<bcs:OrgInfo>${tag('bcc:IDType', opts.organization.idType)}${tag('bcc:IDNumber', opts.organization.idNumber)}${tag('bcc:OrgType', opts.organization.organizationType)}${tag('bcc:OrgName', opts.organization.name)}${tag('bcc:Industry', opts.organization.industry)}${tag('bcc:OrgPhoneNumber', opts.organization.phoneNumber)}${tag('bcc:OrgEmail', opts.organization.email)}</bcs:OrgInfo>`
