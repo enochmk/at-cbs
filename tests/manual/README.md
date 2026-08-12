@@ -7,6 +7,7 @@ Copy `.env.example` to `.env`, set the CBS connection values, then run one scrip
 npx tsx tests/manual/create-and-query-hierarchy.ts
 npx tsx tests/manual/query-customer-info-by-key.ts
 npx tsx tests/manual/create-customer.ts
+npx tsx tests/manual/change-customer-info.ts
 npx tsx tests/manual/create-account.ts
 npx tsx tests/manual/create-subscriber-for-account.ts
 npx tsx tests/manual/change-subscriber-offering.ts
@@ -19,6 +20,9 @@ npx tsx tests/manual/adjust-security-deposit.ts
 Creation and mutation scripts require explicit CBS identifiers and values in `.env`. The
 security-deposit script uses the existing `Adjustment` operation because R25 documents no
 standalone single-subscriber initial-balance operation.
+
+`change-customer-info.ts` updates an existing customer. Set `CBS_CUSTOMER_KEY` or
+`CBS_CUSTOMER_CODE`, plus the fields to update. `CBS_CUSTOMER_ID_NUMBER` may remain empty.
 
 `create-and-query-hierarchy.ts` is the recommended first live test. It creates a customer,
 queries it, creates an account, queries it, creates a subscriber, and queries it. Use dedicated

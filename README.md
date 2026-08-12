@@ -77,6 +77,34 @@ const billCycleEndDate = result.data['bcs:BillCycleEndDate'];
 // MainBalance.TotalAmount remains available in the original CBS units.
 ```
 
+### `queryCustomerInfoByKey(key, options?)`
+
+Query customer details using either the CBS-generated `customerCode` or the customer key used
+when the customer was created.
+
+```typescript
+await client.queryCustomerInfoByKey({ customerKey: 'HTC260812771904-TEST' });
+await client.queryCustomerInfoByKey({ customerCode: 'CBS100010000010839663' });
+```
+
+### `createCustomer(options)`
+
+Create an individual or organization customer. For individual customers, CBS accepts an empty
+`IDNumber`; the client emits an empty element when `idNumber` is omitted.
+
+### `changeCustomerInfo(options)`
+
+Update customer information using exactly one of `customerKey`, `customerCode`, or
+`primaryIdentity`. Individual and organization details, customer segment, and an empty
+individual `IDNumber` are supported.
+
+```typescript
+await client.changeCustomerInfo({
+  customerKey: 'HTC-TEST-CUSTOMER',
+  individual: { lastName: 'CBS-Updated', idNumber: '', email: 'updated@example.com' },
+});
+```
+
 ### `queryBalance(msisdn, options?)`
 
 Query subscriber account balances through `POST /services/ArServices`.
@@ -200,16 +228,18 @@ cp .env.example .env
 
 The manual scripts use these variables:
 
-| Variable                                                     | Used by              | Notes                                                     |
-| ------------------------------------------------------------ | -------------------- | --------------------------------------------------------- |
-| `CBS_BASE_URL`                                               | All scripts          | Use the host only, for example `https://10.40.14.26:8081` |
-| `CBS_USERNAME` / `CBS_PASSWORD`                              | All scripts          | CBS access credentials                                    |
-| `MSISDN`                                                     | Subscriber scripts   | Can be overridden by a command-line argument              |
-| `CDR_SEQ`                                                    | `QueryCDRDetail`     | Can be overridden by the second command-line argument     |
-| `CBS_SUB_DEACTIVATION_OP_TYPE`                               | `SubDeactivation`    | Must be configured in CBS; there is no universal value    |
-| `CBS_CUST_DEACTIVATION_OP_TYPE`                              | `CustDeactivation`   | Must be configured in CBS                                 |
-| `CUSTOMER_PRIMARY_IDENTITY`, `CUSTOMER_KEY`, `CUSTOMER_CODE` | Customer scripts     | Set exactly one                                           |
-| `CBS_EFFECTIVE_TIME`                                         | Deactivation scripts | Optional `YYYYMMDDhhmmss` value                           |
+| Variable                                                     | Used by                        | Notes                                                     |
+| ------------------------------------------------------------ | ------------------------------ | --------------------------------------------------------- |
+| `CBS_BASE_URL`                                               | All scripts                    | Use the host only, for example `https://10.40.14.26:8081` |
+| `CBS_USERNAME` / `CBS_PASSWORD`                              | All scripts                    | CBS access credentials                                    |
+| `MSISDN`                                                     | Subscriber scripts             | Can be overridden by a command-line argument              |
+| `CDR_SEQ`                                                    | `QueryCDRDetail`               | Can be overridden by the second command-line argument     |
+| `CBS_SUB_DEACTIVATION_OP_TYPE`                               | `SubDeactivation`              | Must be configured in CBS; there is no universal value    |
+| `CBS_CUST_DEACTIVATION_OP_TYPE`                              | `CustDeactivation`             | Must be configured in CBS                                 |
+| `CUSTOMER_PRIMARY_IDENTITY`, `CUSTOMER_KEY`, `CUSTOMER_CODE` | Customer scripts               | Set exactly one                                           |
+| `CBS_CUSTOMER_KEY`, `CBS_CUSTOMER_CODE`                      | Customer create/change scripts | Set the identifier used by the operation                  |
+| `CBS_CUSTOMER_EMAIL`                                         | `ChangeCustInfo`               | Updated individual email                                  |
+| `CBS_EFFECTIVE_TIME`                                         | Deactivation scripts           | Optional `YYYYMMDDhhmmss` value                           |
 
 Run the read-only checks first:
 
