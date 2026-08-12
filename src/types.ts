@@ -81,6 +81,16 @@ export interface CreateCustomerOptions extends CbsRequestOptions {
   };
 }
 
+export interface ChangeCustomerInfoOptions extends CbsRequestOptions {
+  customerKey?: string;
+  customerCode?: string;
+  primaryIdentity?: string;
+  customerSegment?: string;
+  individual?: CreateCustomerOptions['individual'];
+  organization?: CreateCustomerOptions['organization'];
+  newCustomerKey?: string;
+}
+
 export interface CreateAccountOptions extends CbsRequestOptions {
   registerCustKey: string;
   accountKey: string;

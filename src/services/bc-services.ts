@@ -5,6 +5,7 @@ import type {
   CbsMutationOutput,
   CbsOperationResponse,
   CreateCustomerOptions,
+  ChangeCustomerInfoOptions,
   CreateAccountOptions,
   CreateSubscriberRequestOptions,
   ChangeSubscriberOfferingOptions,
@@ -241,6 +242,30 @@ export class BcServices extends CbsServiceBase {
       : '';
     const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:CreateCustomerRequestMsg>${this.requestHeader(opts, 'CreateCustomer', opts.messageSeq ?? randomUUID())}<CreateCustomerRequest><bcs:RegisterCustKey>${xmlEscape(opts.registerCustKey)}</bcs:RegisterCustKey><bcs:Customer><bcs:CustKey>${xmlEscape(opts.customerKey)}</bcs:CustKey><bcs:CustInfo>${tag('bcc:CustType', opts.customerType)}${tag('bcc:CustNodeType', opts.customerNodeType)}${tag('bcc:CustClass', opts.customerClass)}${tag('bcc:CustCode', opts.customerCode)}${opts.customerSegment === undefined ? '' : `<bcc:CustBasicInfo>${tag('bcc:CustSegment', opts.customerSegment)}</bcc:CustBasicInfo>`}</bcs:CustInfo>${individual}${organization}</bcs:Customer></CreateCustomerRequest></bcs:CreateCustomerRequestMsg></soapenv:Body></soapenv:Envelope>`;
     return this.mutation('createCustomer', payload, opts.customerKey);
+  }
+
+  async changeCustomerInfo(opts: ChangeCustomerInfoOptions): Promise<CbsMutationOutput> {
+    const key = opts.customerKey
+      ? { customerKey: opts.customerKey }
+      : opts.customerCode
+        ? { customerCode: opts.customerCode }
+        : { primaryIdentity: opts.primaryIdentity ?? '' };
+    const individual = opts.individual
+      ? `<bcs:Individual>${tag('bcc:IDType', opts.individual.idType)}${tag('bcc:IDNumber', opts.individual.idNumber ?? '')}${tag('bcc:Title', opts.individual.title)}${tag('bcc:FirstName', opts.individual.firstName)}${tag('bcc:LastName', opts.individual.lastName)}${tag('bcc:Gender', opts.individual.gender)}${tag('bcc:Nationality', opts.individual.nationality)}${tag('bcc:Birthday', opts.individual.birthday)}${tag('bcc:MobilePhone', opts.individual.mobilePhone)}${tag('bcc:Email', opts.individual.email)}</bcs:Individual>`
+      : '';
+    const organization = opts.organization
+      ? `<bcs:Organization>${tag('bcc:IDType', opts.organization.idType)}${tag('bcc:IDNumber', opts.organization.idNumber ?? '')}${tag('bcc:OrgType', opts.organization.organizationType)}${tag('bcc:OrgName', opts.organization.name)}${tag('bcc:Industry', opts.organization.industry)}${tag('bcc:OrgPhoneNumber', opts.organization.phoneNumber)}${tag('bcc:OrgEmail', opts.organization.email)}</bcs:Organization>`
+      : '';
+    const basic =
+      opts.customerSegment === undefined
+        ? ''
+        : `<bcs:CustBasicInfo>${tag('bcc:CustSegment', opts.customerSegment)}</bcs:CustBasicInfo>`;
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeCustInfoRequestMsg>${this.requestHeader(opts, 'ChangeCustInfo', opts.messageSeq ?? randomUUID())}<ChangeCustInfoRequest>${keyXml('Cust', key)}<bcs:CustInfo>${basic}${individual}${organization}</bcs:CustInfo>${tag('bcs:NewCustomerKey', opts.newCustomerKey)}</ChangeCustInfoRequest></bcs:ChangeCustInfoRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation(
+      'changeCustomerInfo',
+      payload,
+      opts.customerKey ?? opts.customerCode ?? opts.primaryIdentity ?? '',
+    );
   }
 
   async createAccount(opts: CreateAccountOptions): Promise<CbsMutationOutput> {

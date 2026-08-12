@@ -4,6 +4,7 @@ import type {
   QueryCustomerInfoOutput,
   QueryCustomerInfoKey,
   CreateCustomerOptions,
+  ChangeCustomerInfoOptions,
   CreateAccountOptions,
   CreateSubscriberRequestOptions,
   ChangeSubscriberOfferingOptions,
@@ -86,6 +87,10 @@ export class CbsClient {
 
   createCustomer(opts: CreateCustomerOptions): Promise<CbsMutationOutput> {
     return this.bcServices.createCustomer(opts);
+  }
+
+  changeCustomerInfo(opts: ChangeCustomerInfoOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.changeCustomerInfo(opts);
   }
 
   createAccount(opts: CreateAccountOptions): Promise<CbsMutationOutput> {
