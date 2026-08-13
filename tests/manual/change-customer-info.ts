@@ -9,7 +9,7 @@ await run('ChangeCustInfo', () =>
     customerSegment: process.env.CBS_CUSTOMER_SEGMENT,
     individual: {
       idType: process.env.CBS_CUSTOMER_ID_TYPE,
-      idNumber: '',
+      idNumber: process.env.CBS_CUSTOMER_ID_NUMBER,
       firstName: process.env.CBS_CUSTOMER_FIRST_NAME,
       lastName: process.env.CBS_CUSTOMER_LAST_NAME,
       mobilePhone: process.env.CBS_CUSTOMER_MOBILE,
