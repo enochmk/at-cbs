@@ -1,79 +1,304 @@
 {
   "info": {
-    "name": "CBS Client - Implemented Endpoints",
-    "_postman_id": "cbs-client-implemented-endpoints",
+    "name": "CBS Client - Complete R25 Endpoints",
+    "_postman_id": "cbs-client-complete-r25",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman requests for the implemented @enochmk/cbs-client CBS R25 operations. Disable SSL certificate verification for internal CBS certificates."
+    "description": "Complete executable SOAP requests for implemented cbs-client operations. Disable Postman SSL verification for internal CBS certificates."
   },
   "variable": [
-    { "key": "baseUrl", "value": "https://10.40.14.26:8081" },
-    { "key": "username", "value": "102" },
-    { "key": "password", "value": "" },
-    { "key": "customerKey", "value": "HTC260812771904-TEST" },
-    { "key": "customerCode", "value": "CBS100010000010839663" },
-    { "key": "accountKey", "value": "HTC270118755260812172704B" },
-    { "key": "accountCode", "value": "CBS100010000010839665" },
-    { "key": "subscriberKey", "value": "" },
-    { "key": "msisdn", "value": "270118755" },
-    { "key": "offeringId", "value": "2018105071" },
-    { "key": "newOfferingId", "value": "2018246521" },
-    { "key": "creditLimit", "value": "12000000000" },
-    { "key": "messageSeq", "value": "{{$guid}}" },
-    { "key": "operationType", "value": "1" },
-    { "key": "cdrSeq", "value": "123456789" }
+    {
+      "key": "baseUrl",
+      "value": "https://10.40.14.26:8081"
+    },
+    {
+      "key": "username",
+      "value": "102"
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "customerKey",
+      "value": ""
+    },
+    {
+      "key": "customerCode",
+      "value": ""
+    },
+    {
+      "key": "customerIdType",
+      "value": "1"
+    },
+    {
+      "key": "customerIdNumber",
+      "value": ""
+    },
+    {
+      "key": "firstName",
+      "value": "HTC"
+    },
+    {
+      "key": "lastName",
+      "value": "CBS-Test"
+    },
+    {
+      "key": "organizationType",
+      "value": "1"
+    },
+    {
+      "key": "organizationName",
+      "value": "HTC Ghana Limited"
+    },
+    {
+      "key": "industry",
+      "value": "Telecommunications"
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "accountKey",
+      "value": ""
+    },
+    {
+      "key": "accountCode",
+      "value": ""
+    },
+    {
+      "key": "accountName",
+      "value": "HTC-Test-Account"
+    },
+    {
+      "key": "payRelationKey",
+      "value": ""
+    },
+    {
+      "key": "subscriberKey",
+      "value": ""
+    },
+    {
+      "key": "msisdn",
+      "value": "270118755"
+    },
+    {
+      "key": "offeringId",
+      "value": "2018246521"
+    },
+    {
+      "key": "newOfferingId",
+      "value": "2018105071"
+    },
+    {
+      "key": "creditLimit",
+      "value": "12000000000"
+    },
+    {
+      "key": "initialBalance",
+      "value": "0"
+    },
+    {
+      "key": "paymentMode",
+      "value": "0"
+    },
+    {
+      "key": "subscriberStatus",
+      "value": "1"
+    },
+    {
+      "key": "operationType",
+      "value": "1"
+    },
+    {
+      "key": "cdrSeq",
+      "value": "123456789"
+    },
+    {
+      "key": "adjustmentSerialNo",
+      "value": "{{$guid}}"
+    },
+    {
+      "key": "adjustmentAmount",
+      "value": "500000"
+    }
   ],
   "item": [
     {
-      "name": "Customer",
+      "name": "Customers",
       "item": [
         {
-          "name": "Query Customer by Customer Key",
+          "name": "Query Customer - Customer Key",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCustomerInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode><cbs:MessageSeq>{{messageSeq}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCustomerInfoRequest><bcs:QueryObj><bcs:CustAccessCode><bcc:CustomerKey>{{customerKey}}</bcc:CustomerKey></bcs:CustAccessCode></bcs:QueryObj><bcs:QueryMode>0</bcs:QueryMode><bcs:CustomerMask>1100</bcs:CustomerMask><bcs:AccountMask>11</bcs:AccountMask><bcs:SubscriberMask>11111110</bcs:SubscriberMask><bcs:GroupMask>00000</bcs:GroupMask></QueryCustomerInfoRequest></bcs:QueryCustomerInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCustomerInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCustomerInfoRequest><bcs:QueryObj><bcs:CustAccessCode><bcc:CustomerKey>{{customerKey}}</bcc:CustomerKey></bcs:CustAccessCode></bcs:QueryObj><bcs:QueryMode>0</bcs:QueryMode><bcs:CustomerMask>1100</bcs:CustomerMask><bcs:AccountMask>11</bcs:AccountMask><bcs:SubscriberMask>11111110</bcs:SubscriberMask><bcs:GroupMask>00000</bcs:GroupMask></QueryCustomerInfoRequest></bcs:QueryCustomerInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Query Customer by Customer Code",
+          "name": "Query Customer - Customer Code",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{Query Customer by Customer Key request body}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCustomerInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCustomerInfoRequest><bcs:QueryObj><bcs:CustAccessCode><bcc:CustomerCode>{{customerCode}}</bcc:CustomerCode></bcs:CustAccessCode></bcs:QueryObj><bcs:QueryMode>0</bcs:QueryMode><bcs:CustomerMask>1100</bcs:CustomerMask><bcs:AccountMask>11</bcs:AccountMask><bcs:SubscriberMask>11111110</bcs:SubscriberMask><bcs:GroupMask>00000</bcs:GroupMask></QueryCustomerInfoRequest></bcs:QueryCustomerInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Create Customer",
+          "name": "Create Individual Customer",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste CreateCustomer SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateCustomerRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateCustomer</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateCustomerRequest><bcs:RegisterCustKey>{{customerKey}}</bcs:RegisterCustKey><bcs:Customer><bcs:CustKey>{{customerKey}}</bcs:CustKey><bcs:CustInfo><bcc:CustType>1</bcc:CustType><bcc:CustNodeType>1</bcc:CustNodeType><bcc:CustClass>1</bcc:CustClass></bcs:CustInfo><bcs:IndividualInfo><bcc:IDType>{{customerIdType}}</bcc:IDType><bcc:IDNumber>{{customerIdNumber}}</bcc:IDNumber><bcc:FirstName>{{firstName}}</bcc:FirstName><bcc:LastName>{{lastName}}</bcc:LastName><bcc:MobilePhone>{{msisdn}}</bcc:MobilePhone><bcc:Email>{{email}}</bcc:Email></bcs:IndividualInfo></bcs:Customer></CreateCustomerRequest></bcs:CreateCustomerRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Change Customer Info",
+          "name": "Create Company Customer",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste ChangeCustInfo SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateCustomerRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateCustomer</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateCustomerRequest><bcs:RegisterCustKey>{{customerKey}}</bcs:RegisterCustKey><bcs:Customer><bcs:CustKey>{{customerKey}}</bcs:CustKey><bcs:CustInfo><bcc:CustType>2</bcc:CustType><bcc:CustNodeType>1</bcc:CustNodeType><bcc:CustClass>1</bcc:CustClass></bcs:CustInfo><bcs:OrgInfo><bcc:IDType>{{customerIdType}}</bcc:IDType><bcc:IDNumber>{{customerIdNumber}}</bcc:IDNumber><bcc:OrgType>{{organizationType}}</bcc:OrgType><bcc:OrgName>{{organizationName}}</bcc:OrgName><bcc:Industry>{{industry}}</bcc:Industry><bcc:OrgPhoneNumber>{{msisdn}}</bcc:OrgPhoneNumber><bcc:OrgEmail>{{email}}</bcc:OrgEmail></bcs:OrgInfo></bcs:Customer></CreateCustomerRequest></bcs:CreateCustomerRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Change Individual Customer Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeCustInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeCustInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeCustInfoRequest><bcs:CustAccessCode><bcc:CustomerKey>{{customerKey}}</bcc:CustomerKey></bcs:CustAccessCode><bcs:CustInfo><bcs:Individual><bcc:IDType>{{customerIdType}}</bcc:IDType><bcc:IDNumber>{{customerIdNumber}}</bcc:IDNumber><bcc:FirstName>{{firstName}}</bcc:FirstName><bcc:LastName>{{lastName}}</bcc:LastName><bcc:MobilePhone>{{msisdn}}</bcc:MobilePhone><bcc:Email>{{email}}</bcc:Email></bcs:Individual></bcs:CustInfo></ChangeCustInfoRequest></bcs:ChangeCustInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Change Company Customer Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeCustInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeCustInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeCustInfoRequest><bcs:CustAccessCode><bcc:CustomerKey>{{customerKey}}</bcc:CustomerKey></bcs:CustAccessCode><bcs:CustInfo><bcs:Organization><bcc:IDType>{{customerIdType}}</bcc:IDType><bcc:IDNumber>{{customerIdNumber}}</bcc:IDNumber><bcc:OrgType>{{organizationType}}</bcc:OrgType><bcc:OrgName>{{organizationName}}</bcc:OrgName><bcc:Industry>{{industry}}</bcc:Industry><bcc:OrgPhoneNumber>{{msisdn}}</bcc:OrgPhoneNumber><bcc:OrgEmail>{{email}}</bcc:OrgEmail></bcs:Organization></bcs:CustInfo></ChangeCustInfoRequest></bcs:ChangeCustInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Activate Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CustActivationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CustActivation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CustActivationRequest><bcs:CustAccessCode><bcc:CustomerKey>{{customerKey}}</bcc:CustomerKey></bcs:CustAccessCode></CustActivationRequest></bcs:CustActivationRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Deactivate Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CustDeactivationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CustDeactivation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CustDeactivationRequest><bcs:CustAccessCode><bcc:CustomerKey>{{customerKey}}</bcc:CustomerKey></bcs:CustAccessCode><bcs:OpType>{{operationType}}</bcs:OpType></CustDeactivationRequest></bcs:CustDeactivationRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
@@ -81,17 +306,92 @@
       ]
     },
     {
-      "name": "Account",
+      "name": "Accounts",
       "item": [
         {
-          "name": "Create Account",
+          "name": "Query Account - Account Key",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste CreateAccount SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCustomerInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCustomerInfoRequest><bcs:QueryObj><bcs:CustAccessCode><bcc:AccountKey>{{accountKey}}</bcc:AccountKey></bcs:CustAccessCode></bcs:QueryObj><bcs:QueryMode>0</bcs:QueryMode><bcs:CustomerMask>1100</bcs:CustomerMask><bcs:AccountMask>11</bcs:AccountMask><bcs:SubscriberMask>11111110</bcs:SubscriberMask><bcs:GroupMask>00000</bcs:GroupMask></QueryCustomerInfoRequest></bcs:QueryCustomerInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Query Account - Account Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCustomerInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCustomerInfoRequest><bcs:QueryObj><bcs:CustAccessCode><bcc:AccountCode>{{accountCode}}</bcc:AccountCode></bcs:CustAccessCode></bcs:QueryObj><bcs:QueryMode>0</bcs:QueryMode><bcs:CustomerMask>1100</bcs:CustomerMask><bcs:AccountMask>11</bcs:AccountMask><bcs:SubscriberMask>11111110</bcs:SubscriberMask><bcs:GroupMask>00000</bcs:GroupMask></QueryCustomerInfoRequest></bcs:QueryCustomerInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Create Prepaid Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateAccountRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateAccount</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateAccountRequest><bcs:RegisterCustKey>{{customerKey}}</bcs:RegisterCustKey><bcs:Account><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:AcctInfo><bcc:UserCustomerKey>{{customerKey}}</bcc:UserCustomerKey><bcc:AcctBasicInfo><bcc:AcctName>{{accountName}}</bcc:AcctName></bcc:AcctBasicInfo><bcc:BillCycleType>01</bcc:BillCycleType><bcc:AcctType>1</bcc:AcctType><bcc:PaymentType>0</bcc:PaymentType><bcc:AcctClass>1</bcc:AcctClass><bcc:CurrencyID>1054</bcc:CurrencyID><bcc:AcctPayMethod>1</bcc:AcctPayMethod></bcs:AcctInfo></bcs:Account></CreateAccountRequest></bcs:CreateAccountRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Create Postpaid Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateAccountRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateAccount</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateAccountRequest><bcs:RegisterCustKey>{{customerKey}}</bcs:RegisterCustKey><bcs:Account><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:AcctInfo><bcc:UserCustomerKey>{{customerKey}}</bcc:UserCustomerKey><bcc:AcctBasicInfo><bcc:AcctName>{{accountName}}</bcc:AcctName></bcc:AcctBasicInfo><bcc:BillCycleType>01</bcc:BillCycleType><bcc:AcctType>1</bcc:AcctType><bcc:PaymentType>1</bcc:PaymentType><bcc:AcctClass>1</bcc:AcctClass><bcc:CurrencyID>1054</bcc:CurrencyID><bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>{{creditLimit}}</bcc:LimitValue></bcc:CreditLimit><bcc:AcctPayMethod>1</bcc:AcctPayMethod></bcs:AcctInfo></bcs:Account></CreateAccountRequest></bcs:CreateAccountRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
@@ -100,11 +400,20 @@
           "name": "Change Account Credit Limit",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste ChangeAcctCreditLimit SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeAcctCreditLimitRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeAcctCreditLimit</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeAcctCreditLimitRequest><bcs:AcctAccessCode><bcc:AccountKey>{{accountKey}}</bcc:AccountKey></bcs:AcctAccessCode><bcs:AccountCredit><bcs:CreditLimitType>C_INITIAL_CREDIT_LIMIT</bcs:CreditLimitType><bcs:CommonCreditLimit><bcs:NewLimitAmount>{{creditLimit}}</bcs:NewLimitAmount></bcs:CommonCreditLimit></bcs:AccountCredit></ChangeAcctCreditLimitRequest></bcs:ChangeAcctCreditLimitRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
@@ -113,68 +422,179 @@
           "name": "Change Payment Relation",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste ChangePayRelation SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangePayRelationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangePayRelation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangePayRelationRequest><bcs:AcctAccessCode><bcc:AccountKey>{{accountKey}}</bcc:AccountKey></bcs:AcctAccessCode><bcs:AddPayRelation><bcs:PayRelation><bcs:PayRelationKey>{{payRelationKey}}</bcs:PayRelationKey><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:Priority>1</bcs:Priority></bcs:PayRelation></bcs:AddPayRelation></ChangePayRelationRequest></bcs:ChangePayRelationRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Deactivate Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:AcctDeactivationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>AcctDeactivation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><AcctDeactivationRequest><bcs:AcctAccessCode><bcc:AccountKey>{{accountKey}}</bcc:AccountKey></bcs:AcctAccessCode><bcs:OpType>{{operationType}}</bcs:OpType></AcctDeactivationRequest></bcs:AcctDeactivationRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Adjust Account Balance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ars=\"http://www.huawei.com/bme/cbsinterface/arservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:arc=\"http://cbs.huawei.com/ar/wsservice/arcommon\"><soapenv:Header/><soapenv:Body><ars:AdjustmentRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>Adjustment</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><AdjustmentRequest><ars:AdjustmentSerialNo>{{adjustmentSerialNo}}</ars:AdjustmentSerialNo><ars:AdjustmentObj><ars:SubAccessCode><arc:PrimaryIdentity>{{msisdn}}</arc:PrimaryIdentity></ars:SubAccessCode></ars:AdjustmentObj><ars:OpType>2</ars:OpType><ars:AdjustmentInfo><arc:BalanceType>C_MAIN_ACCOUNT</arc:BalanceType><arc:AdjustmentType>2</arc:AdjustmentType><arc:AdjustmentAmt>{{adjustmentAmount}}</arc:AdjustmentAmt><arc:CurrencyID>1054</arc:CurrencyID></ars:AdjustmentInfo><ars:AdjustmentReasonCode>DNTREQ</ars:AdjustmentReasonCode></AdjustmentRequest></ars:AdjustmentRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/ArServices"
           }
         }
       ]
     },
     {
-      "name": "Subscriber",
+      "name": "Subscribers",
       "item": [
         {
-          "name": "Create Subscriber",
+          "name": "Query Subscriber by MSISDN",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste CreateSubscriber SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCustomerInfoRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCustomerInfo</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCustomerInfoRequest><bcs:QueryObj><bcs:CustAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:CustAccessCode></bcs:QueryObj><bcs:QueryMode>0</bcs:QueryMode><bcs:CustomerMask>1100</bcs:CustomerMask><bcs:AccountMask>11</bcs:AccountMask><bcs:SubscriberMask>11111110</bcs:SubscriberMask><bcs:GroupMask>00000</bcs:GroupMask></QueryCustomerInfoRequest></bcs:QueryCustomerInfoRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Change Subscriber Offering",
+          "name": "Create Prepaid Subscriber",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste ChangeSubOffering SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateSubscriber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateSubscriberRequest><bcs:RegisterCustomer OpType=\"1\"><bcs:CustKey>{{customerKey}}</bcs:CustKey></bcs:RegisterCustomer><bcs:Subscriber><bcs:SubscriberKey>{{subscriberKey}}</bcs:SubscriberKey><bcs:SubscriberInfo><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>{{msisdn}}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:Status>1</bcc:Status></bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>0</bcs:PaymentMode><bcs:AcctList><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:DEFAcctFlag>Y</bcs:DEFAcctFlag></bcs:AcctList><bcs:PayRelation><bcs:PayRelationKey>{{accountKey}}</bcs:PayRelationKey><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:Priority>1</bcs:Priority></bcs:PayRelation></bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>2018246521</bcc:OfferingID></bcc:OfferingKey><bcc:OfferingClass>I</bcc:OfferingClass></bcs:PrimaryOffering></CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Change Subscriber Payment Mode",
+          "name": "Create Postpaid Subscriber",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste ChangeSubPaymentMode SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateSubscriber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateSubscriberRequest><bcs:RegisterCustomer OpType=\"1\"><bcs:CustKey>{{customerKey}}</bcs:CustKey></bcs:RegisterCustomer><bcs:Subscriber><bcs:SubscriberKey>{{subscriberKey}}</bcs:SubscriberKey><bcs:SubscriberInfo><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>{{msisdn}}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:Status>1</bcc:Status></bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>1</bcs:PaymentMode><bcs:AcctList><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:DEFAcctFlag>Y</bcs:DEFAcctFlag></bcs:AcctList><bcs:PayRelation><bcs:PayRelationKey>{{accountKey}}</bcs:PayRelationKey><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:Priority>1</bcs:Priority></bcs:PayRelation></bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>2018105071</bcc:OfferingID></bcc:OfferingKey><bcc:OfferingClass>I</bcc:OfferingClass></bcs:PrimaryOffering></CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Query Balance",
+          "name": "Create Hybrid Subscriber",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste QueryBalance SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateSubscriber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateSubscriberRequest><bcs:RegisterCustomer OpType=\"1\"><bcs:CustKey>{{customerKey}}</bcs:CustKey></bcs:RegisterCustomer><bcs:Subscriber><bcs:SubscriberKey>{{subscriberKey}}</bcs:SubscriberKey><bcs:SubscriberInfo><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>{{msisdn}}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:Status>1</bcc:Status></bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>2</bcs:PaymentMode><bcs:AcctList><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:DEFAcctFlag>Y</bcs:DEFAcctFlag></bcs:AcctList><bcs:PayRelation><bcs:PayRelationKey>{{accountKey}}</bcs:PayRelationKey><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:Priority>1</bcs:Priority></bcs:PayRelation></bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>2018105071</bcc:OfferingID></bcc:OfferingKey><bcc:OfferingClass>I</bcc:OfferingClass></bcs:PrimaryOffering></CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Query Subscriber Balance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ars=\"http://www.huawei.com/bme/cbsinterface/arservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:arc=\"http://cbs.huawei.com/ar/wsservice/arcommon\"><soapenv:Header/><soapenv:Body><ars:QueryBalanceRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryBalance</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryBalanceRequest><ars:QueryObj><ars:SubAccessCode><arc:PrimaryIdentity>{{msisdn}}</arc:PrimaryIdentity></ars:SubAccessCode></ars:QueryObj></QueryBalanceRequest></ars:QueryBalanceRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/ArServices"
           }
@@ -183,11 +603,64 @@
           "name": "Query Subscriber Lifecycle",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste QuerySubLifeCycle SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QuerySubLifeCycleRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QuerySubLifeCycle</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QuerySubLifeCycleRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode></QuerySubLifeCycleRequest></bcs:QuerySubLifeCycleRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Change Subscriber Offering",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeSubOfferingRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeSubOffering</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeSubOfferingRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:PrimaryOffering><bcs:NewPrimaryOffering><bcc:OfferingKey><bcc:OfferingID>{{newOfferingId}}</bcc:OfferingID></bcc:OfferingKey></bcs:NewPrimaryOffering></bcs:PrimaryOffering></ChangeSubOfferingRequest></bcs:ChangeSubOfferingRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Change Subscriber Payment Mode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeSubPaymentModeRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeSubPaymentMode</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeSubPaymentModeRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:OpType>1</bcs:OpType><bcs:PaymentModeChange><bcs:SubDFTAccount><bcs:AcctKey>{{accountKey}}</bcs:AcctKey></bcs:SubDFTAccount><bcs:AcctList><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:DEFAcctFlag>Y</bcs:DEFAcctFlag></bcs:AcctList></bcs:PaymentModeChange></ChangeSubPaymentModeRequest></bcs:ChangeSubPaymentModeRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
@@ -196,68 +669,174 @@
           "name": "Change Subscriber Status",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste ChangeSubStatus SOAP payload here}}"
-            },
-            "url": "{{baseUrl}}/services/BcServices"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Other Implemented Operations",
-      "item": [
-        {
-          "name": "Customer Activation",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste CustActivation SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeSubStatusRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeSubStatus</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeSubStatusRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:OpType>{{operationType}}</bcs:OpType><bcs:Status>{{subscriberStatus}}</bcs:Status></ChangeSubStatusRequest></bcs:ChangeSubStatusRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Customer Deactivation",
+          "name": "Activate Subscriber",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste CustDeactivation SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:SubActivationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>SubActivation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><SubActivationRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode></SubActivationRequest></bcs:SubActivationRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
-          "name": "Adjust Account",
+          "name": "Deactivate Subscriber",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste Adjustment SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:SubDeactivationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>SubDeactivation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><SubDeactivationRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:OpType>{{operationType}}</bcs:OpType></SubDeactivationRequest></bcs:SubDeactivationRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
-            "url": "{{baseUrl}}/services/ArServices"
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Pool Activation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:PoolActivationRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>PoolActivation</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><PoolActivationRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode></PoolActivationRequest></bcs:PoolActivationRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Delete Number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:DeleteNumberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>DeleteNumber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><DeleteNumberRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode></DeleteNumberRequest></bcs:DeleteNumberRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Subscribe Supplementary Offering",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeSubOfferingRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeSubOffering</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeSubOfferingRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:SupplementaryOffering><bcs:AddOffering><bcc:OfferingKey><bcc:OfferingID>{{offeringId}}</bcc:OfferingID></bcc:OfferingKey><bcc:Status>2</bcc:Status></bcs:AddOffering></bcs:SupplementaryOffering></ChangeSubOfferingRequest></bcs:ChangeSubOfferingRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
+          }
+        },
+        {
+          "name": "Unsubscribe Supplementary Offering",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:ChangeSubOfferingRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>ChangeSubOffering</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><ChangeSubOfferingRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:SupplementaryOffering><bcs:DelOffering><bcs:OfferingKey><bcc:OfferingID>{{offeringId}}</bcc:OfferingID></bcs:OfferingKey></bcs:DelOffering></bcs:SupplementaryOffering></ChangeSubOfferingRequest></bcs:ChangeSubOfferingRequestMsg></soapenv:Body></soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/BcServices"
           }
         },
         {
           "name": "Query Last Transaction",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste QueryLastXTransaction SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryLastXTransactionRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryLastXTransaction</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryLastXTransactionRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>{{msisdn}}</bcc:PrimaryIdentity></bcs:SubAccessCode></QueryLastXTransactionRequest></bcs:QueryLastXTransactionRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
@@ -266,26 +845,22 @@
           "name": "Query CDR Detail",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste QueryCDRDetail SOAP payload here}}"
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCDRDetailRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCDRDetail</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCDRDetailRequest><bcs:PrimaryIdentity>{{msisdn}}</bcs:PrimaryIdentity><bcs:CDRSeq>{{cdrSeq}}</bcs:CDRSeq></QueryCDRDetailRequest></bcs:QueryCDRDetailRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BbServices"
-          }
-        },
-        {
-          "name": "Delete Number",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "text/xml; charset=utf-8" }],
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "xml" } },
-              "raw": "{{paste DeleteNumber SOAP payload here}}"
-            },
-            "url": "{{baseUrl}}/services/BcServices"
           }
         }
       ]
