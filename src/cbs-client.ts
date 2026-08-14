@@ -1,5 +1,7 @@
 import type {
   CbsClientOptions,
+  AcctDeactivationOptions,
+  AcctDeactivationOutput,
   QueryCustomerInfoOptions,
   QueryCustomerInfoOutput,
   QueryCustomerInfoKey,
@@ -97,6 +99,11 @@ export class CbsClient {
     return this.bcServices.createAccount(opts);
   }
 
+  /**
+   * @deprecated Use createPrepaidSubscriber, createPostpaidSubscriber, or
+   * createHybridSubscriber. This legacy method cannot create an account in
+   * the same request.
+   */
   createSubscriberForAccount(opts: CreateSubscriberRequestOptions): Promise<CbsMutationOutput> {
     return this.bcServices.createSubscriberForAccount(opts);
   }
@@ -181,6 +188,10 @@ export class CbsClient {
     return this.bcServices.subActivate(msisdn, opts);
   }
 
+  /**
+   * @deprecated Use deleteNumber, a typed subscriber creation method, and
+   * subActivate explicitly.
+   */
   poolActivation(msisdn: string, opts: PoolActivationOptions): Promise<PoolActivationOutput> {
     return this.bcServices.poolActivation(msisdn, opts);
   }
@@ -213,5 +224,9 @@ export class CbsClient {
 
   custDeactivation(opts: CustDeactivationOptions): Promise<CustDeactivationOutput> {
     return this.bcServices.custDeactivation(opts);
+  }
+
+  acctDeactivation(opts: AcctDeactivationOptions): Promise<AcctDeactivationOutput> {
+    return this.bcServices.acctDeactivation(opts);
   }
 }

@@ -8,11 +8,11 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "https://10.40.14.26:8081"
+      "value": "https://cbs.example.internal:8081"
     },
     {
       "key": "username",
-      "value": "102"
+      "value": ""
     },
     {
       "key": "password",
@@ -75,6 +75,30 @@
       "value": ""
     },
     {
+      "key": "hybridPostpaidAccountKey",
+      "value": ""
+    },
+    {
+      "key": "hybridPostpaidAccountCode",
+      "value": ""
+    },
+    {
+      "key": "hybridPostpaidPayRelationKey",
+      "value": ""
+    },
+    {
+      "key": "hybridPrepaidAccountKey",
+      "value": ""
+    },
+    {
+      "key": "hybridPrepaidAccountCode",
+      "value": ""
+    },
+    {
+      "key": "hybridPrepaidPayRelationKey",
+      "value": ""
+    },
+    {
       "key": "subscriberKey",
       "value": ""
     },
@@ -89,6 +113,10 @@
     {
       "key": "newOfferingId",
       "value": "2018105071"
+    },
+    {
+      "key": "hybridOfferingId",
+      "value": "2018105022"
     },
     {
       "key": "creditLimit",
@@ -576,6 +604,77 @@
             },
             "url": "{{baseUrl}}/services/BcServices"
           }
+        },
+        {
+          "name": "Create Subscriber + Account",
+          "item": [
+            {
+              "name": "Create Prepaid Subscriber + Account",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/xml; charset=utf-8"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  },
+                  "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateSubscriber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateSubscriberRequest><bcs:RegisterCustomer OpType=\"2\"><bcs:CustKey>{{customerKey}}</bcs:CustKey></bcs:RegisterCustomer><bcs:Account><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:AcctInfo><bcc:AcctCode>{{accountCode}}</bcc:AcctCode><bcc:PaymentType>0</bcc:PaymentType></bcs:AcctInfo></bcs:Account><bcs:Subscriber><bcs:SubscriberKey>{{subscriberKey}}</bcs:SubscriberKey><bcs:SubscriberInfo><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>{{msisdn}}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:Status>{{subscriberStatus}}</bcc:Status></bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>0</bcs:PaymentMode><bcs:PayRelationKey>{{payRelationKey}}</bcs:PayRelationKey><bcs:AcctKey>{{accountKey}}</bcs:AcctKey></bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>{{offeringId}}</bcc:OfferingID></bcc:OfferingKey><bcc:Status>{{subscriberStatus}}</bcc:Status></bcs:PrimaryOffering></CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>"
+                },
+                "url": "{{baseUrl}}/services/BcServices"
+              }
+            },
+            {
+              "name": "Create Postpaid Subscriber + Account",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/xml; charset=utf-8"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  },
+                  "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateSubscriber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateSubscriberRequest><bcs:RegisterCustomer OpType=\"2\"><bcs:CustKey>{{customerKey}}</bcs:CustKey></bcs:RegisterCustomer><bcs:Account><bcs:AcctKey>{{accountKey}}</bcs:AcctKey><bcs:AcctInfo><bcc:AcctCode>{{accountCode}}</bcc:AcctCode><bcc:PaymentType>1</bcc:PaymentType><bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>{{creditLimit}}</bcc:LimitValue></bcc:CreditLimit></bcs:AcctInfo></bcs:Account><bcs:Subscriber><bcs:SubscriberKey>{{subscriberKey}}</bcs:SubscriberKey><bcs:SubscriberInfo><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>{{msisdn}}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:Status>{{subscriberStatus}}</bcc:Status></bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>1</bcs:PaymentMode><bcs:PayRelationKey>{{payRelationKey}}</bcs:PayRelationKey><bcs:AcctKey>{{accountKey}}</bcs:AcctKey></bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>{{newOfferingId}}</bcc:OfferingID></bcc:OfferingKey><bcc:Status>{{subscriberStatus}}</bcc:Status></bcs:PrimaryOffering></CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>"
+                },
+                "url": "{{baseUrl}}/services/BcServices"
+              }
+            },
+            {
+              "name": "Create Hybrid Subscriber + Accounts",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/xml; charset=utf-8"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  },
+                  "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>CreateSubscriber</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><CreateSubscriberRequest><bcs:RegisterCustomer OpType=\"2\"><bcs:CustKey>{{customerKey}}</bcs:CustKey></bcs:RegisterCustomer><bcs:Account><bcs:AcctKey>{{hybridPostpaidAccountKey}}</bcs:AcctKey><bcs:AcctInfo><bcc:AcctCode>{{hybridPostpaidAccountCode}}</bcc:AcctCode><bcc:PaymentType>1</bcc:PaymentType><bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>{{creditLimit}}</bcc:LimitValue></bcc:CreditLimit></bcs:AcctInfo></bcs:Account><bcs:Account><bcs:AcctKey>{{hybridPrepaidAccountKey}}</bcs:AcctKey><bcs:AcctInfo><bcc:AcctCode>{{hybridPrepaidAccountCode}}</bcc:AcctCode><bcc:PaymentType>0</bcc:PaymentType></bcs:AcctInfo></bcs:Account><bcs:Subscriber><bcs:SubscriberKey>{{subscriberKey}}</bcs:SubscriberKey><bcs:SubscriberInfo><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>{{msisdn}}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:Status>{{subscriberStatus}}</bcc:Status></bcs:SubscriberInfo><bcs:SubPaymentMode><bcs:PaymentMode>2</bcs:PaymentMode><bcs:AcctList><bcs:AcctKey>{{hybridPostpaidAccountKey}}</bcs:AcctKey><bcs:DEFAcctFlag>Y</bcs:DEFAcctFlag></bcs:AcctList><bcs:AcctList><bcs:AcctKey>{{hybridPrepaidAccountKey}}</bcs:AcctKey><bcs:DEFAcctFlag>N</bcs:DEFAcctFlag></bcs:AcctList><bcs:PayRelation><bcs:PayRelationKey>{{hybridPostpaidPayRelationKey}}</bcs:PayRelationKey><bcs:AcctKey>{{hybridPostpaidAccountKey}}</bcs:AcctKey><bcs:Priority>50</bcs:Priority></bcs:PayRelation><bcs:PayRelation><bcs:PayRelationKey>{{hybridPrepaidPayRelationKey}}</bcs:PayRelationKey><bcs:AcctKey>{{hybridPrepaidAccountKey}}</bcs:AcctKey><bcs:Priority>51</bcs:Priority></bcs:PayRelation></bcs:SubPaymentMode></bcs:Subscriber><bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>{{hybridOfferingId}}</bcc:OfferingID></bcc:OfferingKey><bcc:Status>{{subscriberStatus}}</bcc:Status></bcs:PrimaryOffering></CreateSubscriberRequest></bcs:CreateSubscriberRequestMsg></soapenv:Body></soapenv:Envelope>"
+                },
+                "url": "{{baseUrl}}/services/BcServices"
+              }
+            }
+          ]
         },
         {
           "name": "Query Subscriber Balance",

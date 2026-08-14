@@ -8,16 +8,16 @@ import { CbsClient } from '../src';
 const successResponse = `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
     <soapenv:Body>
-      <bcs:CreateSubscriberResultMsg xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices">
+      <bcs:AcctDeactivationResultMsg xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices">
         <bcs:ResultHeader>
           <cbs:ResultCode xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">0</cbs:ResultCode>
           <cbs:ResultDesc xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">Success</cbs:ResultDesc>
         </bcs:ResultHeader>
-      </bcs:CreateSubscriberResultMsg>
+      </bcs:AcctDeactivationResultMsg>
     </soapenv:Body>
   </soapenv:Envelope>`;
 
-test('serializes the application-owned customer and account identifiers', async () => {
+test('serializes account deregistration by account code', async () => {
   let requestBody = '';
   const server: Server = createServer((request, response) => {
     const chunks: Buffer[] = [];
@@ -43,39 +43,14 @@ test('serializes the application-owned customer and account identifiers', async 
       rejectUnauthorized: false,
     });
 
-    await client.createPrepaidSubscriber('271004887', {
-      customerKey: 'CUSTOMER-1',
-      subscriberKey: 'SUBSCRIBER-1',
-      offeringId: '123',
-      status: 1,
-      accounts: [
-        {
-          accountKey: 'ACCOUNT-1',
-          accountCode: 'ACCOUNT-1',
-          paymentRelationKey: 'RELATION-1',
-          paymentType: 0,
-        },
-      ],
+    await client.acctDeactivation({
+      accountCode: 'ACCOUNT-1',
+      opType: '2',
     });
 
-    assert.match(requestBody, /<bcs:RegisterCustomer OpType="2">/);
-    assert.match(requestBody, /<bcs:CustKey>CUSTOMER-1<\/bcs:CustKey>/);
-    assert.match(requestBody, /<bcs:SubscriberKey>SUBSCRIBER-1<\/bcs:SubscriberKey>/);
-    assert.match(requestBody, /<bcs:AcctKey>ACCOUNT-1<\/bcs:AcctKey>/);
-    assert.match(requestBody, /<bcc:AcctCode>ACCOUNT-1<\/bcc:AcctCode>/);
-    assert.match(requestBody, /<bcs:PayRelationKey>RELATION-1<\/bcs:PayRelationKey>/);
-    assert.match(requestBody, /<bcc:Status>1<\/bcc:Status>/);
-
-    await client.createPrepaidSubscriber('271004888', {
-      customerKey: 'CUSTOMER-2',
-      subscriberKey: 'SUBSCRIBER-2',
-      offeringId: '123',
-      status: 1,
-    });
-
-    assert.doesNotMatch(requestBody, /<bcs:Account>/);
-    assert.match(requestBody, /<bcs:PaymentMode>0<\/bcs:PaymentMode>/);
-    assert.doesNotMatch(requestBody, /<bcs:PayRelationKey>/);
+    assert.match(requestBody, /<bcs:AcctDeactivationRequestMsg>/);
+    assert.match(requestBody, /<bcc:AccountCode>ACCOUNT-1<\/bcc:AccountCode>/);
+    assert.match(requestBody, /<bcs:OpType>2<\/bcs:OpType>/);
   } finally {
     server.close();
     await once(server, 'close');

@@ -1,4 +1,7 @@
 import type {
+  AcctDeactivationOptions,
+  AcctDeactivationOutput,
+  AcctDeactivationResponse,
   CbsClientOptions,
   QueryCustomerInfoOptions,
   QueryCustomerInfoKey,
@@ -55,6 +58,7 @@ import type {
   DeleteNumberResult,
   DeleteNumberData,
   CreateSubscriberOptions,
+  CreateSubscriberAccountOptions,
   CreateSubscriberOutput,
   CreateSubscriberResponse,
   SubActivationOptions,
@@ -65,6 +69,13 @@ import type {
   ChangeSubscriberStatusOptions,
   ChangeSubscriberStatusOutput,
   ChangeSubscriberStatusResponse,
+  CbsAccountInfo,
+  CbsAddressInfo,
+  CbsCustomerBasicInfo,
+  CbsIndividualInfo,
+  CbsNoticeSuppression,
+  CbsOrganizationInfo,
+  CbsProperty,
 } from '../types';
 import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
@@ -106,6 +117,67 @@ function keyXml(prefix: 'Cust' | 'Acct' | 'Sub', key: QueryCustomerInfoKey): str
   return `<bcs:${container}><bcc:${suffix}>${xmlEscape(String(value))}</bcc:${suffix}></bcs:${container}>`;
 }
 
+function propertyXml(properties: CbsProperty[] | undefined, element: string): string {
+  return (properties ?? [])
+    .map(
+      (property) =>
+        `<${element}><bcc:Code>${xmlEscape(property.code)}</bcc:Code><bcc:Value>${xmlEscape(property.value)}</bcc:Value></${element}>`,
+    )
+    .join('');
+}
+
+function customerBasicInfoXml(
+  info: CbsCustomerBasicInfo | undefined,
+  customerSegment?: string,
+): string {
+  if (!info && customerSegment === undefined) return '';
+  const content = `${tag('bcc:CustSegment', customerSegment)}${tag('bcc:DFTPwd', info?.defaultPassword)}${tag('bcc:DFTWrittenLang', info?.defaultWrittenLanguage)}${tag('bcc:DFTIVRLang', info?.defaultIvrLanguage)}${tag('bcc:DFTBillCycleType', info?.defaultBillCycleType)}${tag('bcc:DFTCurrencyID', info?.defaultCurrencyId)}${tag('bcc:CustLevel', info?.customerLevel)}${tag('bcc:CustLoyalty', info?.customerLoyalty)}${tag('bcc:DunningFlag', info?.dunningFlag)}${propertyXml(info?.properties, 'bcc:CustProperty')}`;
+  return `<bcs:CustBasicInfo>${content}</bcs:CustBasicInfo>`;
+}
+
+function noticeSuppressionsXml(notices: CbsNoticeSuppression[] | undefined): string {
+  return (notices ?? [])
+    .map(
+      (notice) =>
+        `<bcc:NoticeSuppress>${tag('bcc:ChannelType', notice.channelType)}${tag('bcc:NoticeType', notice.noticeType)}${tag('bcc:SubNoticeType', notice.subNoticeType)}${tag('bcc:TemplateID', notice.templateId)}</bcc:NoticeSuppress>`,
+    )
+    .join('');
+}
+
+function individualXml(
+  info: CbsIndividualInfo | undefined,
+  element: 'bcs:IndividualInfo' | 'bcs:Individual',
+): string {
+  if (!info) return '';
+  return `<${element}>${tag('bcc:IDType', info.idType)}${tag('bcc:IDNumber', info.idNumber ?? '')}${tag('bcc:IDValidity', info.idValidity)}${tag('bcc:Title', info.title)}${tag('bcc:FirstName', info.firstName)}${tag('bcc:MiddleName', info.middleName)}${tag('bcc:LastName', info.lastName)}${tag('bcc:HomeAddressKey', info.homeAddressKey)}${tag('bcc:Gender', info.gender)}${tag('bcc:Nationality', info.nationality)}${tag('bcc:Birthday', info.birthday)}${tag('bcc:NativePlace', info.nativePlace)}${tag('bcc:MaritalStatus', info.maritalStatus)}${tag('bcc:Education', info.education)}${tag('bcc:Occupation', info.occupation)}${tag('bcc:Salary', info.salary)}${tag('bcc:OfficePhone', info.officePhone)}${tag('bcc:HomePhone', info.homePhone)}${tag('bcc:MobilePhone', info.mobilePhone)}${tag('bcc:Fax', info.fax)}${tag('bcc:Email', info.email)}${propertyXml(info.properties, 'bcc:IndividualProperty')}</${element}>`;
+}
+
+function organizationXml(
+  info: CbsOrganizationInfo | undefined,
+  element: 'bcs:OrgInfo' | 'bcs:Organization',
+): string {
+  if (!info) return '';
+  return `<${element}>${tag('bcc:IDType', info.idType)}${tag('bcc:IDNumber', info.idNumber)}${tag('bcc:IDValidity', info.idValidity)}${tag('bcc:OrgType', info.organizationType)}${tag('bcc:OrgName', info.name)}${tag('bcc:OrgShortName', info.shortName)}${tag('bcc:OrgLevel', info.level)}${tag('bcc:OrgAddressKey', info.addressKey)}${tag('bcc:OrgSize', info.size)}${tag('bcc:Industry', info.industry)}${tag('bcc:SubIndustry', info.subIndustry)}${tag('bcc:OrgPhoneNumber', info.phoneNumber)}${tag('bcc:OrgFaxNumber', info.faxNumber)}${tag('bcc:OrgEmail', info.email)}${tag('bcc:OrgWebSite', info.website)}${propertyXml(info.properties, 'bcc:OrgProperty')}</${element}>`;
+}
+
+function addressXml(info: CbsAddressInfo | undefined): string {
+  if (!info) return '';
+  return `<bcs:AddressInfo>${tag('bcc:AddressKey', info.addressKey)}${tag('bcc:Address1', info.address1)}${tag('bcc:Address2', info.address2)}${tag('bcc:Address3', info.address3)}${tag('bcc:Address4', info.address4)}${tag('bcc:Address5', info.address5)}${tag('bcc:Address6', info.address6)}${tag('bcc:Address7', info.address7)}${tag('bcc:Address8', info.address8)}${tag('bcc:Address9', info.address9)}${tag('bcc:Address10', info.address10)}${tag('bcc:Address11', info.address11)}${tag('bcc:Address12', info.address12)}${tag('bcc:PostCode', info.postCode)}</bcs:AddressInfo>`;
+}
+
+function accountInfoXml(info: CbsAccountInfo | undefined): string {
+  if (!info) return '';
+  const contact = info.contact
+    ? `<bcc:ContactInfo>${tag('bcc:Title', info.contact.title)}${tag('bcc:FirstName', info.contact.firstName)}${tag('bcc:MiddleName', info.contact.middleName)}${tag('bcc:LastName', info.contact.lastName)}${tag('bcc:AddressKey', info.contact.addressKey)}${tag('bcc:OfficePhone', info.contact.officePhone)}${tag('bcc:HomePhone', info.contact.homePhone)}${tag('bcc:MobilePhone', info.contact.mobilePhone)}${tag('bcc:Email', info.contact.email)}${tag('bcc:Fax', info.contact.fax)}</bcc:ContactInfo>`
+    : '';
+  const basic = `<bcc:AcctBasicInfo>${tag('bcc:AcctName', info.accountName)}${tag('bcc:BillLang', info.billLanguage)}${tag('bcc:DunningFlag', info.dunningFlag)}${tag('bcc:LateFeeChargeable', info.lateFeeChargeable)}${tag('bcc:RedlistFlag', info.redlistFlag)}${contact}${(info.freeBillMedia ?? []).map((medium) => `<bcc:FreeBillMedium>${tag('bcc:BMCode', medium.billingMediumCode)}${tag('bcc:BMType', medium.billingMediumType)}</bcc:FreeBillMedium>`).join('')}${propertyXml(info.properties, 'bcc:AcctProperty')}${info.redlistTimePeriod ? `<bcc:RedlistTimePeriod>${tag('bcc:EffectiveTime', info.redlistTimePeriod.effectiveTime)}${tag('bcc:ExpireTime', info.redlistTimePeriod.expireTime)}</bcc:RedlistTimePeriod>` : ''}</bcc:AcctBasicInfo>`;
+  const creditLimit =
+    info.creditLimit === undefined
+      ? ''
+      : `<bcc:CreditLimit>${tag('bcc:LimitType', info.creditLimitType)}${tag('bcc:LimitValue', info.creditLimit)}${tag('bcc:LimitPlanCode', info.creditLimitPlanCode)}</bcc:CreditLimit>`;
+  return `${tag('bcc:AcctCode', info.accountCode)}${tag('bcc:UserCustomerKey', info.userCustomerKey)}${tag('bcc:ParentAcctKey', info.parentAccountKey)}${basic}${tag('bcc:BillCycleType', info.billCycleType)}${tag('bcc:AcctType', info.accountType)}${tag('bcc:PaymentType', info.paymentType)}${tag('bcc:AcctClass', info.accountClass)}${tag('bcc:CurrencyID', info.currencyId)}${tag('bcc:InitBalance', info.initialBalance)}${creditLimit}${tag('bcc:AcctPayMethod', info.accountPaymentMethod)}`;
+}
+
 export class BcServices extends CbsServiceBase {
   protected readonly servicePath = '/services/BcServices';
 
@@ -115,33 +187,48 @@ export class BcServices extends CbsServiceBase {
     mode: 'prepaid' | 'hybrid' | 'postpaid',
   ): Promise<CreateSubscriberOutput> {
     const identity = this.normalizeMsisdn(msisdn);
-    const creationId = `${identity}_${new Date().toISOString().replace(/\D/g, '')}`;
-    const customerKey = creationId;
-    const accountKey = creationId;
-    const subscriberKey = opts.subscriberKey ?? identity;
     const primaryIdentity = opts.primaryIdentity ?? identity;
-    const secondaryIdentity = opts.secondaryIdentity ?? `123${identity}`;
     const messageSeq = opts.messageSeq ?? randomUUID();
-    const postpaid = mode === 'postpaid';
-    const accountInfo = postpaid
-      ? `<bcc:PaymentType>1</bcc:PaymentType><bcc:CreditLimit><bcc:LimitType>C_INITIAL_CREDIT_LIMIT</bcc:LimitType><bcc:LimitValue>${opts.creditLimit ?? 10000000000}</bcc:LimitValue></bcc:CreditLimit>`
-      : `<bcc:AcctCode>${accountKey}</bcc:AcctCode><bcc:BillCycleType>01</bcc:BillCycleType><bcc:AcctType>1</bcc:AcctType><bcc:PaymentType>0</bcc:PaymentType><bcc:AcctClass>1</bcc:AcctClass><bcc:CurrencyID>1054</bcc:CurrencyID><bcc:InitBalance>${opts.initialBalance ?? 100000000}</bcc:InitBalance><bcc:AcctPayMethod>1</bcc:AcctPayMethod>`;
-    const customerInfo = `<bcs:CustInfo><bcc:CustType>1</bcc:CustType><bcc:CustNodeType>1</bcc:CustNodeType><bcc:CustClass>1</bcc:CustClass><bcc:CustCode>${customerKey}</bcc:CustCode></bcs:CustInfo>`;
-    const subscriberInfo = postpaid
-      ? `<bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>${primaryIdentity}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:SubClass>1</bcc:SubClass><bcc:Status>2</bcc:Status>`
-      : `<bcc:SubBasicInfo/><bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>${primaryIdentity}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity><bcc:SubIdentity><bcc:SubIdentityType>2</bcc:SubIdentityType><bcc:SubIdentity>${secondaryIdentity}</bcc:SubIdentity><bcc:PrimaryFlag>2</bcc:PrimaryFlag></bcc:SubIdentity><bcc:SubClass>2</bcc:SubClass><bcc:NetworkType>1</bcc:NetworkType><bcc:Status>1</bcc:Status>`;
+    const accounts = this.validateSubscriberAccounts(opts.accounts, mode);
+    const accountXml = accounts
+      .map(
+        (account) =>
+          `<bcs:Account><bcs:AcctKey>${xmlEscape(account.accountKey)}</bcs:AcctKey><bcs:AcctInfo>${accountInfoXml(account)}</bcs:AcctInfo></bcs:Account>`,
+      )
+      .join('');
+    const secondaryIdentity = opts.secondaryIdentity
+      ? `<bcc:SubIdentity><bcc:SubIdentityType>2</bcc:SubIdentityType><bcc:SubIdentity>${xmlEscape(opts.secondaryIdentity)}</bcc:SubIdentity><bcc:PrimaryFlag>2</bcc:PrimaryFlag></bcc:SubIdentity>`
+      : '';
+    const subscriberInfo = `${tag('bcc:SubClass', opts.subscriberClass)}${tag('bcc:NetworkType', opts.networkType)}<bcc:SubIdentity><bcc:SubIdentityType>1</bcc:SubIdentityType><bcc:SubIdentity>${xmlEscape(primaryIdentity)}</bcc:SubIdentity><bcc:PrimaryFlag>1</bcc:PrimaryFlag></bcc:SubIdentity>${secondaryIdentity}<bcc:Status>${xmlEscape(opts.status)}</bcc:Status>`;
+    const paymentMode = mode === 'prepaid' ? 0 : mode === 'postpaid' ? 1 : 2;
+    const payment =
+      accounts.length === 0
+        ? ''
+        : paymentMode === 2
+          ? `${accounts
+              .map(
+                (account) =>
+                  `<bcs:AcctList><bcs:AcctKey>${xmlEscape(account.accountKey)}</bcs:AcctKey><bcs:DEFAcctFlag>${account.defaultAccount ? 'Y' : 'N'}</bcs:DEFAcctFlag></bcs:AcctList>`,
+              )
+              .join('')}${accounts
+              .map(
+                (account) =>
+                  `<bcs:PayRelation><bcs:PayRelationKey>${xmlEscape(account.paymentRelationKey)}</bcs:PayRelationKey><bcs:AcctKey>${xmlEscape(account.accountKey)}</bcs:AcctKey>${tag('bcs:Priority', account.priority)}${tag('bcs:OnlyPayRelFlag', account.onlyPayRelationFlag)}${tag('bcs:PaymentLimitKey', account.paymentLimitKey)}</bcs:PayRelation>`,
+              )
+              .join('')}`
+          : `<bcs:PayRelationKey>${xmlEscape(accounts[0].paymentRelationKey)}</bcs:PayRelationKey><bcs:AcctKey>${xmlEscape(accounts[0].accountKey)}</bcs:AcctKey>`;
 
     const soapPayload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">
         <soapenv:Header/><soapenv:Body><bcs:CreateSubscriberRequestMsg>
           ${this.requestHeader(opts, 'CreateSubscriber', messageSeq)}
           <CreateSubscriberRequest>
-            <bcs:RegisterCustomer OpType="1"><bcs:CustKey>${customerKey}</bcs:CustKey>${customerInfo}</bcs:RegisterCustomer>
-            <bcs:Account><bcs:AcctKey>${accountKey}</bcs:AcctKey><bcs:AcctInfo>${accountInfo}</bcs:AcctInfo></bcs:Account>
-            <bcs:Subscriber><bcs:SubscriberKey>${subscriberKey}</bcs:SubscriberKey><bcs:SubscriberInfo>${subscriberInfo}</bcs:SubscriberInfo>
-              <bcs:SubPaymentMode><bcs:PaymentMode>${postpaid ? 1 : 0}</bcs:PaymentMode><bcs:PayRelationKey>${postpaid ? accountKey : `PR_${subscriberKey}`}</bcs:PayRelationKey><bcs:AcctKey>${accountKey}</bcs:AcctKey></bcs:SubPaymentMode>
+            <bcs:RegisterCustomer OpType="2"><bcs:CustKey>${xmlEscape(opts.customerKey)}</bcs:CustKey></bcs:RegisterCustomer>
+            ${accountXml}
+            <bcs:Subscriber><bcs:SubscriberKey>${xmlEscape(opts.subscriberKey)}</bcs:SubscriberKey><bcs:SubscriberInfo>${subscriberInfo}</bcs:SubscriberInfo>
+              <bcs:SubPaymentMode><bcs:PaymentMode>${paymentMode}</bcs:PaymentMode>${payment}</bcs:SubPaymentMode>
             </bcs:Subscriber>
-            <bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${opts.offeringId}</bcc:OfferingID></bcc:OfferingKey><bcc:BundledFlag>S</bcc:BundledFlag><bcc:OfferingClass>I</bcc:OfferingClass><bcc:Status>${postpaid ? 2 : 1}</bcc:Status></bcs:PrimaryOffering>
+            <bcs:PrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${xmlEscape(opts.offeringId)}</bcc:OfferingID></bcc:OfferingKey>${tag('bcc:OfferingClass', opts.offeringClass)}<bcc:Status>${xmlEscape(opts.status)}</bcc:Status></bcs:PrimaryOffering>
           </CreateSubscriberRequest>
         </bcs:CreateSubscriberRequestMsg></soapenv:Body>
       </soapenv:Envelope>`;
@@ -159,6 +246,57 @@ export class BcServices extends CbsServiceBase {
     if (resultCode !== '0')
       this.transport.throwCbsError(`create${mode}Subscriber`, msisdn, resultCode, resultDesc);
     return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
+  }
+
+  private validateSubscriberAccounts(
+    accounts: CreateSubscriberOptions['accounts'],
+    mode: 'prepaid' | 'hybrid' | 'postpaid',
+  ): CreateSubscriberAccountOptions[] {
+    const suppliedAccounts = accounts ?? [];
+    if (suppliedAccounts.length === 0 && mode !== 'hybrid') {
+      return [];
+    }
+    const expectedCount = mode === 'hybrid' ? 2 : 1;
+    if (suppliedAccounts.length !== expectedCount) {
+      throw createHttpError(
+        400,
+        `${mode} subscriber creation requires exactly ${expectedCount} account${expectedCount === 1 ? '' : 's'}`,
+      );
+    }
+
+    const accountKeys = suppliedAccounts.map((account) => account.accountKey);
+    const accountCodes = suppliedAccounts.map((account) => account.accountCode);
+    const relationKeys = suppliedAccounts.map((account) => account.paymentRelationKey);
+    if (new Set(accountKeys).size !== accountKeys.length) {
+      throw createHttpError(400, 'Subscriber account keys must be unique');
+    }
+    if (new Set(accountCodes).size !== accountCodes.length) {
+      throw createHttpError(400, 'Subscriber account codes must be unique');
+    }
+    if (new Set(relationKeys).size !== relationKeys.length) {
+      throw createHttpError(400, 'Subscriber payment relation keys must be unique');
+    }
+    if (suppliedAccounts.some((account) => account.accountKey !== account.accountCode)) {
+      throw createHttpError(400, 'Each subscriber account key must match its account code');
+    }
+
+    const paymentTypes = suppliedAccounts.map((account) => account.paymentType);
+    if (mode === 'prepaid' && paymentTypes[0] !== 0) {
+      throw createHttpError(400, 'Prepaid subscriber accounts must use paymentType 0');
+    }
+    if (mode === 'postpaid' && paymentTypes[0] !== 1) {
+      throw createHttpError(400, 'Postpaid subscriber accounts must use paymentType 1');
+    }
+    if (mode === 'hybrid' && new Set(paymentTypes).size !== 2) {
+      throw createHttpError(400, 'Hybrid subscribers require one prepaid and one postpaid account');
+    }
+    if (
+      mode === 'hybrid' &&
+      suppliedAccounts.filter((account) => account.defaultAccount).length !== 1
+    ) {
+      throw createHttpError(400, 'Hybrid subscribers require exactly one default account');
+    }
+    return suppliedAccounts;
   }
 
   createPrepaidSubscriber(
@@ -234,13 +372,14 @@ export class BcServices extends CbsServiceBase {
   }
 
   async createCustomer(opts: CreateCustomerOptions): Promise<CbsMutationOutput> {
-    const individual = opts.individual
-      ? `<bcs:IndividualInfo>${tag('bcc:IDType', opts.individual.idType)}${tag('bcc:IDNumber', opts.individual.idNumber ?? '')}${tag('bcc:Title', opts.individual.title)}${tag('bcc:FirstName', opts.individual.firstName)}${tag('bcc:LastName', opts.individual.lastName)}${tag('bcc:Gender', opts.individual.gender)}${tag('bcc:Nationality', opts.individual.nationality)}${tag('bcc:Birthday', opts.individual.birthday)}${tag('bcc:MobilePhone', opts.individual.mobilePhone)}${tag('bcc:Email', opts.individual.email)}</bcs:IndividualInfo>`
+    const customerInfo = `<bcs:CustInfo>${tag('bcc:CustType', opts.customerType)}${tag('bcc:CustNodeType', opts.customerNodeType)}${tag('bcc:CustClass', opts.customerClass)}${tag('bcc:CustCode', opts.customerCode)}${tag('bcc:ParentCustKey', opts.parentCustomerKey)}${customerBasicInfoXml(opts.customerBasicInfo, opts.customerSegment)}${noticeSuppressionsXml(opts.noticeSuppressions)}</bcs:CustInfo>`;
+    const defaultAccount = opts.defaultAccount
+      ? `<bcs:DFTAccount><bcs:PayRelationKey>${xmlEscape(opts.defaultAccount.paymentRelationKey)}</bcs:PayRelationKey><bcs:AcctKey>${xmlEscape(opts.defaultAccount.accountKey)}</bcs:AcctKey>${opts.defaultAccount.account ? `<bcs:AcctInfo>${accountInfoXml(opts.defaultAccount.account)}</bcs:AcctInfo>` : ''}</bcs:DFTAccount>`
       : '';
-    const organization = opts.organization
-      ? `<bcs:OrgInfo>${tag('bcc:IDType', opts.organization.idType)}${tag('bcc:IDNumber', opts.organization.idNumber)}${tag('bcc:OrgType', opts.organization.organizationType)}${tag('bcc:OrgName', opts.organization.name)}${tag('bcc:Industry', opts.organization.industry)}${tag('bcc:OrgPhoneNumber', opts.organization.phoneNumber)}${tag('bcc:OrgEmail', opts.organization.email)}</bcs:OrgInfo>`
+    const salesInfo = opts.salesInfo
+      ? `<bcs:SalesInfo>${tag('bcc:SalesChannelID', opts.salesInfo.salesChannelId)}${tag('bcc:SalesID', opts.salesInfo.salesId)}</bcs:SalesInfo>`
       : '';
-    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:CreateCustomerRequestMsg>${this.requestHeader(opts, 'CreateCustomer', opts.messageSeq ?? randomUUID())}<CreateCustomerRequest><bcs:RegisterCustKey>${xmlEscape(opts.registerCustKey)}</bcs:RegisterCustKey><bcs:Customer><bcs:CustKey>${xmlEscape(opts.customerKey)}</bcs:CustKey><bcs:CustInfo>${tag('bcc:CustType', opts.customerType)}${tag('bcc:CustNodeType', opts.customerNodeType)}${tag('bcc:CustClass', opts.customerClass)}${tag('bcc:CustCode', opts.customerCode)}${opts.customerSegment === undefined ? '' : `<bcc:CustBasicInfo>${tag('bcc:CustSegment', opts.customerSegment)}</bcc:CustBasicInfo>`}</bcs:CustInfo>${individual}${organization}</bcs:Customer></CreateCustomerRequest></bcs:CreateCustomerRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:CreateCustomerRequestMsg>${this.requestHeader(opts, 'CreateCustomer', opts.messageSeq ?? randomUUID())}<CreateCustomerRequest><bcs:RegisterCustKey>${xmlEscape(opts.registerCustKey)}</bcs:RegisterCustKey><bcs:Customer><bcs:CustKey>${xmlEscape(opts.customerKey)}</bcs:CustKey>${customerInfo}${individualXml(opts.individual, 'bcs:IndividualInfo')}${organizationXml(opts.organization, 'bcs:OrgInfo')}</bcs:Customer>${defaultAccount}${addressXml(opts.addressInfo)}${salesInfo}${tag('bcs:EffectiveTime', opts.effectiveTime)}</CreateCustomerRequest></bcs:CreateCustomerRequestMsg></soapenv:Body></soapenv:Envelope>`;
     return this.mutation('createCustomer', payload, opts.customerKey);
   }
 
@@ -250,17 +389,7 @@ export class BcServices extends CbsServiceBase {
       : opts.customerCode
         ? { customerCode: opts.customerCode }
         : { primaryIdentity: opts.primaryIdentity ?? '' };
-    const individual = opts.individual
-      ? `<bcs:Individual>${tag('bcc:IDType', opts.individual.idType)}${tag('bcc:IDNumber', opts.individual.idNumber ?? '')}${tag('bcc:Title', opts.individual.title)}${tag('bcc:FirstName', opts.individual.firstName)}${tag('bcc:LastName', opts.individual.lastName)}${tag('bcc:Gender', opts.individual.gender)}${tag('bcc:Nationality', opts.individual.nationality)}${tag('bcc:Birthday', opts.individual.birthday)}${tag('bcc:MobilePhone', opts.individual.mobilePhone)}${tag('bcc:Email', opts.individual.email)}</bcs:Individual>`
-      : '';
-    const organization = opts.organization
-      ? `<bcs:Organization>${tag('bcc:IDType', opts.organization.idType)}${tag('bcc:IDNumber', opts.organization.idNumber ?? '')}${tag('bcc:OrgType', opts.organization.organizationType)}${tag('bcc:OrgName', opts.organization.name)}${tag('bcc:Industry', opts.organization.industry)}${tag('bcc:OrgPhoneNumber', opts.organization.phoneNumber)}${tag('bcc:OrgEmail', opts.organization.email)}</bcs:Organization>`
-      : '';
-    const basic =
-      opts.customerSegment === undefined
-        ? ''
-        : `<bcs:CustBasicInfo>${tag('bcc:CustSegment', opts.customerSegment)}</bcs:CustBasicInfo>`;
-    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeCustInfoRequestMsg>${this.requestHeader(opts, 'ChangeCustInfo', opts.messageSeq ?? randomUUID())}<ChangeCustInfoRequest>${keyXml('Cust', key)}<bcs:CustInfo>${basic}${individual}${organization}</bcs:CustInfo>${tag('bcs:NewCustomerKey', opts.newCustomerKey)}</ChangeCustInfoRequest></bcs:ChangeCustInfoRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeCustInfoRequestMsg>${this.requestHeader(opts, 'ChangeCustInfo', opts.messageSeq ?? randomUUID())}<ChangeCustInfoRequest>${keyXml('Cust', key)}<bcs:CustInfo>${customerBasicInfoXml(opts.customerBasicInfo, opts.customerSegment)}${individualXml(opts.individual, 'bcs:Individual')}${organizationXml(opts.organization, 'bcs:Organization')}</bcs:CustInfo>${addressXml(opts.addressInfo)}${propertyXml(opts.additionalProperties, 'bcs:AdditionalProperty')}${tag('bcs:NewCustomerKey', opts.newCustomerKey)}</ChangeCustInfoRequest></bcs:ChangeCustInfoRequestMsg></soapenv:Body></soapenv:Envelope>`;
     return this.mutation(
       'changeCustomerInfo',
       payload,
@@ -273,6 +402,7 @@ export class BcServices extends CbsServiceBase {
     return this.mutation('createAccount', payload, opts.accountKey);
   }
 
+  /** @deprecated Use the typed subscriber creation methods instead. */
   async createSubscriberForAccount(
     opts: CreateSubscriberRequestOptions,
   ): Promise<CbsMutationOutput> {
@@ -909,6 +1039,7 @@ export class BcServices extends CbsServiceBase {
     return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
   }
 
+  /** @deprecated Use the individual delete, create, and activation methods instead. */
   async poolActivation(msisdn: string, opts: PoolActivationOptions): Promise<PoolActivationOutput> {
     const query = await this.queryCustomerInfo(msisdn);
     if (String(query.data['bcs:PaymentType']) !== '0') {
@@ -1098,6 +1229,49 @@ export class BcServices extends CbsServiceBase {
     }
 
     this.log('verbose', 'custDeactivation - success', { messageSeq });
+    return { metadata: resultMsg };
+  }
+
+  async acctDeactivation(opts: AcctDeactivationOptions): Promise<AcctDeactivationOutput> {
+    if (!opts.opType) {
+      throw createHttpError(400, 'opType is required for AcctDeactivation');
+    }
+
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    const accountAccessCode = this.getAccountAccessCode(opts);
+    const payType = tag('bcs:PayType', opts.payType);
+    this.log('verbose', 'acctDeactivation - sending request', { opts });
+
+    const payload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:AcctDeactivationRequestMsg>
+            ${this.requestHeader(opts, 'AcctDeactivation', messageSeq)}
+            <AcctDeactivationRequest>
+              <bcs:AcctAccessCode>${accountAccessCode}${payType}</bcs:AcctAccessCode>
+              <bcs:OpType>${xmlEscape(opts.opType)}</bcs:OpType>
+            </AcctDeactivationRequest>
+          </bcs:AcctDeactivationRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const accessValue = opts.accountKey ?? opts.accountCode ?? opts.primaryIdentity ?? '';
+    const response = await this.transport.post(
+      this.servicePath,
+      payload,
+      'acctDeactivation',
+      accessValue,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<AcctDeactivationResponse>(
+      response,
+      this.transport.stringParser,
+    );
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('acctDeactivation', accessValue, resultCode, resultDesc);
+    }
+
+    this.log('verbose', 'acctDeactivation - success', { accessValue, messageSeq });
     return { metadata: resultMsg };
   }
 }

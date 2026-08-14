@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 
 import type {
+  AcctDeactivationOptions,
   CbsClientOptions,
   CbsRequestOptions,
   CustActivationOptions,
@@ -55,6 +56,27 @@ export abstract class CbsServiceBase {
       return `<bcc:CustomerKey>${opts.customerKey}</bcc:CustomerKey>`;
     }
     return `<bcc:CustomerCode>${opts.customerCode}</bcc:CustomerCode>`;
+  }
+
+  protected getAccountAccessCode(opts: AcctDeactivationOptions): string {
+    const accessCodes = [opts.primaryIdentity, opts.accountKey, opts.accountCode].filter(
+      (value) => value !== undefined && value !== '',
+    );
+
+    if (accessCodes.length !== 1) {
+      throw createHttpError(
+        400,
+        'Provide exactly one of primaryIdentity, accountKey, or accountCode',
+      );
+    }
+
+    if (opts.primaryIdentity !== undefined && opts.primaryIdentity !== '') {
+      return `<bcc:PrimaryIdentity>${opts.primaryIdentity}</bcc:PrimaryIdentity>`;
+    }
+    if (opts.accountKey !== undefined && opts.accountKey !== '') {
+      return `<bcc:AccountKey>${opts.accountKey}</bcc:AccountKey>`;
+    }
+    return `<bcc:AccountCode>${opts.accountCode}</bcc:AccountCode>`;
   }
 
   protected requestHeader(

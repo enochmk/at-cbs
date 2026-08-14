@@ -7,11 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+No changes yet.
+
+## [2.1.0] - 2026-08-14
+
 ### Added
 
 - Added `changeCustomerInfo()` for customer profile updates by customer key, customer code, or primary identity.
 - Documented customer queries by both customer key and customer code.
 - Documented empty individual `IDNumber` handling for customer creation and updates.
+- Added customer, account, and subscriber hierarchy creation support with application-owned keys.
+- Added optional R25 customer, individual, organization, address, sales, and account fields.
+- Added `acctDeactivation()` for account deregistration.
+- Added complete usage and cleanup documentation for customer, account, and subscriber flows.
+
+### Changed
+
+- Subscriber creation now supports prepaid, postpaid, and hybrid accounts in one request.
+- Credit-limit scaling and individual ID-type selection remain application responsibilities.
+- Removed live/manual test scripts that loaded CBS credentials from environment files.
+
+### Deprecated
+
+- Deprecated `createSubscriberForAccount()` in favor of the typed subscriber creation methods.
+- Deprecated `poolActivation()` in favor of explicit delete, create, and activation calls.
 
 ## [2.0.6] - 2026-08-05
 

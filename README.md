@@ -1,326 +1,459 @@
 # @enochmk/cbs-client
 
-CBS (Core Billing System) SOAP API client for AirtelTigo.
+TypeScript SOAP client for AirtelTigo Huawei CBS R25 customer, account, subscriber, balance,
+offering, lifecycle, and transaction operations.
 
-## Installation
+## Install
 
 ```bash
 npm install @enochmk/cbs-client
 ```
 
-## Quick Start
+The package publishes only the compiled `dist` directory. The repository contains unit tests and
+the Postman collection, but no live-CBS test scripts.
+
+## Configure the client
+
+Keep CBS credentials in your application's secret manager or environment. Never put credentials
+in source code, tests, Postman exports, or committed `.env` files.
 
 ```typescript
 import { CbsClient } from '@enochmk/cbs-client';
 
 const client = new CbsClient({
-  baseUrl: 'https://10.40.14.26:8081',
-  username: 'your-username',
-  password: 'your-password',
+  baseUrl: process.env.CBS_BASE_URL!,
+  username: process.env.CBS_USERNAME!,
+  password: process.env.CBS_PASSWORD!,
+  rejectUnauthorized: process.env.CBS_REJECT_UNAUTHORIZED === 'true',
+  timeout: 30_000,
 });
 ```
 
-### Request options and defaults
+`rejectUnauthorized` defaults to `false` for deployments using an internal CBS certificate. Set it
+to `true` when the CBS certificate chain is trusted. The `.env.example` file contains placeholders
+only.
 
-Every operation accepts optional request-header overrides. Values supplied in an operation’s
-options take precedence over the client defaults and the operation defaults.
+## Shared request options
+
+Every request accepts optional CBS request-header overrides:
 
 ```typescript
-import {
-  CbsClient,
-  CbsRequestDefaults,
-  PaymentModeCode,
-  SubscriberStatusCode,
-} from '@enochmk/cbs-client';
-
-await client.queryCustomerInfo('271004887', {
-  messageSeq: 'customer-info-2026-08-03-001',
-  beId: '205',
-  remoteAddress: '10.20.30.40',
+await client.queryCustomerInfo('270118755', {
+  messageSeq: 'htc-query-001',
+  version: 1,
+  beId: '101',
+  operatorId: '101',
+  accessMode: 3,
+  msgLanguageCode: 2002,
+  timeType: 1,
+  remoteAddress: '10.0.0.10',
   remark: 'Customer support lookup',
-  msgLanguageCode: CbsRequestDefaults.MSG_LANGUAGE_CODE,
-  customerMask: '1100',
 });
 ```
 
-Supported shared overrides include `messageSeq`, `version`, `beId`, `operatorId`, `accessMode`,
-`msgLanguageCode`, `timeType`, `remoteAddress`, and `remark`. `queryCustomerInfo` additionally
-supports `queryMode`, `customerMask`, `accountMask`, `subscriberMask`, and `groupMask`.
+Use `CbsRequestDefaults`, `PaymentModeCode`, and `SubscriberStatusCode` instead of repeating
+stable numeric constants. MSISDNs accept 9, 10, or 12 digits and are normalized to the CBS
+9-digit primary identity format.
 
-Use `CbsRequestDefaults` for the named defaults used by this client, `PaymentModeCode` for
-payment-mode values, and `SubscriberStatusCode` for lifecycle status values. Numeric values remain
-supported for deployment-specific CBS codes.
+## Customer operations
 
-## API
+### Create a customer
 
-### `queryCustomerInfo(msisdn, options?)`
-
-Query complete customer, subscriber, account, offering, lifecycle, and billing information.
+`createCustomer` supports individual and organization information, customer basic information,
+properties, addresses, sales information, default accounts, and effective time. CAF files and HTC
+workflow metadata remain application-owned and are not sent to CBS.
 
 ```typescript
-const result = await client.queryCustomerInfo('271004887');
-
-// The complete parsed CBS response
-const metadata = result.metadata;
-
-// Access normalized fields
-const offering = result.data.PrimaryOffering;
-const supplementaryOfferings = result.data.SupplementaryOfferings;
-const firstActive = result.data.FirstActive;
-const paymentMode = result.data.PaymentMode;
-const status = result.data.CurrentStatusIndex;
-const birthday = result.data.BirthdayDate;
-const mainBalance = result.data.MainBalance;
-const billCycleEndDate = result.data['bcs:BillCycleEndDate'];
-
-// MainBalance.amountInGhc is the main account balance in Ghana cedis.
-// MainBalance.TotalAmount remains available in the original CBS units.
+await client.createCustomer({
+  registerCustKey: 'CUST-REG-20260814',
+  customerKey: 'CUST-20260814185641998',
+  customerCode: 'CUST-20260814185641998',
+  customerType: 1,
+  customerNodeType: 1,
+  customerClass: 1,
+  individual: {
+    idType: '1', // The application chooses the ID type.
+    idNumber: 'GHA-123456789-0',
+    title: 'MR',
+    firstName: 'Kwame',
+    middleName: 'Kofi',
+    lastName: 'Mensah',
+    gender: 'M',
+    nationality: 'GHA',
+    birthday: '19900101',
+    mobilePhone: '270118755',
+    email: 'kwame@example.com',
+    properties: [{ code: 'KYC_SOURCE', value: 'SHARED_KYC' }],
+  },
+  addressInfo: {
+    addressKey: 'ADDR-202608141',
+    address1: '1 Independence Avenue',
+    address2: 'Accra',
+    postCode: 'GA-000-0000',
+  },
+  customerBasicInfo: {
+    defaultWrittenLanguage: 2002,
+    properties: [{ code: 'CUSTOMER_SEGMENT', value: 'B2B' }],
+  },
+  salesInfo: { salesId: 'SALES-001', salesChannelId: 'HTC' },
+});
 ```
 
-### `queryCustomerInfoByKey(key, options?)`
-
-Query customer details using either the CBS-generated `customerCode` or the customer key used
-when the customer was created.
+For an enterprise customer, replace `individual` with `organization`:
 
 ```typescript
-await client.queryCustomerInfoByKey({ customerKey: 'HTC260812771904-TEST' });
-await client.queryCustomerInfoByKey({ customerCode: 'CBS100010000010839663' });
+await client.createCustomer({
+  registerCustKey: 'CUST-REG-ENTERPRISE-001',
+  customerKey: 'CUST-ENTERPRISE-001',
+  customerType: 1,
+  organization: {
+    idType: '1',
+    idNumber: 'BR-123456',
+    organizationType: 1,
+    name: 'Example Ghana Limited',
+    shortName: 'Example GH',
+    industry: 'Telecommunications',
+    phoneNumber: '0302000000',
+    email: 'billing@example.com',
+    website: 'https://example.com',
+  },
+});
 ```
 
-### `createCustomer(options)`
+CBS accepts `customerType` `1` for this integration. The application decides the individual or
+organization `idType`; the client passes the value through unchanged.
 
-Create an individual or organization customer. For individual customers, CBS accepts an empty
-`IDNumber`; the client emits an empty element when `idNumber` is omitted.
+### Query a customer hierarchy
 
-### `changeCustomerInfo(options)`
+Query by MSISDN or by exactly one CBS key. The parsed result includes customer, subscriber,
+account, offering, lifecycle, billing-cycle, and main-balance fields when CBS returns them.
 
-Update customer information using exactly one of `customerKey`, `customerCode`, or
-`primaryIdentity`. Individual and organization details, customer segment, and an empty
-individual `IDNumber` are supported.
+```typescript
+const byMsisdn = await client.queryCustomerInfo('270118755');
+const byCustomer = await client.queryCustomerInfoByKey({
+  customerCode: 'CUST-20260814185641998',
+});
+const byAccount = await client.queryCustomerInfoByKey({
+  accountCode: 'ACCT-20260814185641998-1',
+});
+const bySubscriber = await client.queryCustomerInfoByKey({
+  subscriberKey: 'SUB-20260814185641998-1-1',
+});
+
+console.log(byMsisdn.data.PaymentMode);
+console.log(byMsisdn.data.CurrentStatusIndex);
+console.log(byMsisdn.data.PrimaryOffering);
+console.log(byMsisdn.data.MainBalance?.amountInGhc);
+```
+
+### Update customer information
+
+`changeCustomerInfo` requires exactly one of `customerKey`, `customerCode`, or
+`primaryIdentity`.
 
 ```typescript
 await client.changeCustomerInfo({
-  customerKey: 'HTC-TEST-CUSTOMER',
-  individual: { lastName: 'CBS-Updated', idNumber: '', email: 'updated@example.com' },
+  customerKey: 'CUST-20260814185641998',
+  individual: {
+    lastName: 'Mensah-Updated',
+    idNumber: '',
+    email: 'updated@example.com',
+  },
+  additionalProperties: [{ code: 'CRM_STATUS', value: 'VERIFIED' }],
 });
 ```
 
-### `queryBalance(msisdn, options?)`
-
-Query subscriber account balances through `POST /services/ArServices`.
+### Activate or deregister a customer
 
 ```typescript
-const result = await client.queryBalance('261180256');
-const totalAmount = result.data.TotalAmount;
-const amountInGhc = result.data.amountInGhc;
-const expiresAt = result.data.ExpireTime;
-```
+await client.custActivation({ customerKey: 'CUST-20260814185641998' });
 
-### `querySubLifeCycle(msisdn, options?)`
-
-Query subscriber lifecycle state through `POST /services/BcServices`.
-
-```typescript
-const result = await client.querySubLifeCycle('261180256');
-const status = result.data.CurrentStatusIndex;
-const lifecycle = result.data.LifeCycleStatus;
-```
-
-### `queryXTransaction(msisdn, options?)`
-
-Query the last subscriber transactions using the R25 `QueryLastXTransaction` operation. The response is returned raw because the collection does not include a response example.
-
-```typescript
-const result = await client.queryXTransaction('261180256');
-console.dir(result.data, { depth: null });
-```
-
-### `queryCdrDetail(primaryIdentity, cdrSeq, options?)`
-
-Query one CDR in detail using the R25 `QueryCDRDetail` operation. This request uses `POST /services/BbServices`, not `BcServices` or `ArServices`, and returns the CBS result body without assuming a fixed CDR schema.
-
-```typescript
-const result = await client.queryCdrDetail('261180256', '123456789');
-console.dir(result.data, { depth: null });
-```
-
-`cdrSeq` is the CDR sequence identifier, not a date or MSISDN. Obtain it from your transaction/reporting flow or from a response that exposes CDR sequence values.
-
-### Customer versus subscriber operations
-
-`SubActivation` and `SubDeactivation` target one subscriber, normally identified by an MSISDN or `SubscriberKey`. `CustActivation` and `CustDeactivation` target the customer entity and may affect all subscribers and services belonging to that customer. Customer operations accept exactly one of `primaryIdentity`, `customerKey`, or `customerCode`.
-
-Use the smallest scope that matches the change:
-
-| Operation          | Target                    | Typical identifier                                           | `opType`                      |
-| ------------------ | ------------------------- | ------------------------------------------------------------ | ----------------------------- |
-| `SubActivation`    | One subscriber            | MSISDN or `SubscriberKey`                                    | Not used by this request      |
-| `SubDeactivation`  | One subscriber            | MSISDN or `SubscriberKey`                                    | Required; deployment-specific |
-| `CustActivation`   | Customer and its services | `customerKey`, `customerCode`, or customer `primaryIdentity` | Not used by this request      |
-| `CustDeactivation` | Customer and its services | `customerKey`, `customerCode`, or customer `primaryIdentity` | Required; deployment-specific |
-
-Do not use an MSISDN as a customer `primaryIdentity` unless your CBS configuration defines that MSISDN as the customer's primary identity. Prefer `customerKey` or `customerCode` when available.
-
-### `custActivation(options)`
-
-Activate a customer using the R25 `CustActivation` operation.
-
-```typescript
-await client.custActivation({
-  customerKey: '123456',
-});
-```
-
-### `subDeactivation(msisdn, options)`
-
-Deactivate a subscriber using the R25 `SubDeactivation` operation. `opType` is required and must be a value configured in your CBS deployment; the collection does not define a universal value.
-
-```typescript
-await client.subDeactivation('261180256', {
-  opType: process.env.CBS_SUB_DEACTIVATION_OP_TYPE!,
-});
-```
-
-### `custDeactivation(options)`
-
-Deactivate a customer using exactly one of `primaryIdentity`, `customerKey`, or `customerCode`, plus the deployment-specific `opType`.
-
-```typescript
 await client.custDeactivation({
-  customerKey: '123456',
-  opType: process.env.CBS_CUST_DEACTIVATION_OP_TYPE!,
+  customerKey: 'CUST-20260814185641998',
+  opType: '2', // Normal deregistration in the R25 reference.
 });
 ```
 
-`effectiveTime` is optional and uses the CBS timestamp format `YYYYMMDDhhmmss`:
+Customer deregistration requires no valid subscriber or account references. For cleanup, delete
+subscribers first, then accounts, then the customer.
+
+## Account operations
+
+### Create a standalone account
+
+Use `createAccount` when an account must be provisioned independently. When creating a subscriber
+and its account together, prefer the typed subscriber creation methods below.
 
 ```typescript
-await client.subDeactivation('261180256', {
-  opType: process.env.CBS_SUB_DEACTIVATION_OP_TYPE!,
-  effectiveTime: '20260803235959',
+await client.createAccount({
+  registerCustKey: 'CUST-20260814185641998',
+  accountKey: 'ACCT-20260814185641998-1',
+  accountCode: 'ACCT-20260814185641998-1',
+  userCustomerKey: 'CUST-20260814185641998',
+  paymentType: 1,
+  creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+  // The application supplies CBS units: GHS 10 = 1,000,000.
+  creditLimit: 1_000_000,
 });
 ```
 
-### Recommended state-change workflow
+Credit limits are passed unchanged. The client does not multiply or divide the value.
 
-Before changing state, query the subscriber and record the current status:
-
-```typescript
-const before = await client.querySubLifeCycle('261180256');
-console.dir(before.data, { depth: null });
-```
-
-After a successful activation or deactivation, query the lifecycle again. A normal active subscriber should report `CurrentStatusIndex` `2` (`Active`). A `SubDeactivation` can move a subscriber into `Pool`. In that state, CBS may reject `ChangeSubStatus` and `SubActivation` with:
-
-```text
-The subscriber is in Pool state, and service handling is not allowed.
-```
-
-That is not an `opType` or XML formatting error. The subscriber must first be restored from Pool through the CBS provisioning or administration workflow supported by your deployment. Once it is restored to an eligible state, use the appropriate activation or lifecycle operation.
-
-### Manual test setup
-
-Copy the example environment file and fill in the credentials and identifiers:
-
-```bash
-cp .env.example .env
-```
-
-The manual scripts use these variables:
-
-| Variable                                                     | Used by                        | Notes                                                     |
-| ------------------------------------------------------------ | ------------------------------ | --------------------------------------------------------- |
-| `CBS_BASE_URL`                                               | All scripts                    | Use the host only, for example `https://10.40.14.26:8081` |
-| `CBS_USERNAME` / `CBS_PASSWORD`                              | All scripts                    | CBS access credentials                                    |
-| `MSISDN`                                                     | Subscriber scripts             | Can be overridden by a command-line argument              |
-| `CDR_SEQ`                                                    | `QueryCDRDetail`               | Can be overridden by the second command-line argument     |
-| `CBS_SUB_DEACTIVATION_OP_TYPE`                               | `SubDeactivation`              | Must be configured in CBS; there is no universal value    |
-| `CBS_CUST_DEACTIVATION_OP_TYPE`                              | `CustDeactivation`             | Must be configured in CBS                                 |
-| `CUSTOMER_PRIMARY_IDENTITY`, `CUSTOMER_KEY`, `CUSTOMER_CODE` | Customer scripts               | Set exactly one                                           |
-| `CBS_CUSTOMER_KEY`, `CBS_CUSTOMER_CODE`                      | Customer create/change scripts | Set the identifier used by the operation                  |
-| `CBS_CUSTOMER_EMAIL`                                         | `ChangeCustInfo`               | Updated individual email                                  |
-| `CBS_EFFECTIVE_TIME`                                         | Deactivation scripts           | Optional `YYYYMMDDhhmmss` value                           |
-
-Run the read-only checks first:
-
-```bash
-npm run test:query-sub-life-cycle -- 261180256
-npm run test:query-x-transaction -- 261180256
-npm run test:query-cdr-detail -- 261180256 123456789
-```
-
-Run subscriber operations with an optional MSISDN argument:
-
-```bash
-npm run test:sub-deactivation -- 261180256
-```
-
-Run customer operations using the customer identifier from `.env`:
-
-```bash
-npm run test:cust-activation
-npm run test:cust-deactivation
-```
-
-Activation and deactivation scripts change CBS state and do not have an extra confirmation prompt. Verify the identifier and operation code before running them.
-
-The complete parsed response is available under `result.metadata`. The request does not send a `SoapAction` header and treats result code `0` as success.
-
-The normalized code mappings are:
-
-- `PaymentMode`: `0` prepaid, `1` postpaid, `2` hybrid
-- `CurrentStatusIndex`: `1` Idle, `2` Active, `3` Call Barring, `4` Suspend, `6` Tested, `7` In stock, `8` Pre-deregistration
-
-The `QueryCustomerInfo` request uses `POST /services/BcServices` and does not send a `SoapAction` header.
-
-TLS certificate validation is disabled by default because CBS deployments commonly use an internal/self-signed certificate. Set `rejectUnauthorized: true` when the certificate chain is trusted normally. The `.env` file is git-ignored.
-
-## Options
-
-### CbsClientOptions
-
-| Property             | Type      | Required | Description                                                            |
-| -------------------- | --------- | -------- | ---------------------------------------------------------------------- |
-| `baseUrl`            | `string`  | Yes      | CBS server base URL (e.g., `https://10.40.14.26:8081`)                 |
-| `username`           | `string`  | Yes      | Authentication username                                                |
-| `password`           | `string`  | Yes      | Authentication password                                                |
-| `timeout`            | `number`  | No       | Request timeout in ms (default: `15000`)                               |
-| `rejectUnauthorized` | `boolean` | No       | TLS certificate validation (default: `false`)                          |
-| `logger`             | `Logger`  | No       | Logger object with `info`, `warn`, `error`, `debug`, `verbose` methods |
-
-### MSISDN Format
-
-MSISDNs are automatically normalized to 9 digits. Accepts:
-
-- 9 digits: `271004887`
-- 10 digits: `2710048870`
-- 12 digits: `233271004887`
-
-## Types
-
-All response types are fully typed:
+### Update an account credit limit
 
 ```typescript
-import type { QueryCustomerInfoOutput, QueryBalanceOutput } from '@enochmk/cbs-client';
+await client.changeAccountCreditLimit({
+  accountCode: 'ACCT-20260814185641998-1',
+  creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+  newLimitAmount: 2_000_000,
+});
 ```
 
-## Error Handling
+### Add or remove payment relations
 
-The client throws `HttpError` on failures:
+Identify the account, subscriber, customer, or primary identity with exactly one supported access
+key. Supply either `addPayRelation` or `deletePayRelationKey` as required by the operation.
 
 ```typescript
-try {
-  const result = await client.queryCustomerInfo('271004887');
-} catch (err: any) {
-  if (err.status === 400) {
-    // Invalid MSISDN
-  } else if (err.status === 422) {
-    // CBS error (check err.message for details)
-  } else if (err.status === 502) {
-    // Network or SOAP error
-  }
+await client.changePaymentRelation({
+  accountKey: 'ACCT-20260814185641998-1',
+  addPayRelation: {
+    payRelationKey: 'PAY-20260814185641998-5',
+    accountKey: 'ACCT-20260814185641998-1',
+    priority: 50,
+  },
+});
+
+await client.changePaymentRelation({
+  accountKey: 'ACCT-20260814185641998-1',
+  deletePayRelationKey: 'PAY-20260814185641998-5',
+});
+```
+
+### Deregister an account
+
+```typescript
+await client.acctDeactivation({
+  accountCode: 'ACCT-20260814185641998-1',
+  opType: '2', // Deregister in the R25 reference.
+});
+```
+
+An account cannot be deregistered while it is a default account or has valid payment relations.
+Remove the subscriber/payment relationships first.
+
+## Subscriber operations
+
+### Create prepaid, postpaid, or hybrid subscribers
+
+The application owns every key. `customerKey` must equal the parent customer key. Each account's
+`accountKey` and `accountCode` must match and be unique; payment relation keys must also be unique.
+The client does not generate identifiers, choose identity types, or transform credit limits.
+
+```typescript
+const common = {
+  customerKey: 'CUST-20260814185641998',
+  subscriberKey: 'SUB-20260814185641998-1-1',
+  offeringId: '2018105068',
+  status: 1,
+};
+
+await client.createPostpaidSubscriber('270118755', {
+  ...common,
+  accounts: [
+    {
+      accountKey: 'ACCT-20260814185641998-1',
+      accountCode: 'ACCT-20260814185641998-1',
+      paymentRelationKey: 'PAY-20260814185641998-1',
+      paymentType: 1,
+      creditLimit: 1_000_000,
+    },
+  ],
+});
+
+await client.createPrepaidSubscriber('270105755', {
+  customerKey: 'CUST-20260814185641998',
+  subscriberKey: 'SUB-20260814185641998-2-1',
+  offeringId: '2018246521',
+  status: 1,
+  // Omit accounts to create the subscriber without an account.
+});
+
+await client.createHybridSubscriber('261180254', {
+  customerKey: 'CUST-20260814185641998',
+  subscriberKey: 'SUB-20260814185641998-3-1',
+  offeringId: '2018105022',
+  status: 1,
+  accounts: [
+    {
+      accountKey: 'ACCT-20260814185641998-3',
+      accountCode: 'ACCT-20260814185641998-3',
+      paymentRelationKey: 'PAY-20260814185641998-3',
+      paymentType: 1,
+      defaultAccount: true,
+      priority: 50,
+      creditLimit: 1_000_000,
+    },
+    {
+      accountKey: 'ACCT-20260814185641998-4',
+      accountCode: 'ACCT-20260814185641998-4',
+      paymentRelationKey: 'PAY-20260814185641998-4',
+      paymentType: 0,
+      defaultAccount: false,
+      priority: 51,
+    },
+  ],
+});
+```
+
+Rules enforced by the client:
+
+- Prepaid accounts use `paymentType: 0`; postpaid accounts use `paymentType: 1`.
+- Prepaid and postpaid creation accepts zero accounts or exactly one account.
+- Hybrid creation requires exactly two accounts: one prepaid and one postpaid.
+- Hybrid creation requires exactly one default account.
+- The primary offering status is set to the supplied subscriber/account status value.
+- The client sends the supplied credit-limit value unchanged.
+
+### Update subscriber offering and payment mode
+
+```typescript
+await client.changeSubscriberOffering({
+  primaryIdentity: '270118755',
+  oldOfferingId: '2018105068',
+  newOfferingId: '2018105071',
+});
+
+await client.changeSubscriberPaymentMode({
+  primaryIdentity: '270118755',
+  paymentMode: 1,
+  oldOfferingId: '2018105068',
+  newOfferingId: '2018105071',
+  accountKey: 'ACCT-20260814185641998-1',
+  paymentRelationKey: 'PAY-20260814185641998-1',
+});
+```
+
+### Subscriber lifecycle and status
+
+```typescript
+const lifecycle = await client.querySubLifeCycle('270118755');
+console.log(lifecycle.data.CurrentStatusIndex);
+
+await client.subActivate('270118755');
+await client.changeSubscriberStatus('270118755', { status: 'CALL_BARRING' });
+await client.changeSubscriberStatus('270118755', { status: 'ACTIVE' });
+
+await client.subDeactivation('270118755', {
+  opType: '1', // Deployment-specific: use the value configured by CBS.
+});
+```
+
+Lifecycle status codes exposed by `SubscriberStatusCode` are `1` Idle, `2` Active, `3` Call
+Barring, `4` Suspend, `6` Tested, `7` In Stock, and `8` Pre-deregistration.
+
+For permanent number deletion, use `deleteNumber`. It sends `SubDeactivation` with R25
+`opType=3`:
+
+```typescript
+await client.deleteNumber('270118755', {
+  subscriberKey: 'SUB-20260814185641998-1-1',
+});
+```
+
+This is destructive. Verify the identifier and query the subscriber after the request.
+
+### Subscribe or remove an appendant offering
+
+```typescript
+const added = await client.subscribeAppendantProduct('270118755', {
+  offeringId: '2019000001',
+  bundledFlag: 'N',
+  offeringClass: 'I',
+  status: 1,
+});
+
+await client.unsubscribeAppendantProduct('270118755', {
+  offeringId: '2019000001',
+  purchaseSeq: added.data.PurchaseSeq!,
+});
+```
+
+### Deprecated subscriber helpers
+
+`createSubscriberForAccount` and `poolActivation` remain available for source compatibility but
+are deprecated. Use the typed subscriber creation methods and explicit lifecycle calls instead:
+
+```typescript
+await client.deleteNumber(msisdn);
+await client.createPrepaidSubscriber(msisdn, createOptions);
+await client.subActivate(msisdn);
+```
+
+## Balance and transaction operations
+
+```typescript
+const balance = await client.queryBalance('270118755');
+console.log(balance.data.TotalAmount, balance.data.amountInGhc);
+
+await client.adjustAccount('270118755', {
+  adjustmentAmt: 100_000,
+  balanceType: 'C_MAIN_ACCOUNT',
+  adjustmentType: 2,
+  currencyId: 1054,
+  adjustmentReasonCode: 'DNTREQ',
+  opType: 2,
+  adjustmentSerialNo: 'ADJ-20260814-001',
+});
+
+const transactions = await client.queryXTransaction('270118755');
+console.dir(transactions.data, { depth: null });
+
+const cdr = await client.queryCdrDetail('270118755', '123456789');
+console.dir(cdr.data, { depth: null });
+```
+
+`queryCdrDetail` uses `BbServices`; the other subscriber/account operations use `BcServices`, and
+balance operations use `ArServices`.
+
+## Cleanup order
+
+Use bottom-up cleanup so CBS does not reject a parent with active children:
+
+```typescript
+for (const msisdn of subscriberMsisdns) {
+  await client.deleteNumber(msisdn);
 }
+
+for (const accountCode of accountCodes) {
+  await client.acctDeactivation({ accountCode, opType: '2' });
+}
+
+await client.custDeactivation({ customerKey, opType: '2' });
 ```
+
+Query each subscriber by MSISDN, each account by account code, and the customer by customer key or
+code to confirm that CBS no longer returns the records.
+
+## Testing and release checks
+
+Tests are local HTTP-backed unit tests; they do not load credentials or connect to CBS:
+
+```bash
+npm ci
+npm run typecheck
+npm test
+npm run build
+npm pack --dry-run
+```
+
+`npm run build` is also the `prepublishOnly` hook. Review the tarball file list from
+`npm pack --dry-run` before publishing.
+
+## Postman collection
+
+`postman/cbs-client.collection.json` contains executable R25 SOAP examples. Set the collection
+variables locally before use; the committed collection contains placeholders and no credentials.
 
 ## License
 

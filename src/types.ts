@@ -50,6 +50,150 @@ export interface CbsMutationOutput {
   data: { ResultCode?: number | string; ResultDesc?: string };
 }
 
+export interface CbsProperty {
+  code: string;
+  value: string | number;
+}
+
+export interface CbsAddressInfo {
+  addressKey: string;
+  address1?: string;
+  address2?: string;
+  address3?: string;
+  address4?: string;
+  address5?: string;
+  address6?: string;
+  address7?: string;
+  address8?: string;
+  address9?: string;
+  address10?: string;
+  address11?: string;
+  address12?: string;
+  postCode?: string;
+}
+
+export interface CbsCustomerBasicInfo {
+  defaultPassword?: string;
+  defaultWrittenLanguage?: string | number;
+  defaultIvrLanguage?: string | number;
+  defaultBillCycleType?: string | number;
+  defaultCurrencyId?: string | number;
+  customerLevel?: string | number;
+  customerLoyalty?: string | number;
+  dunningFlag?: string | number;
+  properties?: CbsProperty[];
+}
+
+export interface CbsNoticeSuppression {
+  channelType: string | number;
+  noticeType: string | number;
+  subNoticeType?: string | number;
+  templateId?: string | number;
+}
+
+export interface CbsIndividualInfo {
+  idType?: string;
+  idNumber?: string;
+  idValidity?: string;
+  title?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  homeAddressKey?: string;
+  gender?: string;
+  nationality?: string;
+  birthday?: string;
+  nativePlace?: string;
+  maritalStatus?: string | number;
+  education?: string | number;
+  occupation?: string;
+  salary?: string | number;
+  officePhone?: string;
+  homePhone?: string;
+  mobilePhone?: string;
+  fax?: string;
+  email?: string;
+  properties?: CbsProperty[];
+}
+
+export interface CbsOrganizationInfo {
+  idType?: string;
+  idNumber?: string;
+  idValidity?: string;
+  organizationType?: string | number;
+  name?: string;
+  shortName?: string;
+  level?: string | number;
+  addressKey?: string;
+  size?: string | number;
+  industry?: string;
+  subIndustry?: string;
+  phoneNumber?: string;
+  faxNumber?: string;
+  email?: string;
+  website?: string;
+  properties?: CbsProperty[];
+}
+
+export interface CbsAccountContactInfo {
+  title?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  addressKey?: string;
+  officePhone?: string;
+  homePhone?: string;
+  mobilePhone?: string;
+  email?: string;
+  fax?: string;
+}
+
+export interface CbsFreeBillMedium {
+  billingMediumCode: string;
+  billingMediumType: string | number;
+}
+
+export interface CbsRedlistTimePeriod {
+  effectiveTime: string;
+  expireTime: string;
+}
+
+export interface CbsAccountInfo {
+  accountCode?: string;
+  userCustomerKey?: string;
+  parentAccountKey?: string;
+  accountName?: string;
+  billLanguage?: string | number;
+  dunningFlag?: string | number;
+  lateFeeChargeable?: string | number;
+  redlistFlag?: string | number;
+  contact?: CbsAccountContactInfo;
+  freeBillMedia?: CbsFreeBillMedium[];
+  properties?: CbsProperty[];
+  redlistTimePeriod?: CbsRedlistTimePeriod;
+  billCycleType?: string | number;
+  accountType?: string | number;
+  paymentType?: string | number;
+  accountClass?: string | number;
+  currencyId?: string | number;
+  initialBalance?: string | number;
+  creditLimitType?: string;
+  creditLimit?: string | number;
+  creditLimitPlanCode?: string;
+  accountPaymentMethod?: string | number;
+}
+
+export interface CbsDefaultAccount {
+  paymentRelationKey: string;
+  accountKey: string;
+  account?: CbsAccountInfo;
+}
+
+export interface CbsSalesInfo {
+  salesChannelId?: string | number;
+  salesId?: string | number;
+}
+
 export interface CreateCustomerOptions extends CbsRequestOptions {
   registerCustKey: string;
   customerKey: string;
@@ -57,28 +201,16 @@ export interface CreateCustomerOptions extends CbsRequestOptions {
   customerType?: number | string;
   customerNodeType?: number | string;
   customerClass?: number | string;
+  parentCustomerKey?: string;
   customerSegment?: string;
-  individual?: {
-    idType?: string;
-    idNumber?: string;
-    title?: string;
-    firstName?: string;
-    lastName?: string;
-    gender?: string;
-    nationality?: string;
-    birthday?: string;
-    mobilePhone?: string;
-    email?: string;
-  };
-  organization?: {
-    idType?: string;
-    idNumber?: string;
-    organizationType?: string;
-    name?: string;
-    industry?: string;
-    phoneNumber?: string;
-    email?: string;
-  };
+  customerBasicInfo?: CbsCustomerBasicInfo;
+  noticeSuppressions?: CbsNoticeSuppression[];
+  individual?: CbsIndividualInfo;
+  organization?: CbsOrganizationInfo;
+  defaultAccount?: CbsDefaultAccount;
+  addressInfo?: CbsAddressInfo;
+  salesInfo?: CbsSalesInfo;
+  effectiveTime?: string;
 }
 
 export interface ChangeCustomerInfoOptions extends CbsRequestOptions {
@@ -86,8 +218,11 @@ export interface ChangeCustomerInfoOptions extends CbsRequestOptions {
   customerCode?: string;
   primaryIdentity?: string;
   customerSegment?: string;
-  individual?: CreateCustomerOptions['individual'];
-  organization?: CreateCustomerOptions['organization'];
+  customerBasicInfo?: CbsCustomerBasicInfo;
+  individual?: CbsIndividualInfo;
+  organization?: CbsOrganizationInfo;
+  addressInfo?: CbsAddressInfo;
+  additionalProperties?: CbsProperty[];
   newCustomerKey?: string;
 }
 
@@ -109,6 +244,11 @@ export interface CreateAccountOptions extends CbsRequestOptions {
   accountPaymentMethod?: string | number;
 }
 
+/**
+ * @deprecated Use CreateSubscriberOptions with createPrepaidSubscriber,
+ * createPostpaidSubscriber, or createHybridSubscriber. This legacy shape
+ * cannot create accounts in the same request.
+ */
 export interface CreateSubscriberRequestOptions extends CbsRequestOptions {
   customerKey?: string;
   accountKey?: string;
@@ -541,15 +681,28 @@ export interface DeleteNumberOutput {
   data: DeleteNumberData;
 }
 
+export interface CreateSubscriberAccountOptions extends CbsAccountInfo {
+  accountKey: string;
+  accountCode: string;
+  paymentRelationKey: string;
+  paymentType: 0 | 1;
+  defaultAccount?: boolean;
+  priority?: number;
+  onlyPayRelationFlag?: 'Y' | 'N';
+  paymentLimitKey?: string;
+}
+
 export interface CreateSubscriberOptions extends CbsRequestOptions {
+  customerKey: string;
+  subscriberKey: string;
   offeringId: string | number;
-  customerKey?: string;
-  accountKey?: string;
-  subscriberKey?: string;
+  status: string | number;
   primaryIdentity?: string;
   secondaryIdentity?: string;
-  initialBalance?: number | string;
-  creditLimit?: number | string;
+  subscriberClass?: string | number;
+  networkType?: string | number;
+  offeringClass?: string;
+  accounts?: CreateSubscriberAccountOptions[];
 }
 
 export interface CreateSubscriberResponse extends CbsOperationResponse {
@@ -577,9 +730,11 @@ export interface SubActivationOutput {
   data: { ResultCode?: number | string; ResultDesc?: string };
 }
 
-export interface PoolActivationOptions extends CreateSubscriberOptions {
-  subscriberKey?: string;
-}
+/**
+ * @deprecated Use deleteNumber, a typed subscriber creation method, and
+ * subActivate explicitly so each destructive step is visible to the caller.
+ */
+export type PoolActivationOptions = CreateSubscriberOptions;
 
 export interface PoolActivationOutput {
   query: QueryCustomerInfoOutput;
@@ -640,6 +795,20 @@ export interface CustActivationOptions extends CbsRequestOptions {
   primaryIdentity?: string;
   customerKey?: string | number;
   customerCode?: string;
+}
+
+export interface AcctDeactivationOptions extends CbsRequestOptions {
+  opType: string;
+  primaryIdentity?: string;
+  accountKey?: string;
+  accountCode?: string;
+  payType?: string | number;
+}
+
+export interface AcctDeactivationResponse extends CbsOperationResponse {}
+
+export interface AcctDeactivationOutput {
+  metadata: AcctDeactivationResponse;
 }
 
 export interface CustActivationResponse extends CbsOperationResponse {}

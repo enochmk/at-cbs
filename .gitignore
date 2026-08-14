@@ -18,7 +18,6 @@ out/
 apps/backend/.env
 apps/frontend/.env.local
 !.env.example
-tests/manual/*.local.ts
 .npmrc
 
 # Logs
