@@ -5,9 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
 
-No changes yet.
+## [2.1.2] - 2026-08-15
+
+### Fixed
+
+- Added the required immediate `EffectiveTime` to primary subscriber offering changes.
+- Added regression and guarded manual coverage for the postpaid offering change from `2018105068` to `2018105071` on MSISDN `270118755`.
+
+## [2.1.1] - 2026-08-15
+
+### Fixed
+
+- Fixed `changeSubscriberStatus()` to send the CBS R25 `NewStatus` element instead of the invalid `Status` element.
+- Added regression coverage for the `SUSPEND` SOAP payload.
+
+### Documentation
+
+- Documented subscriber lifecycle status prerequisites and the guarded live status-change test.
 
 ## [2.1.0] - 2026-08-14
 

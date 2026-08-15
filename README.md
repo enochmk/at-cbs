@@ -9,8 +9,8 @@ offering, lifecycle, and transaction operations.
 npm install @enochmk/cbs-client
 ```
 
-The package publishes only the compiled `dist` directory. The repository contains unit tests and
-the Postman collection, but no live-CBS test scripts.
+The package publishes only the compiled `dist` directory. The repository contains unit tests, a
+Postman collection, and a guarded live-CBS status-change test script.
 
 ## Configure the client
 
@@ -334,13 +334,22 @@ await client.changeSubscriberPaymentMode({
 });
 ```
 
+`changeSubscriberOffering()` sends an immediate `EffectiveTime` mode when one is not supplied.
+CBS R25 requires the element-only form inside `PrimaryOffering`:
+`<bcs:EffectiveTime><bcc:Mode>I</bcc:Mode></bcs:EffectiveTime>`.
+
 ### Subscriber lifecycle and status
+
+Query the current lifecycle before attempting a status change. CBS may reject transitions from
+states such as `Idle` when the subscriber is not serviceable. The status-change request sends the
+R25 `NewStatus` element required by the CBS `ChangeSubStatusRequest` schema.
 
 ```typescript
 const lifecycle = await client.querySubLifeCycle('270118755');
 console.log(lifecycle.data.CurrentStatusIndex);
 
 await client.subActivate('270118755');
+await client.changeSubscriberStatus('270118755', { status: 'SUSPEND' });
 await client.changeSubscriberStatus('270118755', { status: 'CALL_BARRING' });
 await client.changeSubscriberStatus('270118755', { status: 'ACTIVE' });
 
@@ -351,6 +360,19 @@ await client.subDeactivation('270118755', {
 
 Lifecycle status codes exposed by `SubscriberStatusCode` are `1` Idle, `2` Active, `3` Call
 Barring, `4` Suspend, `6` Tested, `7` In Stock, and `8` Pre-deregistration.
+
+For a guarded live test against MSISDN `270118755`, provide credentials through environment
+variables and explicitly pass `--execute`:
+
+```bash
+CBS_BASE_URL=https://cbs.example.invalid/services/BcServices \
+CBS_USERNAME=... \
+CBS_PASSWORD=... \
+npm run test:change-subscriber-status -- --execute
+```
+
+The script changes the subscriber to `SUSPEND`; it does not automatically activate an Idle
+subscriber. Check the lifecycle result first and activate it using `subActivate()` when required.
 
 For permanent number deletion, use `deleteNumber`. It sends `SubDeactivation` with R25
 `opType=3`:

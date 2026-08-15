@@ -97,6 +97,12 @@ function tag(name: string, value: string | number | undefined): string {
   return value === undefined ? '' : `<${name}>${xmlEscape(value)}</${name}>`;
 }
 
+function redactSoapCredentials(payload: string): string {
+  return payload
+    .replace(/(<(?:cbs:)?LoginSystemCode>)[^<]*(<\/)/g, '$1[REDACTED]$2')
+    .replace(/(<(?:cbs:)?Password>)[^<]*(<\/)/g, '$1[REDACTED]$2');
+}
+
 function keyXml(prefix: 'Cust' | 'Acct' | 'Sub', key: QueryCustomerInfoKey): string {
   const entries = Object.entries(key).filter(([, value]) => value !== undefined && value !== '');
   if (entries.length !== 1)
@@ -433,7 +439,8 @@ export class BcServices extends CbsServiceBase {
       opts.oldOfferingId === undefined
         ? ''
         : `<bcs:OldPrimaryOffering><bcc:OfferingID>${xmlEscape(opts.oldOfferingId)}</bcc:OfferingID></bcs:OldPrimaryOffering>`;
-    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeSubOfferingRequestMsg>${this.requestHeader(opts, 'ChangeSubOffering', opts.messageSeq ?? randomUUID())}<ChangeSubOfferingRequest>${keyXml('Sub', key)}<bcs:PrimaryOffering>${oldOffering}<bcs:NewPrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${xmlEscape(opts.newOfferingId)}</bcc:OfferingID></bcc:OfferingKey>${tag('bcc:OfferingClass', opts.offeringClass)}</bcs:NewPrimaryOffering>${tag('bcs:EffectiveTime', opts.effectiveTime)}</bcs:PrimaryOffering></ChangeSubOfferingRequest></bcs:ChangeSubOfferingRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    const effectiveMode = opts.effectiveMode ?? 'I';
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeSubOfferingRequestMsg>${this.requestHeader(opts, 'ChangeSubOffering', opts.messageSeq ?? randomUUID())}<ChangeSubOfferingRequest>${keyXml('Sub', key)}<bcs:PrimaryOffering>${oldOffering}<bcs:NewPrimaryOffering><bcc:OfferingKey><bcc:OfferingID>${xmlEscape(opts.newOfferingId)}</bcc:OfferingID></bcc:OfferingKey>${tag('bcc:OfferingClass', opts.offeringClass)}</bcs:NewPrimaryOffering><bcs:EffectiveTime><bcc:Mode>${xmlEscape(effectiveMode)}</bcc:Mode></bcs:EffectiveTime></bcs:PrimaryOffering></ChangeSubOfferingRequest></bcs:ChangeSubOfferingRequestMsg></soapenv:Body></soapenv:Envelope>`;
     return this.mutation(
       'changeSubscriberOffering',
       payload,
@@ -1024,6 +1031,11 @@ export class BcServices extends CbsServiceBase {
           <SubActivationRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode></SubActivationRequest>
         </bcs:SubActivationRequestMsg></soapenv:Body>
       </soapenv:Envelope>`;
+    this.log('verbose', 'subActivate - request payload', {
+      msisdn,
+      selector: opts?.subscriberKey ? 'SubscriberKey' : 'PrimaryIdentity',
+      payload: redactSoapCredentials(soapPayload),
+    });
     const response = await this.transport.post(
       this.servicePath,
       soapPayload,
@@ -1036,6 +1048,7 @@ export class BcServices extends CbsServiceBase {
     );
     if (resultCode !== '0')
       this.transport.throwCbsError('subActivate', msisdn, resultCode, resultDesc);
+    this.log('verbose', 'subActivate - CBS response', { msisdn, resultCode, resultDesc });
     return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
   }
 
@@ -1073,7 +1086,7 @@ export class BcServices extends CbsServiceBase {
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
         <soapenv:Header/><soapenv:Body><bcs:ChangeSubStatusRequestMsg>
           ${this.requestHeader(opts, 'ChangeSubStatus', messageSeq)}
-          <ChangeSubStatusRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode><bcs:OpType>${selected.opType}</bcs:OpType><bcs:Status>${selected.status}</bcs:Status></ChangeSubStatusRequest>
+          <ChangeSubStatusRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode><bcs:OpType>${selected.opType}</bcs:OpType><bcs:NewStatus>${selected.status}</bcs:NewStatus></ChangeSubStatusRequest>
         </bcs:ChangeSubStatusRequestMsg></soapenv:Body>
       </soapenv:Envelope>`;
     const response = await this.transport.post(

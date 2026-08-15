@@ -271,7 +271,7 @@ export interface ChangeSubscriberOfferingOptions extends CbsRequestOptions {
   newOfferingId: string | number;
   purchaseSeq?: string | number;
   offeringClass?: string;
-  effectiveTime?: string;
+  effectiveMode?: string;
 }
 
 export interface ChangeSubscriberPaymentModeOptions extends CbsRequestOptions {
