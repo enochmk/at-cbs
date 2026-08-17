@@ -627,6 +627,7 @@ export interface QuerySubLifeCycleOutput {
 
 export interface SubDeactivationOptions extends CbsRequestOptions {
   opType: string;
+  /** @deprecated Subscriber deactivation uses MSISDN/PrimaryIdentity. */
   subscriberKey?: string;
   effectiveTime?: string;
 }
@@ -643,6 +644,7 @@ export interface SubDeactivationOutput {
 }
 
 export interface DeleteNumberOptions extends CbsRequestOptions {
+  /** @deprecated Subscriber deletion uses MSISDN/PrimaryIdentity. */
   subscriberKey?: string;
 }
 
@@ -720,6 +722,7 @@ export interface CreateSubscriberOutput {
 }
 
 export interface SubActivationOptions extends CbsRequestOptions {
+  /** @deprecated Subscriber activation uses MSISDN/PrimaryIdentity. */
   subscriberKey?: string;
 }
 
@@ -745,8 +748,25 @@ export interface PoolActivationOutput {
 
 export type SubscriberStatus = 'ACTIVE' | 'CALL_BARRING' | 'SUSPEND';
 
+export type ChangeSubscriberStatusOperation =
+  | 'CUSTOMER_RESUME'
+  | 'CUSTOMER_BARRING'
+  | 'CUSTOMER_SUSPENSION'
+  | 'ARREARS_RESUME'
+  | 'ARREARS_BARRING'
+  | 'ARREARS_SUSPENSION'
+  | 'CREDIT_CONTROL_RESUME'
+  | 'CREDIT_CONTROL_BARRING'
+  | 'CREDIT_CONTROL_SUSPENSION'
+  | 'OPERATOR_RESUME'
+  | 'OPERATOR_BARRING'
+  | 'OPERATOR_SUSPENSION';
+
 export interface ChangeSubscriberStatusOptions extends CbsRequestOptions {
   status: SubscriberStatus;
+  /** Defaults to the customer-request operation for the requested status. */
+  operation?: ChangeSubscriberStatusOperation;
+  /** @deprecated Subscriber status changes use MSISDN/PrimaryIdentity. */
   subscriberKey?: string;
 }
 

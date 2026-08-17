@@ -45,6 +45,7 @@ test('subActivate uses PrimaryIdentity and the CBS request defaults', async () =
     });
 
     await client.subActivate('0261180254', {
+      subscriberKey: 'SUB-IGNORED-KEY',
       operatorId: '101',
       accessMode: 3,
       msgLanguageCode: 2002,

@@ -82,6 +82,7 @@ export type {
   PoolActivationOptions,
   PoolActivationOutput,
   SubscriberStatus,
+  ChangeSubscriberStatusOperation,
   ChangeSubscriberStatusOptions,
   ChangeSubscriberStatusResponse,
   ChangeSubscriberStatusOutput,

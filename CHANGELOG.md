@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-08-17
+
+### Added
+
+- Added named customer-request, arrears, credit-control, and operator subscriber status operations.
+- Added validation that the requested application status matches the selected CBS operation.
+
+### Changed
+
+- Subscriber lifecycle mutations now always address subscribers by MSISDN/`PrimaryIdentity`.
+- `changeSubscriberStatus()` now supports operation codes `10`-`12`, `30`-`32`, `40`-`42`, and `60`-`62`.
+- Legacy `subscriberKey` options on lifecycle mutations are retained for source compatibility but ignored.
+
 ## [2.1.2] - 2026-08-15
 
 ### Fixed

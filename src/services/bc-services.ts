@@ -925,7 +925,7 @@ export class BcServices extends CbsServiceBase {
     const effectiveTime = opts.effectiveTime
       ? `<bcs:EffectiveTime>${opts.effectiveTime}</bcs:EffectiveTime>`
       : '';
-    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts.subscriberKey);
+    const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
 
     this.log('verbose', 'subDeactivation - sending request', { msisdn, opts });
 
@@ -968,7 +968,7 @@ export class BcServices extends CbsServiceBase {
   async deleteNumber(msisdn: string, opts?: DeleteNumberOptions): Promise<DeleteNumberOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const messageSeq = opts?.messageSeq ?? randomUUID();
-    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts?.subscriberKey);
+    const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
 
     this.log('verbose', 'deleteNumber - sending request', { msisdn, opts });
     const soapPayload = `
@@ -1023,7 +1023,7 @@ export class BcServices extends CbsServiceBase {
   async subActivate(msisdn: string, opts?: SubActivationOptions): Promise<SubActivationOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const messageSeq = opts?.messageSeq ?? randomUUID();
-    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts?.subscriberKey);
+    const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
     const soapPayload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
         <soapenv:Header/><soapenv:Body><bcs:SubActivationRequestMsg>
@@ -1033,7 +1033,7 @@ export class BcServices extends CbsServiceBase {
       </soapenv:Envelope>`;
     this.log('verbose', 'subActivate - request payload', {
       msisdn,
-      selector: opts?.subscriberKey ? 'SubscriberKey' : 'PrimaryIdentity',
+      selector: 'PrimaryIdentity',
       payload: redactSoapCredentials(soapPayload),
     });
     const response = await this.transport.post(
@@ -1072,21 +1072,38 @@ export class BcServices extends CbsServiceBase {
     opts: ChangeSubscriberStatusOptions,
   ): Promise<ChangeSubscriberStatusOutput> {
     const statusMap = {
-      ACTIVE: { opType: 10, status: 2 },
-      CALL_BARRING: { opType: 11, status: 3 },
-      SUSPEND: { opType: 12, status: 4 },
+      CUSTOMER_RESUME: { opType: 10, status: 'ACTIVE', cbsStatus: 2 },
+      CUSTOMER_BARRING: { opType: 11, status: 'CALL_BARRING', cbsStatus: 3 },
+      CUSTOMER_SUSPENSION: { opType: 12, status: 'SUSPEND', cbsStatus: 4 },
+      ARREARS_RESUME: { opType: 30, status: 'ACTIVE', cbsStatus: 2 },
+      ARREARS_BARRING: { opType: 31, status: 'CALL_BARRING', cbsStatus: 3 },
+      ARREARS_SUSPENSION: { opType: 32, status: 'SUSPEND', cbsStatus: 4 },
+      CREDIT_CONTROL_RESUME: { opType: 40, status: 'ACTIVE', cbsStatus: 2 },
+      CREDIT_CONTROL_BARRING: { opType: 41, status: 'CALL_BARRING', cbsStatus: 3 },
+      CREDIT_CONTROL_SUSPENSION: { opType: 42, status: 'SUSPEND', cbsStatus: 4 },
+      OPERATOR_RESUME: { opType: 60, status: 'ACTIVE', cbsStatus: 2 },
+      OPERATOR_BARRING: { opType: 61, status: 'CALL_BARRING', cbsStatus: 3 },
+      OPERATOR_SUSPENSION: { opType: 62, status: 'SUSPEND', cbsStatus: 4 },
     } as const;
-    const selected = statusMap[opts.status];
-    if (!selected) throw createHttpError(400, 'Unsupported subscriber status');
+    const defaultOperation = {
+      ACTIVE: 'CUSTOMER_RESUME',
+      CALL_BARRING: 'CUSTOMER_BARRING',
+      SUSPEND: 'CUSTOMER_SUSPENSION',
+    } as const;
+    const operation = opts.operation ?? defaultOperation[opts.status];
+    const selected = statusMap[operation];
+    if (!selected || selected.status !== opts.status) {
+      throw createHttpError(400, 'Subscriber status and operation do not match');
+    }
 
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
     const messageSeq = opts.messageSeq ?? randomUUID();
-    const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts.subscriberKey);
+    const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
     const soapPayload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
         <soapenv:Header/><soapenv:Body><bcs:ChangeSubStatusRequestMsg>
           ${this.requestHeader(opts, 'ChangeSubStatus', messageSeq)}
-          <ChangeSubStatusRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode><bcs:OpType>${selected.opType}</bcs:OpType><bcs:NewStatus>${selected.status}</bcs:NewStatus></ChangeSubStatusRequest>
+          <ChangeSubStatusRequest><bcs:SubAccessCode>${subscriberAccessCode}</bcs:SubAccessCode><bcs:OpType>${selected.opType}</bcs:OpType><bcs:NewStatus>${selected.cbsStatus}</bcs:NewStatus></ChangeSubStatusRequest>
         </bcs:ChangeSubStatusRequestMsg></soapenv:Body>
       </soapenv:Envelope>`;
     const response = await this.transport.post(
@@ -1101,7 +1118,7 @@ export class BcServices extends CbsServiceBase {
       this.transport.throwCbsError('changeSubscriberStatus', msisdn, resultCode, resultDesc);
     return {
       metadata: resultMsg,
-      data: { ResultCode: resultCode, ResultDesc: resultDesc, Status: selected.status },
+      data: { ResultCode: resultCode, ResultDesc: resultDesc, Status: selected.cbsStatus },
     };
   }
 

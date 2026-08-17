@@ -37,6 +37,11 @@ export abstract class CbsServiceBase {
     return `<bcc:PrimaryIdentity>${this.normalizeMsisdn(msisdn)}</bcc:PrimaryIdentity>`;
   }
 
+  /** Subscriber lifecycle APIs are addressed by the subscriber's MSISDN. */
+  protected getSubscriberPrimaryIdentity(msisdn: string): string {
+    return `<bcc:PrimaryIdentity>${this.normalizeMsisdn(msisdn)}</bcc:PrimaryIdentity>`;
+  }
+
   protected getCustomerAccessCode(opts: CustActivationOptions | CustDeactivationOptions): string {
     const accessCodes = [opts.primaryIdentity, opts.customerKey, opts.customerCode].filter(
       (value) => value !== undefined && value !== '',

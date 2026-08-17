@@ -55,6 +55,11 @@ Use `CbsRequestDefaults`, `PaymentModeCode`, and `SubscriberStatusCode` instead 
 stable numeric constants. MSISDNs accept 9, 10, or 12 digits and are normalized to the CBS
 9-digit primary identity format.
 
+The HTC application owns the identifier format sent to CBS: individual customers use
+`IND00000000001`, enterprise customers use `ENT00000000001`, accounts use
+`ACC-{Customer}-1`, and subscribers use `SUB-{Customer}-1`. These application keys are resource
+identifiers; subscriber lifecycle requests still use the MSISDN as `PrimaryIdentity`.
+
 ## Customer operations
 
 ### Create a customer
@@ -351,7 +356,10 @@ console.log(lifecycle.data.CurrentStatusIndex);
 await client.subActivate('270118755');
 await client.changeSubscriberStatus('270118755', { status: 'SUSPEND' });
 await client.changeSubscriberStatus('270118755', { status: 'CALL_BARRING' });
-await client.changeSubscriberStatus('270118755', { status: 'ACTIVE' });
+await client.changeSubscriberStatus('270118755', {
+  status: 'ACTIVE',
+  operation: 'CUSTOMER_RESUME',
+});
 
 await client.subDeactivation('270118755', {
   opType: '1', // Deployment-specific: use the value configured by CBS.
@@ -360,6 +368,20 @@ await client.subDeactivation('270118755', {
 
 Lifecycle status codes exposed by `SubscriberStatusCode` are `1` Idle, `2` Active, `3` Call
 Barring, `4` Suspend, `6` Tested, `7` In Stock, and `8` Pre-deregistration.
+
+Subscriber lifecycle requests use the MSISDN as the CBS `PrimaryIdentity`. `subscriberKey` is a
+resource key used during subscriber creation and is ignored by lifecycle mutation methods. Customer
+queries use `CustomerKey`; account queries use `AccountKey` or `AccountCode`.
+
+`changeSubscriberStatus()` defaults to customer-request operations, and supports the following
+named operation variants:
+
+| Operation                                                                        | CBS `OpType` | Target status |
+| -------------------------------------------------------------------------------- | -----------: | ------------: |
+| `CUSTOMER_RESUME` / `CUSTOMER_BARRING` / `CUSTOMER_SUSPENSION`                   | 10 / 11 / 12 |     2 / 3 / 4 |
+| `ARREARS_RESUME` / `ARREARS_BARRING` / `ARREARS_SUSPENSION`                      | 30 / 31 / 32 |     2 / 3 / 4 |
+| `CREDIT_CONTROL_RESUME` / `CREDIT_CONTROL_BARRING` / `CREDIT_CONTROL_SUSPENSION` | 40 / 41 / 42 |     2 / 3 / 4 |
+| `OPERATOR_RESUME` / `OPERATOR_BARRING` / `OPERATOR_SUSPENSION`                   | 60 / 61 / 62 |     2 / 3 / 4 |
 
 For a guarded live test against MSISDN `270118755`, provide credentials through environment
 variables and explicitly pass `--execute`:
@@ -379,7 +401,7 @@ For permanent number deletion, use `deleteNumber`. It sends `SubDeactivation` wi
 
 ```typescript
 await client.deleteNumber('270118755', {
-  subscriberKey: 'SUB-20260814185641998-1-1',
+  // Subscriber deletion uses the MSISDN/PrimaryIdentity above.
 });
 ```
 
