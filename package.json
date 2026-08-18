@@ -39,6 +39,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
+    "test:create-enterprise-customer": "node --env-file-if-exists=.env --import=tsx/esm tests/manual/create-enterprise-customer.ts",
     "test:change-subscriber-status": "tsx tests/manual/change-subscriber-status.ts",
     "test:change-subscriber-offering": "tsx tests/manual/change-subscriber-offering.ts",
     "release": "npm version patch && git push --tags",

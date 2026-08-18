@@ -125,8 +125,19 @@ await client.createCustomer({
 });
 ```
 
-CBS accepts `customerType` `1` for this integration. The application decides the individual or
-organization `idType`; the client passes the value through unchanged.
+The application decides the customer type and organization or individual `idType`; the client
+passes those values through unchanged.
+
+For a live tenant smoke test, use the guarded manual script. It generates a unique organization
+and sends the minimal payload that was verified against CBS R25:
+
+```bash
+npm run test:create-enterprise-customer -- --execute
+```
+
+The script uses `customerType: 2`, `industry: 'Telcom'`, and omits `organizationType` and custom
+properties such as TIN. Those values are tenant-specific or HTC-local and should not be sent to
+CBS unless the target tenant explicitly supports them.
 
 ### Query a customer hierarchy
 
