@@ -499,20 +499,26 @@ export class BcServices extends CbsServiceBase {
       : opts.primaryIdentity
         ? keyXml('Sub', { primaryIdentity: opts.primaryIdentity })
         : '';
+    const account = opts.accountKey ? keyXml('Acct', { accountKey: opts.accountKey }) : '';
     const customer = opts.customerKey
       ? keyXml('Cust', { customerKey: opts.customerKey })
       : opts.customerCode
         ? keyXml('Cust', { customerCode: opts.customerCode })
         : '';
     const add = opts.addPayRelation
-      ? `<bcs:AddPayRelation><bcs:PayRelation><bcs:PayRelationKey>${xmlEscape(opts.addPayRelation.payRelationKey)}</bcs:PayRelationKey>${tag('bcs:AcctKey', opts.addPayRelation.accountKey)}${tag('bcs:Priority', opts.addPayRelation.priority)}${tag('bcs:OnlyPayRelFlag', opts.addPayRelation.onlyPayRelationFlag)}</bcs:PayRelation></bcs:AddPayRelation>`
+      ? `<bcs:AddPayRelation><bcs:PayRelation><bcs:PayRelationKey>${xmlEscape(opts.addPayRelation.payRelationKey)}</bcs:PayRelationKey>${tag('bcs:AcctKey', opts.addPayRelation.accountKey)}${tag('bcs:Priority', opts.addPayRelation.priority)}${tag('bcs:OnlyPayRelFlag', opts.addPayRelation.onlyPayRelationFlag)}<bcs:EffectiveTime><bcc:Mode>I</bcc:Mode></bcs:EffectiveTime><bcs:ExpirationTime>20361231160000</bcs:ExpirationTime></bcs:PayRelation></bcs:AddPayRelation>`
       : '';
     const del = opts.deletePayRelationKey
       ? `<bcs:DelPayRelation><bcs:PayRelationKey>${xmlEscape(opts.deletePayRelationKey)}</bcs:PayRelationKey></bcs:DelPayRelation>`
       : '';
     if (!add && !del)
       throw createHttpError(400, 'Provide an addPayRelation or deletePayRelationKey change');
-    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangePayRelationRequestMsg>${this.requestHeader(opts, 'ChangePayRelation', opts.messageSeq ?? randomUUID())}<ChangePayRelationRequest>${subscriber}${customer}${add}${del}</ChangePayRelationRequest></bcs:ChangePayRelationRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    const paymentObj =
+      subscriber || account || customer
+        ? `<bcs:PaymentObj>${subscriber}${account}${customer}</bcs:PaymentObj>`
+        : '';
+    const paymentRelation = `<bcs:PaymentRelation>${add}${del}</bcs:PaymentRelation>`;
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangePayRelationRequestMsg>${this.requestHeader(opts, 'ChangePayRelation', opts.messageSeq ?? randomUUID())}<ChangePayRelationRequest>${paymentObj}${paymentRelation}</ChangePayRelationRequest></bcs:ChangePayRelationRequestMsg></soapenv:Body></soapenv:Envelope>`;
     return this.mutation(
       'changePaymentRelation',
       payload,
