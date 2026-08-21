@@ -73,6 +73,7 @@ export type {
   DeleteNumberData,
   DeleteNumberOutput,
   CreateSubscriberOptions,
+  CreateStandalonePrepaidSubscriberOptions,
   CreateSubscriberResponse,
   CreateSubscriberData,
   CreateSubscriberOutput,

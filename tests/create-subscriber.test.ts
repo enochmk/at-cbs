@@ -81,3 +81,58 @@ test('serializes the application-owned customer and account identifiers', async 
     await once(server, 'close');
   }
 });
+
+test('serializes a standalone regular prepaid subscriber with MSISDN entity keys', async () => {
+  let requestBody = '';
+  const server: Server = createServer((request, response) => {
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
+    request.on('end', () => {
+      requestBody = Buffer.concat(chunks).toString();
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'text/xml');
+      response.end(successResponse);
+    });
+  });
+
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  assert(address && typeof address !== 'string');
+
+  try {
+    const client = new CbsClient({
+      baseUrl: `http://127.0.0.1:${address.port}`,
+      username: 'test-user',
+      password: 'test-password',
+      rejectUnauthorized: false,
+    });
+
+    await client.createStandalonePrepaidSubscriber('0271004887', {
+      offeringId: '2018246521',
+      messageSeq: 'standalone-test-sequence',
+    });
+
+    const registerCustomerIndex = requestBody.indexOf('<bcs:RegisterCustomer');
+    const accountIndex = requestBody.indexOf('<bcs:Account>');
+    const subscriberIndex = requestBody.indexOf('<bcs:Subscriber>');
+    const offeringIndex = requestBody.indexOf('<bcs:PrimaryOffering>');
+    assert.ok(registerCustomerIndex < accountIndex);
+    assert.ok(accountIndex < subscriberIndex);
+    assert.ok(subscriberIndex < offeringIndex);
+    assert.match(requestBody, /<bcs:RegisterCustomer OpType="1">/);
+    assert.match(requestBody, /<bcs:CustKey>271004887<\/bcs:CustKey>/);
+    assert.match(requestBody, /<bcc:CustCode>271004887<\/bcc:CustCode>/);
+    assert.match(requestBody, /<bcs:AcctKey>271004887<\/bcs:AcctKey>/);
+    assert.match(requestBody, /<bcc:AcctCode>271004887<\/bcc:AcctCode>/);
+    assert.match(requestBody, /<bcs:SubscriberKey>271004887<\/bcs:SubscriberKey>/);
+    assert.match(requestBody, /<bcc:SubIdentity>123271004887<\/bcc:SubIdentity>/);
+    assert.match(requestBody, /<bcs:PayRelationKey>PR_271004887<\/bcs:PayRelationKey>/);
+    assert.match(requestBody, /<bcc:OfferingID>2018246521<\/bcc:OfferingID>/);
+    assert.match(requestBody, /<bcc:BundledFlag>S<\/bcc:BundledFlag>/);
+    assert.match(requestBody, /<bcc:InitBalance>100000000<\/bcc:InitBalance>/);
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
+});

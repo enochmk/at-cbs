@@ -707,6 +707,12 @@ export interface CreateSubscriberOptions extends CbsRequestOptions {
   accounts?: CreateSubscriberAccountOptions[];
 }
 
+/** Options for creating a standalone regular prepaid subscriber keyed by its MSISDN. */
+export interface CreateStandalonePrepaidSubscriberOptions extends CbsRequestOptions {
+  offeringId: string | number;
+  initialBalance?: string | number;
+}
+
 export interface CreateSubscriberResponse extends CbsOperationResponse {
   CreateSubscriberResult?: Record<string, unknown>;
 }

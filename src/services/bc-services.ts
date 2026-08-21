@@ -58,6 +58,7 @@ import type {
   DeleteNumberResult,
   DeleteNumberData,
   CreateSubscriberOptions,
+  CreateStandalonePrepaidSubscriberOptions,
   CreateSubscriberAccountOptions,
   CreateSubscriberOutput,
   CreateSubscriberResponse,
@@ -310,6 +311,102 @@ export class BcServices extends CbsServiceBase {
     opts: CreateSubscriberOptions,
   ): Promise<CreateSubscriberOutput> {
     return this.createSubscriber(msisdn, opts, 'prepaid');
+  }
+
+  /** Creates a standalone regular prepaid subscriber using the MSISDN as every CBS entity key. */
+  async createStandalonePrepaidSubscriber(
+    msisdn: string,
+    opts: CreateStandalonePrepaidSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    const identity = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts.messageSeq ?? randomUUID();
+    const secondaryIdentity = `123${identity}`;
+    const initialBalance = opts.initialBalance ?? 100000000;
+    const payload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:CreateSubscriberRequestMsg>
+            ${this.requestHeader(opts, 'CreateSubscriber', messageSeq)}
+            <CreateSubscriberRequest>
+              <bcs:RegisterCustomer OpType="1">
+                <bcs:CustKey>${xmlEscape(identity)}</bcs:CustKey>
+                <bcs:CustInfo>
+                  <bcc:CustType>1</bcc:CustType>
+                  <bcc:CustNodeType>1</bcc:CustNodeType>
+                  <bcc:CustClass>1</bcc:CustClass>
+                  <bcc:CustCode>${xmlEscape(identity)}</bcc:CustCode>
+                </bcs:CustInfo>
+              </bcs:RegisterCustomer>
+              <bcs:Account>
+                <bcs:AcctKey>${xmlEscape(identity)}</bcs:AcctKey>
+                <bcs:AcctInfo>
+                  <bcc:AcctCode>${xmlEscape(identity)}</bcc:AcctCode>
+                  <bcc:BillCycleType>01</bcc:BillCycleType>
+                  <bcc:AcctType>1</bcc:AcctType>
+                  <bcc:PaymentType>0</bcc:PaymentType>
+                  <bcc:AcctClass>1</bcc:AcctClass>
+                  <bcc:CurrencyID>1054</bcc:CurrencyID>
+                  <bcc:InitBalance>${xmlEscape(initialBalance)}</bcc:InitBalance>
+                  <bcc:AcctPayMethod>1</bcc:AcctPayMethod>
+                </bcs:AcctInfo>
+              </bcs:Account>
+              <bcs:Subscriber>
+                <bcs:SubscriberKey>${xmlEscape(identity)}</bcs:SubscriberKey>
+                <bcs:SubscriberInfo>
+                  <bcc:SubBasicInfo/>
+                  <bcc:SubIdentity>
+                    <bcc:SubIdentityType>1</bcc:SubIdentityType>
+                    <bcc:SubIdentity>${xmlEscape(identity)}</bcc:SubIdentity>
+                    <bcc:PrimaryFlag>1</bcc:PrimaryFlag>
+                  </bcc:SubIdentity>
+                  <bcc:SubIdentity>
+                    <bcc:SubIdentityType>2</bcc:SubIdentityType>
+                    <bcc:SubIdentity>${xmlEscape(secondaryIdentity)}</bcc:SubIdentity>
+                    <bcc:PrimaryFlag>2</bcc:PrimaryFlag>
+                  </bcc:SubIdentity>
+                  <bcc:SubClass>2</bcc:SubClass>
+                  <bcc:NetworkType>1</bcc:NetworkType>
+                  <bcc:Status>1</bcc:Status>
+                </bcs:SubscriberInfo>
+                <bcs:SubPaymentMode>
+                  <bcs:PaymentMode>0</bcs:PaymentMode>
+                  <bcs:PayRelationKey>PR_${xmlEscape(identity)}</bcs:PayRelationKey>
+                  <bcs:AcctKey>${xmlEscape(identity)}</bcs:AcctKey>
+                </bcs:SubPaymentMode>
+              </bcs:Subscriber>
+              <bcs:PrimaryOffering>
+                <bcc:OfferingKey>
+                  <bcc:OfferingID>${xmlEscape(opts.offeringId)}</bcc:OfferingID>
+                </bcc:OfferingKey>
+                <bcc:BundledFlag>S</bcc:BundledFlag>
+                <bcc:OfferingClass>I</bcc:OfferingClass>
+                <bcc:Status>1</bcc:Status>
+              </bcs:PrimaryOffering>
+            </CreateSubscriberRequest>
+          </bcs:CreateSubscriberRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      payload,
+      'createStandalonePrepaidSubscriber',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<CreateSubscriberResponse>(
+      response,
+      this.transport.parser,
+    );
+    if (resultCode !== '0') {
+      this.transport.throwCbsError(
+        'createStandalonePrepaidSubscriber',
+        msisdn,
+        resultCode,
+        resultDesc,
+      );
+    }
+    return { metadata: resultMsg, data: { ResultCode: resultCode, ResultDesc: resultDesc } };
   }
 
   createHybridSubscriber(

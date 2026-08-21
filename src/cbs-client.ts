@@ -37,6 +37,7 @@ import type {
   DeleteNumberOptions,
   DeleteNumberOutput,
   CreateSubscriberOptions,
+  CreateStandalonePrepaidSubscriberOptions,
   CreateSubscriberOutput,
   SubActivationOptions,
   SubActivationOutput,
@@ -168,6 +169,13 @@ export class CbsClient {
     opts: CreateSubscriberOptions,
   ): Promise<CreateSubscriberOutput> {
     return this.bcServices.createPrepaidSubscriber(msisdn, opts);
+  }
+
+  createStandalonePrepaidSubscriber(
+    msisdn: string,
+    opts: CreateStandalonePrepaidSubscriberOptions,
+  ): Promise<CreateSubscriberOutput> {
+    return this.bcServices.createStandalonePrepaidSubscriber(msisdn, opts);
   }
 
   createHybridSubscriber(

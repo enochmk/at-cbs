@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-08-21
+
+### Added
+
+- Added standalone regular prepaid subscriber creation keyed by MSISDN.
+
+### Fixed
+
+- Corrected the CBS subscriber creation payload order and inline customer/account data.
+
 ## [2.2.0] - 2026-08-17
 
 ### Added
