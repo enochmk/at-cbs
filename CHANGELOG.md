@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-08-23
+
+### Added
+
+- Added configurable standalone `RegisterCustomer` options for subscriber creation.
+- Added `createAccount: false` for reusing existing accounts in subscriber requests.
+- Added active-state and existing-account coverage to the container-flow smoke script.
+
+## [2.4.0] - 2026-08-23
+
+### Added
+
+- Added the generic `createSubscriber()` API with configurable prepaid, postpaid, and hybrid account relationships.
+- Added optional customer registration, account credit limits, default-account flags, and payment relation fields.
+- Added configurable payment-limit creation and modification to `changePaymentRelation()`.
+- Added a guarded container-flow manual script for the MK customer and three test MSISDNs.
+
+### Changed
+
+- Subscriber keys, status, account codes, payment types, relation keys, relation expiry, and payment-limit values can now be overridden; protocol defaults are used only when omitted.
+
 ## [2.3.0] - 2026-08-21
 
 ### Added

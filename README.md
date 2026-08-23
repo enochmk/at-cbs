@@ -128,6 +128,60 @@ await client.createCustomer({
 The application decides the customer type and organization or individual `idType`; the client
 passes those values through unchanged.
 
+### Create a configurable subscriber
+
+Use `createSubscriber()` for prepaid, postpaid, and hybrid requests. Use `customerKey` for an
+existing corporate customer, or provide a configurable `registerCustomer` block with `opType: 1`
+for a standalone subscriber. Account and payment-relation fields are optional where CBS permits
+them and are serialized only when supplied.
+
+```typescript
+await client.createSubscriber('270105755', {
+  customerKey: 'MK202608201545',
+  paymentMode: 2,
+  offeringId: '2018105022',
+  accounts: [
+    {
+      accountKey: 'MK202608201629',
+      paymentType: 0,
+      defaultAccount: true,
+    },
+    {
+      accountKey: 'MK202608201545',
+      paymentType: 1,
+      defaultAccount: false,
+      paymentRelationKey: 'PostPayRelKey270105755',
+      priority: 55,
+    },
+  ],
+});
+```
+
+Add or modify a payment limit through the same configurable payment-relation operation:
+
+```typescript
+await client.changePaymentRelation({
+  primaryIdentity: '270105755',
+  modifyPayRelation: {
+    payRelationKey: 'PostPayRelKey270105755',
+    paymentLimit: {
+      operationType: 1,
+      paymentLimitKey: 'PostPayRelKey270105755',
+      limitValue: 50_000_000,
+    },
+  },
+  paymentLimits: [
+    {
+      paymentLimitKey: 'PostPayRelKey270105755',
+      limitCycleType: 'B',
+      limitType: 'M',
+      limitValueType: 'A',
+      limitValue: 50_000_000,
+    },
+  ],
+});
+```
+
 For a live tenant smoke test, use the guarded manual script. It generates a unique organization
 and sends the minimal payload that was verified against CBS R25:
 
@@ -138,6 +192,16 @@ npm run test:create-enterprise-customer -- --execute
 The script uses `customerType: 2`, `industry: 'Telcom'`, and omits `organizationType` and custom
 properties such as TIN. Those values are tenant-specific or HTC-local and should not be sent to
 CBS unless the target tenant explicitly supports them.
+
+The container-flow smoke script is guarded and uses the three configured test MSISDNs by default:
+
+```bash
+npm run test:create-container-flow -- --execute --cleanup
+```
+
+`--cleanup` churns the three MSISDNs first. GHS amounts are converted to CBS units using
+`CBS_AMOUNT_DIVISOR` (default `100000`). The prepaid amount is sent as `InitBalance`; only the
+postpaid and hybrid amounts are sent as payment limits.
 
 ### Query a customer hierarchy
 

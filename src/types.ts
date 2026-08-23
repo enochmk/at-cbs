@@ -308,8 +308,27 @@ export interface ChangePaymentRelationOptions extends CbsRequestOptions {
     priority?: number;
     onlyPayRelationFlag?: 'Y' | 'N';
     paymentLimitKey?: string;
+    effectiveTimeMode?: string;
+    expirationTime?: string | number;
   };
+  modifyPayRelation?: {
+    payRelationKey: string;
+    paymentLimit?: {
+      operationType?: string | number;
+      paymentLimitKey?: string;
+      limitValue?: string | number;
+    };
+  };
+  paymentLimits?: CbsPaymentLimit[];
   deletePayRelationKey?: string;
+}
+
+export interface CbsPaymentLimit {
+  paymentLimitKey: string;
+  limitCycleType?: string | number;
+  limitType?: string | number;
+  limitValueType?: string | number;
+  limitValue?: string | number;
 }
 
 export interface QueryCustomerInfoResultHeader {
@@ -685,20 +704,33 @@ export interface DeleteNumberOutput {
 
 export interface CreateSubscriberAccountOptions extends CbsAccountInfo {
   accountKey: string;
-  accountCode: string;
-  paymentRelationKey: string;
-  paymentType: 0 | 1;
+  accountCode?: string;
+  createAccount?: boolean;
+  paymentRelationKey?: string;
+  paymentType?: 0 | 1;
   defaultAccount?: boolean;
   priority?: number;
   onlyPayRelationFlag?: 'Y' | 'N';
   paymentLimitKey?: string;
 }
 
+export interface CbsRegisterCustomerOptions {
+  opType?: string | number;
+  customerKey?: string;
+  customerType?: string | number;
+  customerNodeType?: string | number;
+  customerClass?: string | number;
+  customerCode?: string;
+}
+
 export interface CreateSubscriberOptions extends CbsRequestOptions {
-  customerKey: string;
-  subscriberKey: string;
+  customerKey?: string;
+  registerCustomerOpType?: string | number;
+  registerCustomer?: CbsRegisterCustomerOptions;
+  subscriberKey?: string;
   offeringId: string | number;
-  status: string | number;
+  paymentMode?: 0 | 1 | 2;
+  status?: string | number;
   primaryIdentity?: string;
   secondaryIdentity?: string;
   subscriberClass?: string | number;
@@ -887,4 +919,6 @@ export const CbsRequestDefaults = {
   ACCOUNT_MASK: '11',
   SUBSCRIBER_MASK: '11111110',
   GROUP_MASK: '00000',
+  SUBSCRIBER_STATUS: 1,
+  PAYMENT_RELATION_EXPIRATION_TIME: '20361231160000',
 } as const;

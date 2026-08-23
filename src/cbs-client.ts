@@ -171,6 +171,10 @@ export class CbsClient {
     return this.bcServices.createPrepaidSubscriber(msisdn, opts);
   }
 
+  createSubscriber(msisdn: string, opts: CreateSubscriberOptions): Promise<CreateSubscriberOutput> {
+    return this.bcServices.createSubscriber(msisdn, opts);
+  }
+
   createStandalonePrepaidSubscriber(
     msisdn: string,
     opts: CreateStandalonePrepaidSubscriberOptions,
