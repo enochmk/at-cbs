@@ -221,7 +221,7 @@ const bySubscriber = await client.queryCustomerInfoByKey({
 });
 
 console.log(byMsisdn.data.PaymentMode);
-console.log(byMsisdn.data.CurrentStatusIndex);
+console.log(byMsisdn.data.Status);
 console.log(byMsisdn.data.PrimaryOffering);
 console.log(byMsisdn.data.MainBalance?.amountInGhc);
 ```

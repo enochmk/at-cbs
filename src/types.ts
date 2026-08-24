@@ -376,7 +376,10 @@ export interface QueryCustomerInfoLifeCycleDetail {
 
 export interface QueryCustomerInfoSubscriber {
   SubscriberKey?: string | number;
-  SubscriberInfo?: Record<string, unknown>;
+  SubscriberInfo?: {
+    Status?: number | string;
+    [key: string]: unknown;
+  };
   PaymentMode?: number | string;
   PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
   LifeCycleDetail?: QueryCustomerInfoLifeCycleDetail;
@@ -435,7 +438,8 @@ export interface MappedCode<T extends string> {
 export interface QueryCustomerInfoData {
   FirstActive?: string;
   PaymentMode?: MappedCode<PaymentModeLabel>;
-  CurrentStatusIndex?: MappedCode<CurrentStatusLabel>;
+  /** Subscriber status returned by QueryCustomerInfo SubscriberInfo.Status. */
+  Status?: MappedCode<CurrentStatusLabel>;
   BirthdayDate?: string;
   MainBalance?: QueryCustomerInfoMainBalance;
   PrimaryOffering?: QueryCustomerInfoPrimaryOffering;

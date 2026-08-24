@@ -20,6 +20,7 @@ import type {
   QueryCustomerInfoAccount,
   QueryCustomerInfoMainBalance,
   CurrentStatusLabel,
+  MappedCode,
   QueryBalanceOptions,
   QueryBalanceOutput,
   QueryBalanceResponse,
@@ -96,6 +97,25 @@ function xmlEscape(value: string | number): string {
 
 function tag(name: string, value: string | number | undefined): string {
   return value === undefined ? '' : `<${name}>${xmlEscape(value)}</${name}>`;
+}
+
+const currentStatusLabels: Record<number, CurrentStatusLabel> = {
+  1: 'Idle',
+  2: 'Active',
+  3: 'Call Barring',
+  4: 'Suspend',
+  6: 'Tested',
+  7: 'In stock',
+  8: 'Pre-deregistration',
+};
+
+function mapCurrentStatus(value: unknown): MappedCode<CurrentStatusLabel> | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+
+  const code = Number(value);
+  if (!Number.isFinite(code)) return undefined;
+
+  return { code, label: currentStatusLabels[code] ?? 'Unknown' };
 }
 
 function redactSoapCredentials(payload: string): string {
@@ -865,7 +885,6 @@ export class BcServices extends CbsServiceBase {
     };
     const account = getXmlField<QueryCustomerInfoAccount>(queryResult, 'Account');
     const individualInfo = getXmlField<Record<string, unknown>>(customer, 'IndividualInfo');
-    const lifecycleDetail = getXmlField<Record<string, unknown>>(subscriber, 'LifeCycleDetail');
     const subscriberAccounts = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
       subscriber,
       'AcctList',
@@ -920,7 +939,7 @@ export class BcServices extends CbsServiceBase {
       : undefined;
     const accountInfo = getXmlField<Record<string, unknown>>(account, 'AcctInfo');
     const paymentMode = Number(getXmlField(subscriber, 'PaymentMode'));
-    const currentStatusIndex = Number(getXmlField(lifecycleDetail, 'CurrentStatusIndex'));
+    const subscriberStatus = mapCurrentStatus(getXmlField(subscriberInfo, 'Status'));
 
     this.log('verbose', `${operation} - success`, { access, messageSeq });
     return {
@@ -937,21 +956,7 @@ export class BcServices extends CbsServiceBase {
               >
             )[paymentMode] ?? 'unknown',
         },
-        CurrentStatusIndex: {
-          code: currentStatusIndex,
-          label:
-            (
-              {
-                1: 'Idle',
-                2: 'Active',
-                3: 'Call Barring',
-                4: 'Suspend',
-                6: 'Tested',
-                7: 'In stock',
-                8: 'Pre-deregistration',
-              } as Record<number, CurrentStatusLabel>
-            )[currentStatusIndex] ?? 'Unknown',
-        },
+        Status: subscriberStatus,
         BirthdayDate: getXmlField<string>(individualInfo, 'Birthday'),
         MainBalance: mainBalance,
         PrimaryOffering: primaryOffering ? mapOffering(primaryOffering) : undefined,
@@ -1039,27 +1044,13 @@ export class BcServices extends CbsServiceBase {
       resultMsg as Record<string, unknown>,
       'QuerySubLifeCycleResult',
     );
-    const currentStatusIndex = Number(getXmlField(queryResult, 'CurrentStatusIndex'));
+    const currentStatus = mapCurrentStatus(getXmlField(queryResult, 'CurrentStatusIndex'));
 
     this.log('verbose', 'querySubLifeCycle - success', { msisdn, messageSeq });
     return {
       metadata: resultMsg,
       data: {
-        CurrentStatusIndex: {
-          code: currentStatusIndex,
-          label:
-            (
-              {
-                1: 'Idle',
-                2: 'Active',
-                3: 'Call Barring',
-                4: 'Suspend',
-                6: 'Tested',
-                7: 'In stock',
-                8: 'Pre-deregistration',
-              } as Record<number, CurrentStatusLabel>
-            )[currentStatusIndex] ?? 'Unknown',
-        },
+        CurrentStatusIndex: currentStatus,
         LifeCycleStatus: getXmlField<QuerySubLifeCycleResult['LifeCycleStatus']>(
           queryResult,
           'LifeCycleStatus',
@@ -1217,7 +1208,7 @@ export class BcServices extends CbsServiceBase {
     if (String(query.data['bcs:PaymentType']) !== '0') {
       throw createHttpError(400, 'Pool activation requires a prepaid subscriber');
     }
-    if (String(query.data.CurrentStatusIndex?.code) !== '8') {
+    if (String(query.data.Status?.code) !== '8') {
       throw createHttpError(400, 'Pool activation requires subscriber lifecycle status 8');
     }
     const deletion = await this.deleteNumber(msisdn, opts);

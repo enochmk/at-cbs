@@ -30,7 +30,7 @@ const client = new CbsClient({
 
 const current = await client.queryCustomerInfo(msisdn);
 const currentOffering = current.data.PrimaryOffering?.OfferingID;
-const lifecycle = current.data.CurrentStatusIndex;
+const lifecycle = current.data.Status;
 
 console.log('CBS subscriber snapshot:', {
   msisdn,

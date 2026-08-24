@@ -18,6 +18,28 @@ const successResponse = `
     </soapenv:Body>
   </soapenv:Envelope>`;
 
+const subscriberStatusResponse = `
+  <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <soapenv:Body>
+      <bcs:QueryCustomerInfoResultMsg xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices">
+        <bcs:ResultHeader>
+          <cbs:ResultCode xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">0</cbs:ResultCode>
+          <cbs:ResultDesc xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">Success</cbs:ResultDesc>
+        </bcs:ResultHeader>
+        <bcs:QueryCustomerInfoResult>
+          <bcs:Subscriber>
+            <bcs:SubscriberInfo>
+              <bcc:Status xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">2</bcc:Status>
+            </bcs:SubscriberInfo>
+            <bcs:SubPaymentMode>
+              <bcs:PaymentMode>1</bcs:PaymentMode>
+            </bcs:SubPaymentMode>
+          </bcs:Subscriber>
+        </bcs:QueryCustomerInfoResult>
+      </bcs:QueryCustomerInfoResultMsg>
+    </soapenv:Body>
+  </soapenv:Envelope>`;
+
 test('queryCustomerInfoByKey emits the selected CBS access code', async () => {
   const requests: string[] = [];
   const server: Server = createServer((request, response) => {
@@ -84,4 +106,36 @@ test('queryCustomerInfoByKey rejects ambiguous selectors', async () => {
       return true;
     },
   );
+});
+
+test('queryCustomerInfo maps SubscriberInfo.Status instead of LifeCycleDetail.CurrentStatusIndex', async () => {
+  const server: Server = createServer((request, response) => {
+    request.resume();
+    request.on('end', () => {
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'text/xml');
+      response.end(subscriberStatusResponse);
+    });
+  });
+
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  assert(address && typeof address !== 'string');
+
+  try {
+    const client = new CbsClient({
+      baseUrl: `http://127.0.0.1:${address.port}`,
+      username: 'test-user',
+      password: 'test-password',
+      rejectUnauthorized: false,
+    });
+
+    const result = await client.queryCustomerInfo('271004887');
+
+    assert.deepEqual(result.data.Status, { code: 2, label: 'Active' });
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
 });
