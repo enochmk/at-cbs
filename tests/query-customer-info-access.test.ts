@@ -38,6 +38,18 @@ const subscriberStatusResponse = `
         </bcs:QueryCustomerInfoResult>
       </bcs:QueryCustomerInfoResultMsg>
     </soapenv:Body>
+    </soapenv:Envelope>`;
+
+const subscriberNotFoundResponse = `
+  <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <soapenv:Body>
+      <bcs:QueryCustomerInfoResultMsg xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices">
+        <bcs:ResultHeader>
+          <cbs:ResultCode xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">20000003</cbs:ResultCode>
+          <cbs:ResultDesc xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">Subscriber does not exist</cbs:ResultDesc>
+        </bcs:ResultHeader>
+      </bcs:QueryCustomerInfoResultMsg>
+    </soapenv:Body>
   </soapenv:Envelope>`;
 
 test('queryCustomerInfoByKey emits the selected CBS access code', async () => {
@@ -134,6 +146,44 @@ test('queryCustomerInfo maps SubscriberInfo.Status instead of LifeCycleDetail.Cu
     const result = await client.queryCustomerInfo('271004887');
 
     assert.deepEqual(result.data.Status, { code: 2, label: 'Active' });
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
+});
+
+test('queryCustomerInfo treats CBS result code 20000003 as a normal not-found result', async () => {
+  const server: Server = createServer((_request, response) => {
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'text/xml');
+    response.end(subscriberNotFoundResponse);
+  });
+
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  assert(address && typeof address !== 'string');
+
+  const logs: string[] = [];
+  try {
+    const client = new CbsClient({
+      baseUrl: `http://127.0.0.1:${address.port}`,
+      username: 'test-user',
+      password: 'test-password',
+      logger: {
+        info: (message) => logs.push(message),
+        warn: (message) => logs.push(`warn:${message}`),
+      },
+    });
+
+    const result = await client.queryCustomerInfo('271004887');
+
+    assert.deepEqual(result.data, {});
+    assert.match(logs[0] ?? '', /subscriber not found/);
+    assert.equal(
+      logs.some((message) => message.startsWith('warn:')),
+      false,
+    );
   } finally {
     server.close();
     await once(server, 'close');

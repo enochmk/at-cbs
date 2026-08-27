@@ -130,7 +130,7 @@ test('serializes a standalone regular prepaid subscriber with MSISDN entity keys
     assert.match(requestBody, /<bcs:PayRelationKey>PR_271004887<\/bcs:PayRelationKey>/);
     assert.match(requestBody, /<bcc:OfferingID>2018246521<\/bcc:OfferingID>/);
     assert.match(requestBody, /<bcc:BundledFlag>S<\/bcc:BundledFlag>/);
-    assert.match(requestBody, /<bcc:InitBalance>100000000<\/bcc:InitBalance>/);
+    assert.match(requestBody, /<bcc:InitBalance>0<\/bcc:InitBalance>/);
   } finally {
     server.close();
     await once(server, 'close');

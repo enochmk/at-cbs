@@ -86,6 +86,8 @@ import { CbsServiceBase } from './cbs-service-base';
 import { addAmountInGhc, getXmlField, normalizeBalanceAmount } from '../utils';
 import { CbsRequestDefaults } from '../types';
 
+const CBS_SUBSCRIBER_NOT_FOUND_RESULT_CODE = '20000003';
+
 function xmlEscape(value: string | number): string {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -383,7 +385,7 @@ export class BcServices extends CbsServiceBase {
     const identity = this.normalizeMsisdn(msisdn);
     const messageSeq = opts.messageSeq ?? randomUUID();
     const secondaryIdentity = `123${identity}`;
-    const initialBalance = opts.initialBalance ?? 100000000;
+    const initialBalance = opts.initialBalance ?? 0;
     const payload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon">
         <soapenv:Header/>
@@ -847,6 +849,18 @@ export class BcServices extends CbsServiceBase {
       response,
       this.transport.parser,
     );
+
+    if (resultCode === CBS_SUBSCRIBER_NOT_FOUND_RESULT_CODE) {
+      this.log('info', `${operation} - subscriber not found`, {
+        access,
+        resultCode,
+        resultDesc,
+      });
+      return {
+        metadata: resultMsg,
+        data: {},
+      };
+    }
 
     if (resultCode !== '0') {
       this.transport.throwCbsError(operation, accessValue, resultCode, resultDesc);
