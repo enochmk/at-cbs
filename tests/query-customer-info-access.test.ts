@@ -30,6 +30,16 @@ const subscriberStatusResponse = `
           <bcs:Subscriber>
             <bcs:SubscriberInfo>
               <bcc:Status xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">2</bcc:Status>
+              <bcc:SubIdentity xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+                <bcc:SubIdentityType>1</bcc:SubIdentityType>
+                <bcc:SubIdentity>271004887</bcc:SubIdentity>
+                <bcc:PrimaryFlag>1</bcc:PrimaryFlag>
+              </bcc:SubIdentity>
+              <bcc:SubIdentity xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+                <bcc:SubIdentityType>2</bcc:SubIdentityType>
+                <bcc:SubIdentity>620031078105814</bcc:SubIdentity>
+                <bcc:PrimaryFlag>2</bcc:PrimaryFlag>
+              </bcc:SubIdentity>
             </bcs:SubscriberInfo>
             <bcs:SubPaymentMode>
               <bcs:PaymentMode>1</bcs:PaymentMode>
@@ -146,6 +156,10 @@ test('queryCustomerInfo maps SubscriberInfo.Status instead of LifeCycleDetail.Cu
     const result = await client.queryCustomerInfo('271004887');
 
     assert.deepEqual(result.data.Status, { code: 2, label: 'Active' });
+    assert.deepEqual(result.data.SubscriberIdentities, [
+      { SubIdentityType: 1, SubIdentity: 271004887, PrimaryFlag: 1 },
+      { SubIdentityType: 2, SubIdentity: 620031078105814, PrimaryFlag: 2 },
+    ]);
   } finally {
     server.close();
     await once(server, 'close');

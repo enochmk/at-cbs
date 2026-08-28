@@ -292,6 +292,13 @@ export interface ChangeSubscriberPaymentModeOptions extends CbsRequestOptions {
   effectiveTime?: string;
 }
 
+export interface ChangeSubscriberIdentityOptions extends CbsRequestOptions {
+  primaryIdentity: string;
+  oldSubIdentity: string;
+  oldSubIdentityType: 1 | 2;
+  newSubIdentity: string;
+}
+
 export interface ChangeAccountCreditLimitOptions extends CbsRequestOptions {
   accountKey?: string;
   accountCode?: string;
@@ -400,6 +407,13 @@ export interface QueryCustomerInfoSubscriber {
   [key: string]: unknown;
 }
 
+export interface QueryCustomerInfoSubIdentity {
+  SubIdentityType?: number | string;
+  SubIdentity?: number | string;
+  PrimaryFlag?: number | string;
+  [key: string]: unknown;
+}
+
 export interface QueryCustomerInfoMainBalance {
   BalanceType: 'C_MAIN_ACCOUNT';
   BalanceTypeName: 'PPS_MainAccount';
@@ -452,6 +466,7 @@ export interface QueryCustomerInfoData {
   PaymentMode?: MappedCode<PaymentModeLabel>;
   /** Subscriber status returned by QueryCustomerInfo SubscriberInfo.Status. */
   Status?: MappedCode<CurrentStatusLabel>;
+  SubscriberIdentities?: QueryCustomerInfoSubIdentity[];
   BirthdayDate?: string;
   MainBalance?: QueryCustomerInfoMainBalance;
   PrimaryOffering?: QueryCustomerInfoPrimaryOffering;

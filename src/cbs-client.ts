@@ -13,6 +13,7 @@ import type {
   CreateSubscriberRequestOptions,
   ChangeSubscriberOfferingOptions,
   ChangeSubscriberPaymentModeOptions,
+  ChangeSubscriberIdentityOptions,
   ChangeAccountCreditLimitOptions,
   ChangePaymentRelationOptions,
   ChangeSubscriberPaymentLimitOptions,
@@ -127,6 +128,10 @@ export class CbsClient {
     opts: ChangeSubscriberPaymentModeOptions,
   ): Promise<CbsMutationOutput> {
     return this.bcServices.changeSubscriberPaymentMode(opts);
+  }
+
+  changeSubscriberIdentity(opts: ChangeSubscriberIdentityOptions): Promise<CbsMutationOutput> {
+    return this.bcServices.changeSubscriberIdentity(opts);
   }
 
   changeAccountCreditLimit(opts: ChangeAccountCreditLimitOptions): Promise<CbsMutationOutput> {

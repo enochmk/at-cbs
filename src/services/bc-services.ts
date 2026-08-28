@@ -13,6 +13,7 @@ import type {
   CreateSubscriberRequestOptions,
   ChangeSubscriberOfferingOptions,
   ChangeSubscriberPaymentModeOptions,
+  ChangeSubscriberIdentityOptions,
   ChangeAccountCreditLimitOptions,
   ChangePaymentRelationOptions,
   ChangeSubscriberPaymentLimitOptions,
@@ -20,6 +21,7 @@ import type {
   QueryCustomerInfoResponse,
   QueryCustomerInfoAccount,
   QueryCustomerInfoMainBalance,
+  QueryCustomerInfoSubIdentity,
   QueryPaymentRelationOptions,
   QueryPaymentRelationOutput,
   QueryPaymentRelationResponse,
@@ -651,6 +653,13 @@ export class BcServices extends CbsServiceBase {
     );
   }
 
+  async changeSubscriberIdentity(
+    opts: ChangeSubscriberIdentityOptions,
+  ): Promise<CbsMutationOutput> {
+    const payload = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon"><soapenv:Header/><soapenv:Body><bcs:ChangeSubIdentityRequestMsg>${this.requestHeader(opts, 'ChangeSubIdentity', opts.messageSeq ?? randomUUID())}<ChangeSubIdentityRequest><bcs:SubAccessCode><bcc:PrimaryIdentity>${xmlEscape(opts.primaryIdentity)}</bcc:PrimaryIdentity></bcs:SubAccessCode><bcs:ModifySubIdentity><bcs:OldSubIdentity>${xmlEscape(opts.oldSubIdentity)}</bcs:OldSubIdentity><bcs:OldSubIdentityType>${opts.oldSubIdentityType}</bcs:OldSubIdentityType><bcs:NewSubIdentity>${xmlEscape(opts.newSubIdentity)}</bcs:NewSubIdentity></bcs:ModifySubIdentity></ChangeSubIdentityRequest></bcs:ChangeSubIdentityRequestMsg></soapenv:Body></soapenv:Envelope>`;
+    return this.mutation('changeSubscriberIdentity', payload, opts.primaryIdentity);
+  }
+
   async changeAccountCreditLimit(
     opts: ChangeAccountCreditLimitOptions,
   ): Promise<CbsMutationOutput> {
@@ -949,6 +958,19 @@ export class BcServices extends CbsServiceBase {
     const customer = getXmlField<Record<string, unknown>>(queryResult, 'Customer');
     const subscriber = getXmlField<Record<string, unknown>>(queryResult, 'Subscriber');
     const subscriberInfo = getXmlField<Record<string, unknown>>(subscriber, 'SubscriberInfo');
+    const subscriberIdentitiesValue = getXmlField<
+      QueryCustomerInfoSubIdentity | QueryCustomerInfoSubIdentity[]
+    >(subscriberInfo, 'SubIdentity');
+    const subscriberIdentities = subscriberIdentitiesValue
+      ? (Array.isArray(subscriberIdentitiesValue)
+          ? subscriberIdentitiesValue
+          : [subscriberIdentitiesValue]
+        ).map((identity) => ({
+          SubIdentityType: getXmlField<number | string>(identity, 'SubIdentityType'),
+          SubIdentity: getXmlField<number | string>(identity, 'SubIdentity'),
+          PrimaryFlag: getXmlField<number | string>(identity, 'PrimaryFlag'),
+        }))
+      : [];
     const primaryOffering = getXmlField<Record<string, unknown>>(subscriber, 'PrimaryOffering');
     const supplementaryOfferingsValue = getXmlField<
       Record<string, unknown> | Record<string, unknown>[]
@@ -1047,6 +1069,7 @@ export class BcServices extends CbsServiceBase {
             )[paymentMode] ?? 'unknown',
         },
         Status: subscriberStatus,
+        SubscriberIdentities: subscriberIdentities,
         BirthdayDate: getXmlField<string>(individualInfo, 'Birthday'),
         MainBalance: mainBalance,
         PrimaryOffering: primaryOffering ? mapOffering(primaryOffering) : undefined,
