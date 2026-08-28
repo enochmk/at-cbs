@@ -15,10 +15,15 @@ import type {
   ChangeSubscriberPaymentModeOptions,
   ChangeAccountCreditLimitOptions,
   ChangePaymentRelationOptions,
+  ChangeSubscriberPaymentLimitOptions,
   QueryCustomerInfoOutput,
   QueryCustomerInfoResponse,
   QueryCustomerInfoAccount,
   QueryCustomerInfoMainBalance,
+  QueryPaymentRelationOptions,
+  QueryPaymentRelationOutput,
+  QueryPaymentRelationResponse,
+  QueryPaymentRelationResult,
   CurrentStatusLabel,
   MappedCode,
   QueryBalanceOptions,
@@ -701,6 +706,23 @@ export class BcServices extends CbsServiceBase {
     );
   }
 
+  async changeSubscriberPaymentLimit(
+    msisdn: string,
+    opts: ChangeSubscriberPaymentLimitOptions,
+  ): Promise<CbsMutationOutput> {
+    return this.changePaymentRelation({
+      ...opts,
+      primaryIdentity: this.normalizeMsisdn(msisdn),
+      modifyPayRelation: {
+        payRelationKey: opts.payRelationKey,
+        paymentLimit: {
+          operationType: 3,
+          limitValue: opts.newLimit,
+        },
+      },
+    });
+  }
+
   private async mutation<T extends CbsOperationResponse>(
     operation: string,
     payload: string,
@@ -805,6 +827,60 @@ export class BcServices extends CbsServiceBase {
     opts?: QueryCustomerInfoOptions,
   ): Promise<QueryCustomerInfoOutput> {
     return this.queryCustomerInfoAccess(key, opts, 'queryCustomerInfoByKey');
+  }
+
+  async queryPaymentRelation(
+    msisdn: string,
+    opts: QueryPaymentRelationOptions,
+  ): Promise<QueryPaymentRelationOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const messageSeq = opts.messageSeq ?? new Date().toISOString();
+    this.log('verbose', 'queryPaymentRelation - sending request', { msisdn, opts });
+
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <bcs:QueryPaymentRelationRequestMsg>
+            ${this.requestHeader(opts, 'QueryPaymentRelation', messageSeq)}
+            <QueryPaymentRelationRequest>
+              <bcs:PayAccount>
+                <bcc:AccountCode>${xmlEscape(opts.payAccountCode)}</bcc:AccountCode>
+              </bcs:PayAccount>
+              <bcs:PaymentObj>
+                <bcs:SubAccessCode>
+                  <bcc:PrimaryIdentity>${cbsMsisdn}</bcc:PrimaryIdentity>
+                </bcs:SubAccessCode>
+              </bcs:PaymentObj>
+            </QueryPaymentRelationRequest>
+          </bcs:QueryPaymentRelationRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    `;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'queryPaymentRelation',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } =
+      this.transport.parse<QueryPaymentRelationResponse>(response, this.transport.stringParser);
+
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('queryPaymentRelation', msisdn, resultCode, resultDesc);
+    }
+
+    const queryResult = getXmlField<QueryPaymentRelationResult>(
+      resultMsg as Record<string, unknown>,
+      'QueryPaymentRelationResult',
+    );
+
+    this.log('verbose', 'queryPaymentRelation - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: queryResult ?? {},
+    };
   }
 
   private async queryCustomerInfoAccess(

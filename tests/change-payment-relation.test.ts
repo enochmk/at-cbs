@@ -65,3 +65,49 @@ test('serializes ChangePayRelation using the R25 PaymentObj and PaymentRelation 
     await once(server, 'close');
   }
 });
+
+test('changeSubscriberPaymentLimit serializes OpType 3 for an existing subscriber relation', async () => {
+  let requestBody = '';
+  const server: Server = createServer((request, response) => {
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
+    request.on('end', () => {
+      requestBody = Buffer.concat(chunks).toString();
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'text/xml');
+      response.end(successResponse);
+    });
+  });
+
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  assert(address && typeof address !== 'string');
+
+  try {
+    const client = new CbsClient({
+      baseUrl: `http://127.0.0.1:${address.port}`,
+      username: 'test-user',
+      password: 'test-password',
+      rejectUnauthorized: false,
+    });
+
+    await client.changeSubscriberPaymentLimit('0241744292', {
+      payRelationKey: 'PAY-IND-274174292-PARENT',
+      newLimit: 2500000,
+    });
+
+    assert.match(
+      requestBody,
+      /<bcs:PaymentObj>\s*<bcs:SubAccessCode>\s*<bcc:PrimaryIdentity>241744292<\/bcc:PrimaryIdentity>/,
+    );
+    assert.match(
+      requestBody,
+      /<bcs:PayRelationKey>PAY-IND-274174292-PARENT<\/bcs:PayRelationKey>\s*<bcs:PaymentLimit>\s*<bcs:OpType>3<\/bcs:OpType>\s*<bcs:LimitValue>2500000<\/bcs:LimitValue>/,
+    );
+    assert.doesNotMatch(requestBody, /<bcs:PaymentLimitKey>/);
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
+});

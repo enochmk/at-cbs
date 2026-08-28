@@ -1,6 +1,6 @@
 {
   "name": "@enochmk/cbs-client",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "CBS (Core Billing System) SOAP API client for AirtelTigo",
   "private": false,
   "author": "Enoch Klufio",
@@ -43,6 +43,8 @@
     "test:create-container-flow": "node --env-file-if-exists=.env --import=tsx/esm tests/manual/create-container-flow.ts",
     "test:change-subscriber-status": "tsx tests/manual/change-subscriber-status.ts",
     "test:change-subscriber-offering": "tsx tests/manual/change-subscriber-offering.ts",
+    "test:query-payment-relation": "node --env-file-if-exists=.env --import=tsx/esm tests/manual/query-payment-relation.ts",
+    "test:change-subscriber-payment-limit": "node --env-file-if-exists=.env --import=tsx/esm tests/manual/change-subscriber-payment-limit.ts",
     "release": "npm version patch && git push --tags",
     "release:minor": "npm version minor && git push --tags",
     "release:major": "npm version major && git push --tags",

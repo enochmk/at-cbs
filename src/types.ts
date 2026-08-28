@@ -35,6 +35,11 @@ export interface QueryCustomerInfoOptions extends CbsRequestOptions {
   groupMask?: string;
 }
 
+export interface QueryPaymentRelationOptions extends CbsRequestOptions {
+  /** Account code that pays for the subscriber. */
+  payAccountCode: string;
+}
+
 export type QueryCustomerInfoKey =
   | { primaryIdentity: string }
   | { customerKey: string }
@@ -323,6 +328,13 @@ export interface ChangePaymentRelationOptions extends CbsRequestOptions {
   deletePayRelationKey?: string;
 }
 
+export interface ChangeSubscriberPaymentLimitOptions extends CbsRequestOptions {
+  /** Existing payment-relation key returned by QueryPaymentRelation. */
+  payRelationKey: string;
+  /** New payment limit in CBS units. */
+  newLimit: string | number;
+}
+
 export interface CbsPaymentLimit {
   paymentLimitKey: string;
   limitCycleType?: string | number;
@@ -457,6 +469,58 @@ export interface QueryCustomerInfoData {
 export interface QueryCustomerInfoOutput {
   metadata: QueryCustomerInfoResponse;
   data: QueryCustomerInfoData;
+}
+
+export interface QueryPaymentRelationPayRelation {
+  'bcs:PayRelationKey'?: string | number;
+  'bcs:DefaultPayFlag'?: string;
+  'bcs:AcctKey'?: string | number;
+  'bcs:PayObjType'?: string;
+  'bcs:PayObjKey'?: string | number;
+  'bcs:PayObjCode'?: string | number;
+  'bcs:Priority'?: string | number;
+  'bcs:OnlyPayRelFlag'?: string;
+  'bcs:PaymentLimitKey'?: string | number;
+  'bcs:EffectiveTime'?: string | number;
+  'bcs:ExpirationTime'?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryPaymentRelationLimit {
+  'bcc:LimitType'?: string | number;
+  'bcc:LimitValueType'?: string | number;
+  'bcc:LimitValue'?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryPaymentRelationPaymentLimit {
+  'bcs:PaymentLimitKey'?: string | number;
+  'bcs:PaymentLimitInfo'?: {
+    'bcc:LimitCycleType'?: string | number;
+    'bcc:Limit'?: QueryPaymentRelationLimit;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface QueryPaymentRelationList {
+  'bcs:PayRelation'?: QueryPaymentRelationPayRelation | QueryPaymentRelationPayRelation[];
+  'bcs:PaymentLimit'?: QueryPaymentRelationPaymentLimit | QueryPaymentRelationPaymentLimit[];
+  [key: string]: unknown;
+}
+
+export interface QueryPaymentRelationResult {
+  'bcs:PaymentRelationList'?: QueryPaymentRelationList | QueryPaymentRelationList[];
+  [key: string]: unknown;
+}
+
+export interface QueryPaymentRelationResponse extends CbsOperationResponse {
+  QueryPaymentRelationResult?: QueryPaymentRelationResult;
+}
+
+export interface QueryPaymentRelationOutput {
+  metadata: QueryPaymentRelationResponse;
+  data: QueryPaymentRelationResult;
 }
 
 export interface QueryBalanceOptions extends CbsRequestOptions {}

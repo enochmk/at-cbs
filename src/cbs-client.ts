@@ -5,6 +5,8 @@ import type {
   QueryCustomerInfoOptions,
   QueryCustomerInfoOutput,
   QueryCustomerInfoKey,
+  QueryPaymentRelationOptions,
+  QueryPaymentRelationOutput,
   CreateCustomerOptions,
   ChangeCustomerInfoOptions,
   CreateAccountOptions,
@@ -13,6 +15,7 @@ import type {
   ChangeSubscriberPaymentModeOptions,
   ChangeAccountCreditLimitOptions,
   ChangePaymentRelationOptions,
+  ChangeSubscriberPaymentLimitOptions,
   CbsMutationOutput,
   QueryBalanceOptions,
   QueryBalanceOutput,
@@ -88,6 +91,13 @@ export class CbsClient {
     return this.bcServices.queryCustomerInfoByKey(key, opts);
   }
 
+  queryPaymentRelation(
+    msisdn: string,
+    opts: QueryPaymentRelationOptions,
+  ): Promise<QueryPaymentRelationOutput> {
+    return this.bcServices.queryPaymentRelation(msisdn, opts);
+  }
+
   createCustomer(opts: CreateCustomerOptions): Promise<CbsMutationOutput> {
     return this.bcServices.createCustomer(opts);
   }
@@ -125,6 +135,13 @@ export class CbsClient {
 
   changePaymentRelation(opts: ChangePaymentRelationOptions): Promise<CbsMutationOutput> {
     return this.bcServices.changePaymentRelation(opts);
+  }
+
+  changeSubscriberPaymentLimit(
+    msisdn: string,
+    opts: ChangeSubscriberPaymentLimitOptions,
+  ): Promise<CbsMutationOutput> {
+    return this.bcServices.changeSubscriberPaymentLimit(msisdn, opts);
   }
 
   queryBalance(msisdn: string, opts?: QueryBalanceOptions): Promise<QueryBalanceOutput> {
