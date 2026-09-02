@@ -12,6 +12,7 @@ export type CbsTransportOptions = Required<CbsClientOptions>;
 export class CbsTransport {
   readonly parser: XMLParser;
   readonly stringParser: XMLParser;
+  private requestTail: Promise<void> = Promise.resolve();
 
   constructor(private readonly opts: CbsTransportOptions) {
     this.parser = new XMLParser({
@@ -36,6 +37,23 @@ export class CbsTransport {
   }
 
   async post(service: string, payload: string, operation: string, msisdn: string): Promise<string> {
+    const request = this.requestTail.then(
+      () => this.postNow(service, payload, operation, msisdn),
+      () => this.postNow(service, payload, operation, msisdn),
+    );
+    this.requestTail = request.then(
+      () => undefined,
+      () => undefined,
+    );
+    return request;
+  }
+
+  private async postNow(
+    service: string,
+    payload: string,
+    operation: string,
+    msisdn: string,
+  ): Promise<string> {
     try {
       const response = await axios.post<string>(this.getUrl(service), payload, {
         headers: { 'Content-Type': 'text/xml' },

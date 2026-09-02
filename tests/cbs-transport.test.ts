@@ -141,6 +141,32 @@ test('turns timeout failures into a useful 502 transport error', async () => {
   );
 });
 
+test('serializes concurrent CBS requests through one transport lane', async () => {
+  let activeRequests = 0;
+  let maximumConcurrentRequests = 0;
+
+  await withServer(
+    200,
+    (response) => {
+      activeRequests += 1;
+      maximumConcurrentRequests = Math.max(maximumConcurrentRequests, activeRequests);
+      setTimeout(() => {
+        activeRequests -= 1;
+        response.end('<response/>');
+      }, 20);
+    },
+    async (baseUrl) => {
+      const client = transport(baseUrl);
+      const first = client.post('/', '<request/>', 'first-operation', '271000000');
+      const second = client.post('/', '<request/>', 'second-operation', '271000001');
+
+      await Promise.all([first, second]);
+
+      assert.equal(maximumConcurrentRequests, 1);
+    },
+  );
+});
+
 test('keeps readable hyphens and escapes unsafe ResultDesc characters', () => {
   const resultDesc =
     'Subscriber information verification error: Product management verification failed. <-- The offering 987865631 does not exist.';
