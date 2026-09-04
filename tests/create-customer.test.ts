@@ -71,7 +71,7 @@ test('serializes optional CBS customer fields', async () => {
           accountName: 'Default account',
           contact: { firstName: 'Ama', email: 'ama@example.com' },
           creditLimit: 1000,
-          creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+          creditLimitType: 'C_BILL_CYCLE_INITIAL_CREDIT',
         },
       },
     });

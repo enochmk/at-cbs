@@ -271,7 +271,7 @@ await client.createAccount({
   accountCode: 'ACCT-20260814185641998-1',
   userCustomerKey: 'CUST-20260814185641998',
   paymentType: 1,
-  creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+  creditLimitType: 'C_BILL_CYCLE_INITIAL_CREDIT',
   // The application supplies CBS units: GHS 10 = 1,000,000.
   creditLimit: 1_000_000,
 });
@@ -284,7 +284,7 @@ Credit limits are passed unchanged. The client does not multiply or divide the v
 ```typescript
 await client.changeAccountCreditLimit({
   accountCode: 'ACCT-20260814185641998-1',
-  creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+  creditLimitType: 'C_BILL_CYCLE_INITIAL_CREDIT',
   newLimitAmount: 2_000_000,
 });
 ```

@@ -140,7 +140,7 @@ await client.createCustomer({
       billCycleType: '01',
       accountType: 1,
       paymentType: 1,
-      creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+      creditLimitType: 'C_BILL_CYCLE_INITIAL_CREDIT',
       creditLimit: -1,
     },
   },
@@ -179,7 +179,7 @@ await client.createSubscriber(POSTPAID_MSISDN, {
   offeringId: postpaidOfferingId,
   accounts: [
     account(postpaidAccountKey, 1, postpaidAccountKey, {
-      creditLimitType: 'C_INITIAL_CREDIT_LIMIT',
+      creditLimitType: 'C_BILL_CYCLE_INITIAL_CREDIT',
       creditLimit: 0,
     }),
   ],
