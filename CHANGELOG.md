@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-09-15
+
+### Added
+
+- Added normalized `AcctList` balance results to `queryCustomerInfo()` responses.
+- Added normalized `FreeUnitInfo` and `FreeUnits` data, including totals, units, expiry fields,
+  and allocation details.
+- Added regression coverage for account balances, free-unit totals, and multiple free-unit details.
+
 ## [2.5.0] - 2026-08-23
 
 ### Added

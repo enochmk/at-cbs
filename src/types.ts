@@ -393,6 +393,66 @@ export interface QueryCustomerInfoLifeCycleDetail {
   [key: string]: unknown;
 }
 
+export interface QueryCustomerInfoBalanceDetail {
+  BalanceInstanceID?: string | number;
+  Amount?: string | number;
+  InitialAmount?: string | number;
+  EffectiveTime?: string | number;
+  ExpireTime?: string | number;
+  AcctBalOriginal?: Record<string, unknown>;
+  LastUpdateTime?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoBalanceResult {
+  BalanceType?: string;
+  BalanceTypeName?: string;
+  TotalAmount?: string | number;
+  ReservedAmount?: string | number;
+  DepositFlag?: string;
+  RefundFlag?: string | number;
+  CurrencyID?: string | number;
+  BalanceDetail?: QueryCustomerInfoBalanceDetail;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoAcctList {
+  AcctKey?: string | number;
+  BalanceResult?: QueryCustomerInfoBalanceResult[];
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoFreeUnitDetail {
+  FreeUnitInstanceID?: string | number;
+  InitialAmount?: string | number;
+  CurrentAmount?: string | number;
+  EffectiveTime?: string | number;
+  ExpireTime?: string | number;
+  FreeUnitOrigin?: Record<string, unknown>;
+  UsagePriority?: string | number;
+  RollOverFlag?: string;
+  ReserveValidTime?: string | number;
+  LastUpdateTime?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoFreeUnitItem {
+  FreeUnitType?: string;
+  FreeUnitTypeName?: string;
+  MeasureUnit?: string | number;
+  MeasureUnitName?: string;
+  TotalInitialAmount?: string | number;
+  TotalUnusedAmount?: string | number;
+  TotalReserveAmount?: string | number;
+  FreeUnitItemDetail?: QueryCustomerInfoFreeUnitDetail[];
+  [key: string]: unknown;
+}
+
+export interface QueryCustomerInfoFreeUnitInfo {
+  FreeUnitItem?: QueryCustomerInfoFreeUnitItem[];
+  [key: string]: unknown;
+}
+
 export interface QueryCustomerInfoSubscriber {
   SubscriberKey?: string | number;
   SubscriberInfo?: {
@@ -403,7 +463,8 @@ export interface QueryCustomerInfoSubscriber {
   PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
   LifeCycleDetail?: QueryCustomerInfoLifeCycleDetail;
   ActivationTime?: string;
-  AcctList?: Record<string, unknown> | Record<string, unknown>[];
+  AcctList?: QueryCustomerInfoAcctList | QueryCustomerInfoAcctList[];
+  FreeUnitInfo?: QueryCustomerInfoFreeUnitInfo;
   [key: string]: unknown;
 }
 
@@ -469,6 +530,9 @@ export interface QueryCustomerInfoData {
   SubscriberIdentities?: QueryCustomerInfoSubIdentity[];
   BirthdayDate?: string;
   MainBalance?: QueryCustomerInfoMainBalance;
+  AcctList?: QueryCustomerInfoAcctList[];
+  FreeUnitInfo?: QueryCustomerInfoFreeUnitInfo;
+  FreeUnits?: QueryCustomerInfoFreeUnitItem[];
   PrimaryOffering?: QueryCustomerInfoPrimaryOffering;
   SupplementaryOfferings?: QueryCustomerInfoPrimaryOffering[];
   'bcs:BillCycleType'?: number | string;

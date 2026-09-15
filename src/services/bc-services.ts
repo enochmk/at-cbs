@@ -20,6 +20,12 @@ import type {
   QueryCustomerInfoOutput,
   QueryCustomerInfoResponse,
   QueryCustomerInfoAccount,
+  QueryCustomerInfoAcctList,
+  QueryCustomerInfoBalanceDetail,
+  QueryCustomerInfoBalanceResult,
+  QueryCustomerInfoFreeUnitDetail,
+  QueryCustomerInfoFreeUnitInfo,
+  QueryCustomerInfoFreeUnitItem,
   QueryCustomerInfoMainBalance,
   QueryCustomerInfoSubIdentity,
   QueryPaymentRelationOptions,
@@ -117,6 +123,90 @@ const currentStatusLabels: Record<number, CurrentStatusLabel> = {
   7: 'In stock',
   8: 'Pre-deregistration',
 };
+
+function asRecordArray<T>(value: T | T[] | undefined): T[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function mapCustomerInfoBalanceDetail(
+  detail: Record<string, unknown>,
+): QueryCustomerInfoBalanceDetail {
+  return {
+    ...detail,
+    BalanceInstanceID: getXmlField<string | number>(detail, 'BalanceInstanceID'),
+    Amount: getXmlField<string | number>(detail, 'Amount'),
+    InitialAmount: getXmlField<string | number>(detail, 'InitialAmount'),
+    EffectiveTime: getXmlField<string | number>(detail, 'EffectiveTime'),
+    ExpireTime: getXmlField<string | number>(detail, 'ExpireTime'),
+    AcctBalOriginal: getXmlField<Record<string, unknown>>(detail, 'AcctBalOriginal'),
+    LastUpdateTime: getXmlField<string | number>(detail, 'LastUpdateTime'),
+  };
+}
+
+function mapCustomerInfoBalance(balance: Record<string, unknown>): QueryCustomerInfoBalanceResult {
+  const detail = getXmlField<Record<string, unknown>>(balance, 'BalanceDetail');
+  return {
+    ...balance,
+    BalanceType: getXmlField<string>(balance, 'BalanceType'),
+    BalanceTypeName: getXmlField<string>(balance, 'BalanceTypeName'),
+    TotalAmount: getXmlField<string | number>(balance, 'TotalAmount'),
+    ReservedAmount: getXmlField<string | number>(balance, 'ReservedAmount'),
+    DepositFlag: getXmlField<string>(balance, 'DepositFlag'),
+    RefundFlag: getXmlField<string | number>(balance, 'RefundFlag'),
+    CurrencyID: getXmlField<string | number>(balance, 'CurrencyID'),
+    BalanceDetail: detail ? mapCustomerInfoBalanceDetail(detail) : undefined,
+  };
+}
+
+function mapCustomerInfoAcctList(account: Record<string, unknown>): QueryCustomerInfoAcctList {
+  const balances = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+    account,
+    'BalanceResult',
+  );
+  return {
+    ...account,
+    AcctKey: getXmlField<string | number>(account, 'AcctKey'),
+    BalanceResult: asRecordArray(balances).map(mapCustomerInfoBalance),
+  };
+}
+
+function mapCustomerInfoFreeUnitDetail(
+  detail: Record<string, unknown>,
+): QueryCustomerInfoFreeUnitDetail {
+  return {
+    ...detail,
+    FreeUnitInstanceID: getXmlField<string | number>(detail, 'FreeUnitInstanceID'),
+    InitialAmount: getXmlField<string | number>(detail, 'InitialAmount'),
+    CurrentAmount: getXmlField<string | number>(detail, 'CurrentAmount'),
+    EffectiveTime: getXmlField<string | number>(detail, 'EffectiveTime'),
+    ExpireTime: getXmlField<string | number>(detail, 'ExpireTime'),
+    FreeUnitOrigin: getXmlField<Record<string, unknown>>(detail, 'FreeUnitOrigin'),
+    UsagePriority: getXmlField<string | number>(detail, 'UsagePriority'),
+    RollOverFlag: getXmlField<string>(detail, 'RollOverFlag'),
+    ReserveValidTime: getXmlField<string | number>(detail, 'ReserveValidTime'),
+    LastUpdateTime: getXmlField<string | number>(detail, 'LastUpdateTime'),
+  };
+}
+
+function mapCustomerInfoFreeUnit(item: Record<string, unknown>): QueryCustomerInfoFreeUnitItem {
+  const details = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+    item,
+    'FreeUnitItemDetail',
+  );
+  const mappedDetails = asRecordArray(details).map(mapCustomerInfoFreeUnitDetail);
+  return {
+    ...item,
+    FreeUnitType: getXmlField<string>(item, 'FreeUnitType'),
+    FreeUnitTypeName: getXmlField<string>(item, 'FreeUnitTypeName'),
+    MeasureUnit: getXmlField<string | number>(item, 'MeasureUnit'),
+    MeasureUnitName: getXmlField<string>(item, 'MeasureUnitName'),
+    TotalInitialAmount: getXmlField<string | number>(item, 'TotalInitialAmount'),
+    TotalUnusedAmount: getXmlField<string | number>(item, 'TotalUnusedAmount'),
+    TotalReserveAmount: getXmlField<string | number>(item, 'TotalReserveAmount'),
+    FreeUnitItemDetail: mappedDetails,
+  };
+}
 
 function mapCurrentStatus(value: unknown): MappedCode<CurrentStatusLabel> | undefined {
   if (value === undefined || value === null || value === '') return undefined;
@@ -1001,11 +1091,20 @@ export class BcServices extends CbsServiceBase {
       subscriber,
       'AcctList',
     );
-    const accountRecords = subscriberAccounts
-      ? Array.isArray(subscriberAccounts)
-        ? subscriberAccounts
-        : [subscriberAccounts]
-      : [];
+    const accountRecords = asRecordArray(subscriberAccounts);
+    const accountLists = accountRecords.map(mapCustomerInfoAcctList);
+    const freeUnitInfo = getXmlField<QueryCustomerInfoFreeUnitInfo>(subscriber, 'FreeUnitInfo');
+    const freeUnitItems = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
+      freeUnitInfo,
+      'FreeUnitItem',
+    );
+    const freeUnits = asRecordArray(freeUnitItems).map(mapCustomerInfoFreeUnit);
+    const normalizedFreeUnitInfo = freeUnitInfo
+      ? {
+          ...freeUnitInfo,
+          FreeUnitItem: freeUnits,
+        }
+      : undefined;
     const mainBalanceResult = accountRecords
       .flatMap((acctList) => {
         const balanceResult = getXmlField<Record<string, unknown> | Record<string, unknown>[]>(
@@ -1072,6 +1171,9 @@ export class BcServices extends CbsServiceBase {
         SubscriberIdentities: subscriberIdentities,
         BirthdayDate: getXmlField<string>(individualInfo, 'Birthday'),
         MainBalance: mainBalance,
+        AcctList: accountLists,
+        FreeUnitInfo: normalizedFreeUnitInfo,
+        FreeUnits: freeUnits,
         PrimaryOffering: primaryOffering ? mapOffering(primaryOffering) : undefined,
         SupplementaryOfferings: supplementaryOfferings.map(mapOffering),
         'bcs:BillCycleType': getXmlField(accountInfo, 'BillCycleType'),

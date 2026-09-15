@@ -206,7 +206,10 @@ postpaid and hybrid amounts are sent as payment limits.
 ### Query a customer hierarchy
 
 Query by MSISDN or by exactly one CBS key. The parsed result includes customer, subscriber,
-account, offering, lifecycle, billing-cycle, and main-balance fields when CBS returns them.
+account, offering, lifecycle, billing-cycle, main-balance, account-balance, and free-unit fields
+when CBS returns them. `data.AcctList` contains normalized balance results and `data.FreeUnits`
+contains normalized free-unit totals and allocation details. Free-unit details are always returned
+as an array, including when CBS returns only one detail.
 
 ```typescript
 const byMsisdn = await client.queryCustomerInfo('270118755');
@@ -224,6 +227,8 @@ console.log(byMsisdn.data.PaymentMode);
 console.log(byMsisdn.data.Status);
 console.log(byMsisdn.data.PrimaryOffering);
 console.log(byMsisdn.data.MainBalance?.amountInGhc);
+console.log(byMsisdn.data.AcctList);
+console.log(byMsisdn.data.FreeUnits);
 ```
 
 ### Update customer information
