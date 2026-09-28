@@ -40,6 +40,8 @@ import type {
   CustDeactivationOutput,
   AdjustAccountOptions,
   AdjustAccountOutput,
+  AdjustBalancesOptions,
+  AdjustBalancesOutput,
   SubscribeAppendantProductOptions,
   SubscribeAppendantProductOutput,
   UnsubscribeAppendantProductOptions,
@@ -161,6 +163,10 @@ export class CbsClient {
 
   adjustAccount(msisdn: string, opts?: AdjustAccountOptions): Promise<AdjustAccountOutput> {
     return this.arServices.adjustAccount(msisdn, opts);
+  }
+
+  adjustBalances(msisdn: string, opts: AdjustBalancesOptions): Promise<AdjustBalancesOutput> {
+    return this.arServices.adjustBalances(msisdn, opts);
   }
 
   subscribeAppendantProduct(
