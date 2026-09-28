@@ -754,6 +754,64 @@ export interface AdjustAccountOutput {
   data: AdjustAccountData;
 }
 
+/** One monetary balance entry in a combined account/free-unit adjustment. */
+export interface AdjustBalanceAccount {
+  balanceType: string;
+  adjustmentAmt: number | string;
+  adjustmentType?: number | string;
+  currencyId?: number | string;
+  expireTime?: string;
+}
+
+/** One free-unit entry, addressable by type or a specific instance ID. */
+export interface AdjustFreeUnitAdjustment {
+  freeUnitType?: string;
+  freeUnitInstanceId?: number | string;
+  adjustmentAmt: number | string;
+  adjustmentType?: number | string;
+  expireTime?: string;
+  offsetUnit?: number | string;
+  offsetValue?: number | string;
+  selectInstanceMode?: number | string;
+}
+
+/** Sends monetary and free-unit entries together in one CBS AdjustmentRequest. */
+export interface AdjustBalancesOptions extends CbsRequestOptions {
+  accounts: AdjustBalanceAccount[];
+  adjustments: AdjustFreeUnitAdjustment[];
+  adjustmentReasonCode?: string;
+  opType?: number | string;
+  adjustmentSerialNo?: string;
+}
+
+export interface AdjustBalancesAccountResult {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+  OldBalanceAmt?: number | string;
+  NewBalanceAmt?: number | string;
+  BalanceType?: string;
+  BalanceTypeName?: string;
+}
+
+export interface AdjustFreeUnitData {
+  ResultCode?: number | string;
+  ResultDesc?: string;
+  OldBalanceAmt?: number | string;
+  NewBalanceAmt?: number | string;
+  FreeUnitType?: string;
+  FreeUnitInstanceID?: number | string;
+}
+
+export interface AdjustBalancesOutput {
+  metadata: AdjustAccountResponse;
+  data: {
+    ResultCode?: number | string;
+    ResultDesc?: string;
+    accounts: AdjustBalancesAccountResult[];
+    adjustments: AdjustFreeUnitData[];
+  };
+}
+
 export interface QuerySubLifeCycleOptions extends CbsRequestOptions {}
 
 export interface QuerySubLifeCycleStatus {

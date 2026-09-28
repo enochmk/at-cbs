@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `adjustBalances()` to send account-balance and free-unit changes together in one CBS
+  adjustment request, including free-unit instance-ID adjustments.
+
 ### Changed
 
 - Prefix every outbound CBS `MessageSeq` with `CRM_` and a fresh UUID, including requests that

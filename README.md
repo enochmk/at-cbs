@@ -534,6 +534,27 @@ await client.adjustAccount('270118755', {
   adjustmentSerialNo: 'ADJ-20260814-001',
 });
 
+// Account balances and free units can also be adjusted in one CBS request.
+await client.adjustBalances('270118755', {
+  adjustmentSerialNo: 'MOVE-20260928-001',
+  accounts: [
+    {
+      balanceType: 'C_BONUS_FUND',
+      adjustmentAmt: 100_000,
+      adjustmentType: 1,
+      currencyId: 1054,
+    },
+  ],
+  adjustments: [
+    {
+      freeUnitType: 'C_BigTime_Data_10GH',
+      adjustmentAmt: 500,
+      adjustmentType: 1,
+      expireTime: '20370101000000',
+    },
+  ],
+});
+
 const transactions = await client.queryXTransaction('270118755');
 console.dir(transactions.data, { depth: null });
 
