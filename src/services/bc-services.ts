@@ -328,7 +328,7 @@ export class BcServices extends CbsServiceBase {
   ): Promise<CreateSubscriberOutput> {
     const identity = this.normalizeMsisdn(msisdn);
     const primaryIdentity = opts.primaryIdentity ?? identity;
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const accounts = this.validateSubscriberAccounts(opts.accounts, mode);
     const status = opts.status ?? CbsRequestDefaults.SUBSCRIBER_STATUS;
     const subscriberKey = opts.subscriberKey ?? primaryIdentity;
@@ -480,7 +480,7 @@ export class BcServices extends CbsServiceBase {
     opts: CreateStandalonePrepaidSubscriberOptions,
   ): Promise<CreateSubscriberOutput> {
     const identity = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const secondaryIdentity = `123${identity}`;
     const initialBalance = opts.initialBalance ?? 0;
     const payload = `
@@ -597,7 +597,7 @@ export class BcServices extends CbsServiceBase {
     opts: UnsubscribeAppendantProductOptions,
   ): Promise<UnsubscribeAppendantProductOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     this.log('verbose', 'unsubscribeAppendantProduct - sending request', { msisdn, opts });
 
     const soapPayload = `
@@ -842,7 +842,7 @@ export class BcServices extends CbsServiceBase {
     opts: SubscribeAppendantProductOptions,
   ): Promise<SubscribeAppendantProductOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     this.log('verbose', 'subscribeAppendantProduct - sending request', { msisdn, opts });
 
     const soapPayload = `
@@ -933,7 +933,7 @@ export class BcServices extends CbsServiceBase {
     opts: QueryPaymentRelationOptions,
   ): Promise<QueryPaymentRelationOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts.messageSeq ?? new Date().toISOString();
+    const messageSeq = this.createMessageSeq();
     this.log('verbose', 'queryPaymentRelation - sending request', { msisdn, opts });
 
     const soapPayload = `
@@ -989,7 +989,7 @@ export class BcServices extends CbsServiceBase {
   ): Promise<QueryCustomerInfoOutput> {
     const accessXml = this.queryCustomerInfoAccessXml(access);
     const accessValue = Object.values(access)[0];
-    const messageSeq = opts?.messageSeq ?? new Date().toISOString();
+    const messageSeq = this.createMessageSeq();
     this.log('verbose', `${operation} - sending request`, { access, opts });
 
     const soapPayload = `
@@ -1220,7 +1220,7 @@ export class BcServices extends CbsServiceBase {
     opts?: QuerySubLifeCycleOptions,
   ): Promise<QuerySubLifeCycleOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts?.messageSeq ?? new Date().toISOString();
+    const messageSeq = this.createMessageSeq();
     this.log('verbose', 'querySubLifeCycle - sending request', { msisdn, opts });
 
     const soapPayload = `
@@ -1286,7 +1286,7 @@ export class BcServices extends CbsServiceBase {
     }
 
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const effectiveTime = opts.effectiveTime
       ? `<bcs:EffectiveTime>${opts.effectiveTime}</bcs:EffectiveTime>`
       : '';
@@ -1332,7 +1332,7 @@ export class BcServices extends CbsServiceBase {
 
   async deleteNumber(msisdn: string, opts?: DeleteNumberOptions): Promise<DeleteNumberOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
 
     this.log('verbose', 'deleteNumber - sending request', { msisdn, opts });
@@ -1387,7 +1387,7 @@ export class BcServices extends CbsServiceBase {
 
   async subActivate(msisdn: string, opts?: SubActivationOptions): Promise<SubActivationOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
     const soapPayload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
@@ -1462,7 +1462,7 @@ export class BcServices extends CbsServiceBase {
     }
 
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const subscriberAccessCode = this.getSubscriberPrimaryIdentity(cbsMsisdn);
     const soapPayload = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bcs="http://www.huawei.com/bme/cbsinterface/bcservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:bcc="http://www.huawei.com/bme/cbsinterface/bccommon">
@@ -1492,7 +1492,7 @@ export class BcServices extends CbsServiceBase {
     opts?: QueryXTransactionOptions,
   ): Promise<QueryXTransactionOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const subscriberAccessCode = this.getSubscriberAccessCode(cbsMsisdn, opts?.subscriberKey);
 
     this.log('verbose', 'queryXTransaction - sending request', { msisdn, opts });
@@ -1544,7 +1544,7 @@ export class BcServices extends CbsServiceBase {
       throw createHttpError(400, 'Customer access code is required for CustActivation');
     }
 
-    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const customerAccessCode = this.getCustomerAccessCode(opts);
 
     this.log('verbose', 'custActivation - sending request', { opts });
@@ -1583,7 +1583,7 @@ export class BcServices extends CbsServiceBase {
       throw createHttpError(400, 'opType is required for CustDeactivation');
     }
 
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const effectiveTime = opts.effectiveTime
       ? `<bcs:EffectiveTime>${opts.effectiveTime}</bcs:EffectiveTime>`
       : '';
@@ -1632,7 +1632,7 @@ export class BcServices extends CbsServiceBase {
       throw createHttpError(400, 'opType is required for AcctDeactivation');
     }
 
-    const messageSeq = opts.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const accountAccessCode = this.getAccountAccessCode(opts);
     const payType = tag('bcs:PayType', opts.payType);
     this.log('verbose', 'acctDeactivation - sending request', { opts });

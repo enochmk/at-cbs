@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Prefix every outbound CBS `MessageSeq` with `CRM_` and a fresh UUID, including requests that
+  provide a caller-defined sequence or previously used timestamp/constant defaults.
+
 ## [2.9.0] - 2026-09-15
 
 ### Added

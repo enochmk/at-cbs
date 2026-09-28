@@ -1,4 +1,5 @@
 import createHttpError from 'http-errors';
+import { randomUUID } from 'node:crypto';
 
 import type {
   AcctDeactivationOptions,
@@ -20,6 +21,11 @@ export abstract class CbsServiceBase {
 
   protected log(level: string, msg: string, ctx?: Record<string, unknown>): void {
     this.transport.log(level, msg, ctx);
+  }
+
+  /** Generates a unique request identifier that identifies this client as CRM. */
+  protected createMessageSeq(): string {
+    return `CRM_${randomUUID()}`;
   }
 
   protected normalizeMsisdn(msisdn: string): string {
@@ -98,12 +104,18 @@ export abstract class CbsServiceBase {
     const accessMode = opts?.accessMode ?? defaults.accessMode;
     const msgLanguageCode = opts?.msgLanguageCode ?? defaults.msgLanguageCode;
     const timeType = opts?.timeType ?? defaults.timeType;
+    const requestMessageSeq =
+      /^CRM_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        messageSeq,
+      )
+        ? messageSeq
+        : this.createMessageSeq();
 
     return `
       <RequestHeader>
         <cbs:Version>${version}</cbs:Version>
         <cbs:BusinessCode>${businessCode}</cbs:BusinessCode>
-        <cbs:MessageSeq>${messageSeq}</cbs:MessageSeq>
+        <cbs:MessageSeq>${requestMessageSeq}</cbs:MessageSeq>
         <cbs:OwnershipInfo>
           <cbs:BEID>${beId}</cbs:BEID>
         </cbs:OwnershipInfo>

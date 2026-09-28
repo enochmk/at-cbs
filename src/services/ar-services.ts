@@ -48,7 +48,7 @@ export class ArServices extends CbsServiceBase {
 
   async adjustAccount(msisdn: string, opts?: AdjustAccountOptions): Promise<AdjustAccountOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
     const adjustmentSerialNo = opts?.adjustmentSerialNo ?? `Adj${randomUUID().replace(/-/g, '')}`;
     const adjustmentAmt = opts?.adjustmentAmt ?? 500000;
     const balanceType = opts?.balanceType ?? 'C_MAIN_ACCOUNT';
@@ -112,7 +112,7 @@ export class ArServices extends CbsServiceBase {
 
   async queryBalance(msisdn: string, opts?: QueryBalanceOptions): Promise<QueryBalanceOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);
-    const messageSeq = opts?.messageSeq ?? '1';
+    const messageSeq = this.createMessageSeq();
     this.log('verbose', 'queryBalance - sending request', { msisdn, opts });
 
     const soapPayload = `

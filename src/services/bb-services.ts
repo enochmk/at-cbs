@@ -52,7 +52,7 @@ export class BbServices extends CbsServiceBase {
     }
 
     const cbsMsisdn = this.normalizeMsisdn(primaryIdentity);
-    const messageSeq = opts?.messageSeq ?? randomUUID();
+    const messageSeq = this.createMessageSeq();
 
     this.log('verbose', 'queryCdrDetail - sending request', {
       primaryIdentity,

@@ -49,6 +49,7 @@ test('changeSubscriberIdentity sends the CBS IMSI replacement request', async ()
       oldSubIdentity: '123261000001',
       oldSubIdentityType: 2,
       newSubIdentity: '124261000001',
+      messageSeq: 'legacy-workflow-id',
     });
 
     assert.equal(result.data.ResultCode, '0');
@@ -56,6 +57,8 @@ test('changeSubscriberIdentity sends the CBS IMSI replacement request', async ()
     assert.match(requestBody, /<bcs:OldSubIdentity>123261000001<\/bcs:OldSubIdentity>/);
     assert.match(requestBody, /<bcs:OldSubIdentityType>2<\/bcs:OldSubIdentityType>/);
     assert.match(requestBody, /<bcs:NewSubIdentity>124261000001<\/bcs:NewSubIdentity>/);
+    assert.match(requestBody, /<cbs:MessageSeq>CRM_[0-9a-f-]{36}<\/cbs:MessageSeq>/);
+    assert.doesNotMatch(requestBody, /legacy-workflow-id/);
   } finally {
     server.close();
     await once(server, 'close');
