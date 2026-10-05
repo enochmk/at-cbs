@@ -41,6 +41,16 @@ import type {
   QueryTransactionOutput,
   QueryTransactionResponse,
   QueryTransactionResult,
+  QueryRechargeLogOptions,
+  QueryRechargeLogOutput,
+  QueryRechargeLogRecord,
+  QueryRechargeLogResponse,
+  QueryRechargeLogResult,
+  QueryRefundLogOptions,
+  QueryRefundLogOutput,
+  QueryRefundLogRecord,
+  QueryRefundLogResponse,
+  QueryRefundLogResult,
 } from '../types';
 import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
@@ -66,6 +76,231 @@ function parseOptionalNonNegativeInteger(value: string | number | undefined): nu
 
 export class ArServices extends CbsServiceBase {
   protected readonly servicePath = '/services/ArServices';
+
+  async queryRechargeLog(
+    msisdn: string,
+    opts: QueryRechargeLogOptions,
+  ): Promise<QueryRechargeLogOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    if (!opts?.startTime?.trim() || !opts?.endTime?.trim()) {
+      throw createHttpError(400, 'startTime and endTime are required for QueryRechargeLog');
+    }
+    if (opts.rechargeType !== undefined && opts.innerRechargeType !== undefined) {
+      throw createHttpError(400, 'rechargeType and innerRechargeType cannot both be specified');
+    }
+    if (
+      opts.innerRechargeType !== undefined &&
+      !['0', '1', '2', '3'].includes(opts.innerRechargeType)
+    ) {
+      throw createHttpError(400, 'innerRechargeType must be one of 0, 1, 2, or 3');
+    }
+    if (opts.rechargeResult !== undefined && ![0, 1].includes(opts.rechargeResult)) {
+      throw createHttpError(400, 'rechargeResult must be 0 (failed) or 1 (successful)');
+    }
+
+    const startRow = opts.startRow ?? 0;
+    const pageSize = opts.pageSize ?? 50;
+    const totalRows = opts.totalRows ?? 0;
+    if (!Number.isSafeInteger(totalRows) || totalRows < 0 || totalRows >= 65535) {
+      throw createHttpError(400, 'totalRows must be an integer from 0 to 65534');
+    }
+    if (!Number.isSafeInteger(startRow) || startRow < 0 || startRow >= 65535) {
+      throw createHttpError(400, 'startRow must be an integer from 0 to 65534');
+    }
+    if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 500) {
+      throw createHttpError(400, 'pageSize must be an integer from 1 to 500');
+    }
+    const channelIds = opts.rechargeChannelIds ?? [];
+    if (channelIds.some((channelId) => !channelId.trim())) {
+      throw createHttpError(400, 'rechargeChannelIds cannot contain an empty value');
+    }
+
+    const messageSeq = this.createMessageSeq();
+    this.log('verbose', 'queryRechargeLog - sending request', { msisdn, opts });
+
+    const rechargeChannelIds =
+      channelIds.length > 0
+        ? `<ars:RechargeChannelIDs>${channelIds
+            .map(
+              (channelId) =>
+                `<ars:RechargeChannelID>${escapeXmlText(channelId)}</ars:RechargeChannelID>`,
+            )
+            .join('')}</ars:RechargeChannelIDs>`
+        : '';
+    const optionalFilters = [
+      opts.extTransId !== undefined
+        ? `<ars:ExtTransID>${escapeXmlText(opts.extTransId)}</ars:ExtTransID>`
+        : '',
+      opts.rechargeType !== undefined
+        ? `<ars:RechargeType>${escapeXmlText(opts.rechargeType)}</ars:RechargeType>`
+        : '',
+      opts.innerRechargeType !== undefined
+        ? `<ars:InnerRechargeType>${opts.innerRechargeType}</ars:InnerRechargeType>`
+        : '',
+      opts.rechargeResult !== undefined
+        ? `<ars:RechargeResult>${opts.rechargeResult}</ars:RechargeResult>`
+        : '',
+      opts.subscriberLevelOnly !== undefined
+        ? `<ars:AdditionalProperty><arc:Code>C_SUB_LOG</arc:Code><arc:Value>${opts.subscriberLevelOnly ? 1 : 0}</arc:Value></ars:AdditionalProperty>`
+        : '',
+    ].join('');
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ars="http://www.huawei.com/bme/cbsinterface/arservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:arc="http://cbs.huawei.com/ar/wsservice/arcommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <ars:QueryRechargeLogRequestMsg>
+            ${this.requestHeader(opts, '1', messageSeq, { timeType: 2 })}
+            <QueryRechargeLogRequest>
+              <ars:QueryObj>
+                <ars:SubAccessCode>
+                  <arc:PrimaryIdentity>${cbsMsisdn}</arc:PrimaryIdentity>
+                </ars:SubAccessCode>
+              </ars:QueryObj>
+              ${rechargeChannelIds}
+              <ars:TotalRowNum>${totalRows}</ars:TotalRowNum>
+              <ars:BeginRowNum>${startRow}</ars:BeginRowNum>
+              <ars:FetchRowNum>${pageSize}</ars:FetchRowNum>
+              <ars:StartTime>${escapeXmlText(opts.startTime)}</ars:StartTime>
+              <ars:EndTime>${escapeXmlText(opts.endTime)}</ars:EndTime>
+              ${optionalFilters}
+            </QueryRechargeLogRequest>
+          </ars:QueryRechargeLogRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'queryRechargeLog',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<QueryRechargeLogResponse>(
+      response,
+      this.transport.stringParser,
+    );
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('queryRechargeLog', msisdn, resultCode, resultDesc);
+    }
+
+    const queryResult = getXmlField<QueryRechargeLogResult>(
+      resultMsg as Record<string, unknown>,
+      'QueryRechargeLogResult',
+    );
+    const recordResult = getXmlField<QueryRechargeLogRecord | QueryRechargeLogRecord[]>(
+      queryResult as Record<string, unknown> | undefined,
+      'RechargeInfo',
+    );
+    const recharges =
+      recordResult === undefined ? [] : Array.isArray(recordResult) ? recordResult : [recordResult];
+    const returnedResult = queryResult ?? {};
+
+    this.log('verbose', 'queryRechargeLog - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: returnedResult,
+      recharges,
+      pagination: {
+        totalRows: parseOptionalNonNegativeInteger(
+          getXmlField<string | number>(returnedResult, 'TotalRowNum'),
+        ),
+        startRow,
+        pageSize,
+        rowsReturned: recharges.length,
+      },
+    };
+  }
+
+  async queryRefundLog(
+    msisdn: string,
+    opts?: QueryRefundLogOptions,
+  ): Promise<QueryRefundLogOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const startRow = opts?.startRow ?? 0;
+    const pageSize = opts?.pageSize ?? 50;
+    const totalRows = opts?.totalRows ?? 0;
+
+    if (!Number.isSafeInteger(totalRows) || totalRows < 0 || totalRows >= 65535) {
+      throw createHttpError(400, 'totalRows must be an integer from 0 to 65534');
+    }
+    if (!Number.isSafeInteger(startRow) || startRow < 0 || startRow >= 65535) {
+      throw createHttpError(400, 'startRow must be an integer from 0 to 65534');
+    }
+    if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000) {
+      throw createHttpError(400, 'pageSize must be an integer from 1 to 1000');
+    }
+
+    const messageSeq = this.createMessageSeq();
+    this.log('verbose', 'queryRefundLog - sending request', { msisdn, opts });
+    const optionalTimes = [
+      opts?.startTime !== undefined
+        ? `<ars:StartTime>${escapeXmlText(opts.startTime)}</ars:StartTime>`
+        : '',
+      opts?.endTime !== undefined
+        ? `<ars:EndTime>${escapeXmlText(opts.endTime)}</ars:EndTime>`
+        : '',
+    ].join('');
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ars="http://www.huawei.com/bme/cbsinterface/arservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:arc="http://cbs.huawei.com/ar/wsservice/arcommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <ars:QueryRefundLogRequestMsg>
+            ${this.requestHeader(opts, 'QueryRefundLog', messageSeq)}
+            <QueryRefundLogRequest>
+              <ars:QueryObj>
+                <ars:SubAccessCode>
+                  <arc:PrimaryIdentity>${cbsMsisdn}</arc:PrimaryIdentity>
+                </ars:SubAccessCode>
+              </ars:QueryObj>
+              ${optionalTimes}
+              <ars:TotalRowNum>${totalRows}</ars:TotalRowNum>
+              <ars:BeginRowNum>${startRow}</ars:BeginRowNum>
+              <ars:FetchRowNum>${pageSize}</ars:FetchRowNum>
+            </QueryRefundLogRequest>
+          </ars:QueryRefundLogRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'queryRefundLog',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<QueryRefundLogResponse>(
+      response,
+      this.transport.stringParser,
+    );
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('queryRefundLog', msisdn, resultCode, resultDesc);
+    }
+
+    const queryResult = getXmlField<QueryRefundLogResult>(
+      resultMsg as Record<string, unknown>,
+      'QueryRefundLogResult',
+    );
+    const recordResult = getXmlField<QueryRefundLogRecord | QueryRefundLogRecord[]>(
+      queryResult as Record<string, unknown> | undefined,
+      'RefundLogInfo',
+    );
+    const refunds =
+      recordResult === undefined ? [] : Array.isArray(recordResult) ? recordResult : [recordResult];
+    const returnedResult = queryResult ?? {};
+
+    this.log('verbose', 'queryRefundLog - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: returnedResult,
+      refunds,
+      pagination: {
+        totalRows: parseOptionalNonNegativeInteger(
+          getXmlField<string | number>(returnedResult, 'TotalRowNum'),
+        ),
+        startRow,
+        pageSize,
+        rowsReturned: refunds.length,
+      },
+    };
+  }
 
   async queryTransaction(
     msisdn: string,

@@ -565,6 +565,21 @@ for (let startRow = 0; ; ) {
 
 const cdr = await client.queryCdrDetail('270118755', '123456789');
 console.dir(cdr.data, { depth: null });
+
+const rechargePage = await client.queryRechargeLog('560043149', {
+  startTime: '20261001000000',
+  endTime: '20261005235959',
+  pageSize: 50,
+  subscriberLevelOnly: true,
+});
+console.dir(rechargePage.recharges, { depth: null });
+
+const refundPage = await client.queryRefundLog('560043149', {
+  startTime: '20261001000000',
+  endTime: '20261005235959',
+  pageSize: 50,
+});
+console.dir(refundPage.refunds, { depth: null });
 ```
 
 `queryTransaction` uses the `ArServices` endpoint and returns `transactions` as an array plus
@@ -572,7 +587,15 @@ normalized `pagination` values (`totalRows`, request `startRow` and `pageSize`, 
 `data` and `metadata` preserve the parsed CBS response, including
 namespaced or deployment-specific fields not modeled by the client. CBS paging uses `TotalRowNum`
 as the prior total and `BeginRowNum` as a zero-based offset; `FetchRowNum` is limited to 1000.
+`queryRechargeLog` also uses `ArServices` and requires a time range. Its `pageSize` maximum is 500.
+By default, CBS returns recharge records for the subscriber's default account; set
+`subscriberLevelOnly: true` to request only records tied to that subscriber. The manual's `C_SUB_LOG`
+behavior and recharge-summary output depend on CBS configuration. `rechargeType` and
+`innerRechargeType` are mutually exclusive.
 `queryCdrDetail` uses `BbServices` and requires a CDR sequence; it does not search CDRs by number.
+`queryRefundLog` uses `ArServices`; its date range is optional and its `pageSize` maximum is 1000.
+It returns `refunds` as normalized records and preserves all parsed CBS fields in `data` and
+`metadata`. Refund amounts remain raw CBS values; use `CurrencyID` when interpreting them.
 
 ## Cleanup order
 

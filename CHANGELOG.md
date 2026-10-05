@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `queryTransaction()` for subscriber billing transaction logs, with complete CBS response preservation, normalized records, and validated pagination.
+- Added `queryRechargeLog()` with subscriber/account scope control, recharge filters, normalized records, and pagination bounded by the CBS contract.
+- Added `queryRefundLog()` with typed refund details, full CBS response preservation, and pagination bounded by the CBS contract.
 
 ### Changed
 

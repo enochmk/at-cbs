@@ -28,6 +28,10 @@ import type {
   QueryXTransactionOutput,
   QueryTransactionOptions,
   QueryTransactionOutput,
+  QueryRechargeLogOptions,
+  QueryRechargeLogOutput,
+  QueryRefundLogOptions,
+  QueryRefundLogOutput,
   QueryCdrDetailOptions,
   QueryCdrDetailOutput,
   CustActivationOptions,
@@ -251,6 +255,14 @@ export class CbsClient {
     opts?: QueryTransactionOptions,
   ): Promise<QueryTransactionOutput> {
     return this.arServices.queryTransaction(msisdn, opts);
+  }
+
+  queryRechargeLog(msisdn: string, opts: QueryRechargeLogOptions): Promise<QueryRechargeLogOutput> {
+    return this.arServices.queryRechargeLog(msisdn, opts);
+  }
+
+  queryRefundLog(msisdn: string, opts?: QueryRefundLogOptions): Promise<QueryRefundLogOutput> {
+    return this.arServices.queryRefundLog(msisdn, opts);
   }
 
   queryCdrDetail(

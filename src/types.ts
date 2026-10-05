@@ -1056,6 +1056,346 @@ export interface QueryTransactionOutput {
   };
 }
 
+export type QueryRechargeLogInnerType = '0' | '1' | '2' | '3';
+export type QueryRechargeLogResultFilter = 0 | 1;
+
+export interface QueryRechargeLogOptions extends CbsRequestOptions {
+  /** Required CBS recharge record start time, in the configured CBS time format. */
+  startTime: string;
+  /** Required CBS recharge record end time, in the configured CBS time format. */
+  endTime: string;
+  /** Total matching rows from the previous response; leave at 0 for the first page. */
+  totalRows?: number;
+  /** Zero-based index of the first row to return; defaults to 0. */
+  startRow?: number;
+  /** Rows per page. CBS allows values from 1 through 500; defaults to 50. */
+  pageSize?: number;
+  /** External CBS recharge transaction identifier. */
+  extTransId?: string;
+  /** Site-configured external recharge type. Mutually exclusive with innerRechargeType. */
+  rechargeType?: string;
+  /** CBS internal type: UVC voucher, cash, EVC, or cash reversal. */
+  innerRechargeType?: QueryRechargeLogInnerType;
+  /** 0 selects failed records; 1 selects successful records. */
+  rechargeResult?: QueryRechargeLogResultFilter;
+  /** CBS recharge channel identifiers to include. */
+  rechargeChannelIds?: string[];
+  /** Select subscriber-only records when true; false selects the default-account view. */
+  subscriberLevelOnly?: boolean;
+}
+
+export interface QueryRechargeLogAdditionalProperty {
+  'arc:Code'?: string;
+  'arc:Value'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogCardInfo {
+  'arc:CardPinNumber'?: string;
+  'arc:CardSequence'?: string;
+  'arc:CardType'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogBankInfo {
+  'arc:BankCode'?: string;
+  'arc:BankBranchCode'?: string;
+  'arc:AcctType'?: string;
+  'arc:AcctNo'?: string;
+  'arc:CreditCardType'?: string;
+  'arc:AcctName'?: string;
+  'arc:ExpDate'?: string;
+  'arc:CVVNumber'?: string;
+  'arc:CheckNo'?: string;
+  'arc:CheckDate'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogLifeCycleStatus {
+  'ars:StatusName'?: string;
+  'ars:StatusExpireTime'?: string;
+  'ars:StatusIndex'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogLifeCycleChange {
+  'ars:OldLifeCycleStatus'?: QueryRechargeLogLifeCycleStatus | QueryRechargeLogLifeCycleStatus[];
+  'ars:NewLifeCycleStatus'?: QueryRechargeLogLifeCycleStatus | QueryRechargeLogLifeCycleStatus[];
+  'ars:ChgValidity'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogBalanceChange {
+  'arc:BalanceType'?: string;
+  'arc:BalanceID'?: string;
+  'arc:BalanceTypeName'?: string;
+  'arc:OldBalanceAmt'?: string;
+  'arc:NewBalanceAmt'?: string;
+  'arc:CurrencyID'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogFreeUnitChange {
+  'arc:FreeUnitInstanceID'?: string;
+  'arc:FreeUnitType'?: string;
+  'arc:FreeUnitTypeName'?: string;
+  'arc:MeasureUnit'?: string;
+  'arc:MeasureUnitName'?: string;
+  'arc:OldAmt'?: string;
+  'arc:NewAmt'?: string;
+  'arc:EffectiveTime'?: string;
+  'arc:ExpireTime'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogBonusFreeUnit {
+  'ars:FreeUnitID'?: string;
+  'ars:FreeUnitType'?: string;
+  'ars:FreeUnitTypeName'?: string;
+  'ars:MeasureUnit'?: string;
+  'ars:MeasureUnitName'?: string;
+  'ars:BonusAmt'?: string;
+  'ars:EffectiveTime'?: string;
+  'ars:ExpireTime'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogBonusBalance {
+  'ars:BalanceType'?: string;
+  'ars:BalanceID'?: string;
+  'ars:BalanceTypeName'?: string;
+  'ars:BonusAmt'?: string;
+  'ars:CurrencyID'?: string;
+  'ars:EffectiveTime'?: string;
+  'ars:ExpireTime'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogBonusOffering {
+  'ars:Offeringid'?: string;
+  'ars:OwnerType'?: string;
+  'ars:OwnerKey'?: string;
+  'ars:EffectiveTime'?: string;
+  'ars:ExpireTime'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogBonus {
+  'ars:FreeUnitItemList'?: QueryRechargeLogBonusFreeUnit | QueryRechargeLogBonusFreeUnit[];
+  'ars:BalanceList'?: QueryRechargeLogBonusBalance | QueryRechargeLogBonusBalance[];
+  'ars:Bonusofferlist'?: QueryRechargeLogBonusOffering | QueryRechargeLogBonusOffering[];
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogCreditChange {
+  'arc:CreditLimitID'?: string;
+  'arc:CreditLimitType'?: string;
+  'arc:CreditLimitTypeName'?: string;
+  'arc:OldLeftCreditAmt'?: string;
+  'arc:NewLeftCreditAmt'?: string;
+  'arc:MeasureUnit'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogLoanPayment {
+  'ars:PaidLoanAmount'?: string;
+  'ars:PaidLoanPoundage'?: string;
+  'ars:PaidLoanPenalty'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogRecord {
+  'ars:TradeTime'?: string;
+  'ars:AcctKey'?: string;
+  'ars:SubKey'?: string;
+  'ars:PrimaryIdentity'?: string;
+  'ars:TransID'?: string;
+  'ars:ExtTransID'?: string;
+  'ars:RechargeAmount'?: string;
+  'ars:CurrencyID'?: string;
+  'ars:OriAmount'?: string;
+  'ars:OriCurrencyID'?: string;
+  'ars:CurrencyRate'?: string;
+  'ars:RechargeTax'?: string;
+  'ars:RechargePenalty'?: string;
+  'ars:RechargeType'?: string;
+  'ars:ExtRechargeType'?: string;
+  'ars:RechargeChannelID'?: string;
+  'ars:RechargeReason'?: string;
+  'ars:OperID'?: string;
+  'ars:OperAccount'?: string;
+  'ars:DeptID'?: string;
+  'ars:DeptCode'?: string;
+  'ars:ResultCode'?: string;
+  'ars:ReversalFlag'?: string;
+  'ars:ReversalTransId'?: string;
+  'ars:ReversalReason'?: string;
+  'ars:ReversalTime'?: string;
+  'ars:ReversalOpID'?: string;
+  'ars:ReversalOperAccount'?: string;
+  'ars:ReversalDeptID'?: string;
+  'ars:ReversalDeptCode'?: string;
+  'ars:CardInfo'?: QueryRechargeLogCardInfo;
+  'ars:BankInfo'?: QueryRechargeLogBankInfo;
+  'ars:LifeCycleChgInfo'?: QueryRechargeLogLifeCycleChange;
+  'ars:BalanceChgInfo'?: QueryRechargeLogBalanceChange;
+  'ars:RechargeBonus'?: QueryRechargeLogBonus;
+  'ars:AdditionalProperty'?:
+    | QueryRechargeLogAdditionalProperty
+    | QueryRechargeLogAdditionalProperty[];
+  'ars:CreditChgInfo'?: QueryRechargeLogCreditChange;
+  'ars:LoanPaymentList'?: QueryRechargeLogLoanPayment;
+  'ars:FreeUnitChgInfo'?: QueryRechargeLogFreeUnitChange;
+  'ars:Remark'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogSummary {
+  'ars:CurrencyID'?: string;
+  'ars:SumAmount'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogResult {
+  'ars:RechargeInfo'?: QueryRechargeLogRecord | QueryRechargeLogRecord[];
+  'ars:RechargeSumList'?: QueryRechargeLogSummary | QueryRechargeLogSummary[];
+  'ars:TotalRowNum'?: string | number;
+  'ars:BeginRowNum'?: string | number;
+  'ars:FetchRowNum'?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogResultHeader extends QueryCustomerInfoResultHeader {
+  'cbs:Version'?: string;
+  'cbs:ResultCode'?: string;
+  'cbs:MsgLanguageCode'?: string;
+  'cbs:ResultDesc'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRechargeLogResponse extends CbsOperationResponse {
+  ResultHeader?: QueryRechargeLogResultHeader;
+  QueryRechargeLogResult?: QueryRechargeLogResult;
+}
+
+export interface QueryRechargeLogOutput {
+  metadata: QueryRechargeLogResponse;
+  /** Unmodified CBS query result, including nested and deployment-specific fields. */
+  data: QueryRechargeLogResult;
+  /** RechargeInfo normalized to an array, including when CBS returns one record. */
+  recharges: QueryRechargeLogRecord[];
+  /** Normalized paging values; omitted when CBS does not return a valid total. */
+  pagination: {
+    totalRows?: number;
+    startRow: number;
+    pageSize: number;
+    rowsReturned: number;
+  };
+}
+
+export interface QueryRefundLogOptions extends CbsRequestOptions {
+  /** CBS refund log start time in the configured time format. */
+  startTime?: string;
+  /** CBS refund log end time in the configured time format. */
+  endTime?: string;
+  /** Total matching rows from the previous response; leave at 0 for the first page. */
+  totalRows?: number;
+  /** Zero-based index of the first row to return; defaults to 0. */
+  startRow?: number;
+  /** Rows per page. CBS allows values from 1 through 1000; defaults to 50. */
+  pageSize?: number;
+}
+
+/** CBS origin of the refunded credit: PAYMENT, OVERPAYMENT, or DEPOSIT. */
+export type QueryRefundLogCreditConsumeRule = 'P' | 'O' | 'D';
+
+/** CBS refund method: debit card, credit card, cash, or check. */
+export type QueryRefundLogPaymentMethod = 'D' | 'C' | 'A' | 'E';
+
+export interface QueryRefundLogAdditionalProperty {
+  'arc:Code'?: string;
+  'arc:Value'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRefundLogBankInfo {
+  'arc:BankCode'?: string;
+  'arc:BankBranchCode'?: string;
+  'arc:AcctType'?: string;
+  'arc:AcctNo'?: string;
+  'arc:CreditCardType'?: string;
+  'arc:AcctName'?: string;
+  'arc:ExpDate'?: string;
+  'arc:CVVNumber'?: string;
+  'arc:CheckNo'?: string;
+  'arc:CheckDate'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRefundLogChannel {
+  'ars:PaymentMethod'?: QueryRefundLogPaymentMethod;
+  'ars:BankInfo'?: QueryRefundLogBankInfo;
+  [key: string]: unknown;
+}
+
+export interface QueryRefundLogRecord {
+  'ars:AcctKey'?: string;
+  'ars:RefundId'?: string;
+  'ars:RefundTime'?: string;
+  'ars:RefundAmount'?: string;
+  'ars:CurrencyID'?: string;
+  'ars:CreditConsumeRule'?: QueryRefundLogCreditConsumeRule;
+  'ars:Reason'?: string;
+  'ars:OperID'?: string;
+  'ars:OperAccount'?: string;
+  'ars:DeptID'?: string;
+  'ars:DeptCode'?: string;
+  'ars:Status'?: string;
+  'ars:RefundChannel'?: QueryRefundLogChannel;
+  'ars:Remark'?: string;
+  'ars:AdditionalProperty'?: QueryRefundLogAdditionalProperty | QueryRefundLogAdditionalProperty[];
+  'ars:RefundSerialNo'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRefundLogResult {
+  'ars:RefundLogInfo'?: QueryRefundLogRecord | QueryRefundLogRecord[];
+  'ars:TotalRowNum'?: string | number;
+  'ars:BeginRowNum'?: string | number;
+  'ars:FetchRowNum'?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryRefundLogResultHeader extends QueryCustomerInfoResultHeader {
+  'cbs:Version'?: string;
+  'cbs:ResultCode'?: string;
+  'cbs:MsgLanguageCode'?: string;
+  'cbs:ResultDesc'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryRefundLogResponse extends CbsOperationResponse {
+  'ars:ResultHeader'?: QueryRefundLogResultHeader;
+  'ars:QueryRefundLogResult'?: QueryRefundLogResult;
+  ResultHeader?: QueryRefundLogResultHeader;
+  QueryRefundLogResult?: QueryRefundLogResult;
+}
+
+export interface QueryRefundLogOutput {
+  metadata: QueryRefundLogResponse;
+  /** Unmodified CBS query result, including nested and deployment-specific fields. */
+  data: QueryRefundLogResult;
+  /** RefundLogInfo normalized to an array, including when CBS returns one record. */
+  refunds: QueryRefundLogRecord[];
+  /** Normalized paging values; totalRows is omitted when CBS does not return a valid total. */
+  pagination: {
+    totalRows?: number;
+    startRow: number;
+    pageSize: number;
+    rowsReturned: number;
+  };
+}
+
 export interface QueryCdrDetailOptions extends CbsRequestOptions {}
 
 export interface QueryCdrDetailResult {
