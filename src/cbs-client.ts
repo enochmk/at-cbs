@@ -26,6 +26,8 @@ import type {
   SubDeactivationOutput,
   QueryXTransactionOptions,
   QueryXTransactionOutput,
+  QueryTransactionOptions,
+  QueryTransactionOutput,
   QueryCdrDetailOptions,
   QueryCdrDetailOutput,
   CustActivationOptions,
@@ -242,6 +244,13 @@ export class CbsClient {
     opts?: QueryXTransactionOptions,
   ): Promise<QueryXTransactionOutput> {
     return this.bcServices.queryXTransaction(msisdn, opts);
+  }
+
+  queryTransaction(
+    msisdn: string,
+    opts?: QueryTransactionOptions,
+  ): Promise<QueryTransactionOutput> {
+    return this.arServices.queryTransaction(msisdn, opts);
   }
 
   queryCdrDetail(

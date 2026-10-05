@@ -36,6 +36,11 @@ import type {
   AdjustAccountOutput,
   AdjustAccountResponse,
   AdjustAccountResult,
+  QueryTransactionOptions,
+  QueryTransactionRecord,
+  QueryTransactionOutput,
+  QueryTransactionResponse,
+  QueryTransactionResult,
 } from '../types';
 import createHttpError from 'http-errors';
 import { randomUUID } from 'node:crypto';
@@ -43,8 +48,117 @@ import { randomUUID } from 'node:crypto';
 import { CbsServiceBase } from './cbs-service-base';
 import { getXmlField, normalizeBalanceAmount } from '../utils';
 
+function escapeXmlText(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+}
+
+function parseOptionalNonNegativeInteger(value: string | number | undefined): number | undefined {
+  if (value === undefined) return undefined;
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
 export class ArServices extends CbsServiceBase {
   protected readonly servicePath = '/services/ArServices';
+
+  async queryTransaction(
+    msisdn: string,
+    opts?: QueryTransactionOptions,
+  ): Promise<QueryTransactionOutput> {
+    const cbsMsisdn = this.normalizeMsisdn(msisdn);
+    const startRow = opts?.startRow ?? 0;
+    const pageSize = opts?.pageSize ?? 50;
+    const totalRows = opts?.totalRows ?? 0;
+
+    if (!Number.isSafeInteger(totalRows) || totalRows < 0) {
+      throw createHttpError(400, 'totalRows must be a non-negative integer');
+    }
+    if (!Number.isSafeInteger(startRow) || startRow < 0) {
+      throw createHttpError(400, 'startRow must be a non-negative integer');
+    }
+    if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000) {
+      throw createHttpError(400, 'pageSize must be an integer from 1 to 1000');
+    }
+
+    const messageSeq = this.createMessageSeq();
+    this.log('verbose', 'queryTransaction - sending request', { msisdn, opts });
+
+    const optionalTimes = [
+      opts?.startTime !== undefined
+        ? `<ars:StartTime>${escapeXmlText(opts.startTime)}</ars:StartTime>`
+        : '',
+      opts?.endTime !== undefined
+        ? `<ars:EndTime>${escapeXmlText(opts.endTime)}</ars:EndTime>`
+        : '',
+    ].join('');
+    const soapPayload = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ars="http://www.huawei.com/bme/cbsinterface/arservices" xmlns:cbs="http://www.huawei.com/bme/cbsinterface/cbscommon" xmlns:arc="http://cbs.huawei.com/ar/wsservice/arcommon">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <ars:QueryTransactionRequestMsg>
+            ${this.requestHeader(opts, 'QueryTransaction', messageSeq)}
+            <QueryTransactionRequest>
+              <ars:QueryObj>
+                <ars:SubAccessCode>
+                  <arc:PrimaryIdentity>${cbsMsisdn}</arc:PrimaryIdentity>
+                </ars:SubAccessCode>
+              </ars:QueryObj>
+              ${optionalTimes}
+              <ars:TotalRowNum>${totalRows}</ars:TotalRowNum>
+              <ars:BeginRowNum>${startRow}</ars:BeginRowNum>
+              <ars:FetchRowNum>${pageSize}</ars:FetchRowNum>
+            </QueryTransactionRequest>
+          </ars:QueryTransactionRequestMsg>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await this.transport.post(
+      this.servicePath,
+      soapPayload,
+      'queryTransaction',
+      msisdn,
+    );
+    const { resultMsg, resultCode, resultDesc } = this.transport.parse<QueryTransactionResponse>(
+      response,
+      this.transport.stringParser,
+    );
+    if (resultCode !== '0') {
+      this.transport.throwCbsError('queryTransaction', msisdn, resultCode, resultDesc);
+    }
+
+    const queryResult = getXmlField<QueryTransactionResult>(
+      resultMsg as Record<string, unknown>,
+      'QueryTransactionResult',
+    );
+    const recordResult = getXmlField<QueryTransactionRecord | QueryTransactionRecord[]>(
+      queryResult as Record<string, unknown> | undefined,
+      'TransactionInfo',
+    );
+    const transactions =
+      recordResult === undefined ? [] : Array.isArray(recordResult) ? recordResult : [recordResult];
+    const returnedResult = queryResult ?? {};
+
+    this.log('verbose', 'queryTransaction - success', { msisdn, messageSeq });
+    return {
+      metadata: resultMsg,
+      data: returnedResult,
+      transactions,
+      pagination: {
+        totalRows: parseOptionalNonNegativeInteger(
+          getXmlField<string | number>(returnedResult, 'TotalRowNum'),
+        ),
+        startRow,
+        pageSize,
+        rowsReturned: transactions.length,
+      },
+    };
+  }
 
   async adjustAccount(msisdn: string, opts?: AdjustAccountOptions): Promise<AdjustAccountOutput> {
     const cbsMsisdn = this.normalizeMsisdn(msisdn);

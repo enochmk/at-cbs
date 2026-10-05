@@ -981,6 +981,81 @@ export interface QueryXTransactionOutput {
   data: QueryXTransactionResult;
 }
 
+export interface QueryTransactionOptions extends CbsRequestOptions {
+  /** CBS transaction start time, in the configured CBS time format. */
+  startTime?: string;
+  /** CBS transaction end time, in the configured CBS time format. */
+  endTime?: string;
+  /** Total matching rows from the previous response; leave at 0 for the first page. */
+  totalRows?: number;
+  /** Zero-based index of the first row to return; defaults to 0. */
+  startRow?: number;
+  /** Rows per page. CBS allows values from 1 through 1000; defaults to 50. */
+  pageSize?: number;
+}
+
+export interface QueryTransactionRecord {
+  'ars:AcctKey'?: string;
+  'ars:AcctCode'?: string;
+  'ars:CustKey'?: string;
+  'ars:SubKey'?: string;
+  'ars:PrimaryIdentity'?: string;
+  'ars:AccountBalance'?: string;
+  'ars:TransType'?: string;
+  'ars:ChannelID'?: string;
+  'ars:TransAmount'?: string;
+  'ars:TaxAmount'?: string;
+  'ars:CurrencyID'?: string;
+  'ars:TransTime'?: string;
+  'ars:TransID'?: string;
+  'ars:SrcTransID'?: string;
+  'ars:ExtTransID'?: string;
+  'ars:OperID'?: string;
+  'ars:OperAccount'?: string;
+  'ars:DeptID'?: string;
+  'ars:DeptCode'?: string;
+  'ars:ReasonCode'?: string;
+  'ars:Status'?: string;
+  'ars:Remark'?: string;
+  'ars:AdditionalProperty'?:
+    | QueryTransactionAdditionalProperty
+    | QueryTransactionAdditionalProperty[];
+  [key: string]: unknown;
+}
+
+export interface QueryTransactionAdditionalProperty {
+  'arc:Code'?: string;
+  'arc:Value'?: string;
+  [key: string]: unknown;
+}
+
+export interface QueryTransactionResult {
+  'ars:TransactionInfo'?: QueryTransactionRecord | QueryTransactionRecord[];
+  'ars:TotalRowNum'?: string | number;
+  'ars:BeginRowNum'?: string | number;
+  'ars:FetchRowNum'?: string | number;
+  [key: string]: unknown;
+}
+
+export interface QueryTransactionResponse extends CbsOperationResponse {
+  QueryTransactionResult?: QueryTransactionResult;
+}
+
+export interface QueryTransactionOutput {
+  metadata: QueryTransactionResponse;
+  /** Unmodified CBS query result, including namespaced fields not modeled here. */
+  data: QueryTransactionResult;
+  /** TransactionInfo normalized to an array, including when CBS returns one record. */
+  transactions: QueryTransactionRecord[];
+  /** Normalized paging values; omitted when CBS does not return a valid value. */
+  pagination: {
+    totalRows?: number;
+    startRow: number;
+    pageSize: number;
+    rowsReturned: number;
+  };
+}
+
 export interface QueryCdrDetailOptions extends CbsRequestOptions {}
 
 export interface QueryCdrDetailResult {

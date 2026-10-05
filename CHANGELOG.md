@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `queryTransaction()` for subscriber billing transaction logs, with complete CBS response preservation, normalized records, and validated pagination.
+
 ### Changed
 
 - Prefix every outbound CBS `MessageSeq` with `CRM_` and a fresh UUID, including requests that

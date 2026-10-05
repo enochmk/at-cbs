@@ -537,12 +537,42 @@ await client.adjustAccount('270118755', {
 const transactions = await client.queryXTransaction('270118755');
 console.dir(transactions.data, { depth: null });
 
+// Search the subscriber's billing transaction log.
+const pageSize = 50;
+let totalRows = 0;
+
+for (let startRow = 0; ; ) {
+  const page = await client.queryTransaction('560043149', {
+    startTime: '20261001000000',
+    endTime: '20261005235959',
+    totalRows, // CBS expects 0 on the first request, then the returned total.
+    startRow, // Zero-based offset: 0, 50, 100, ...
+    pageSize,
+  });
+
+  totalRows = page.pagination.totalRows ?? totalRows;
+  for (const transaction of page.transactions) {
+    console.dir(transaction, { depth: null });
+  }
+
+  const nextStartRow = startRow + page.pagination.rowsReturned;
+  const reachedKnownEnd = page.pagination.totalRows !== undefined && nextStartRow >= totalRows;
+  const endedWithoutTotal =
+    page.pagination.totalRows === undefined && page.transactions.length < pageSize;
+  if (page.pagination.rowsReturned === 0 || reachedKnownEnd || endedWithoutTotal) break;
+  startRow = nextStartRow;
+}
+
 const cdr = await client.queryCdrDetail('270118755', '123456789');
 console.dir(cdr.data, { depth: null });
 ```
 
-`queryCdrDetail` uses `BbServices`; the other subscriber/account operations use `BcServices`, and
-balance operations use `ArServices`.
+`queryTransaction` uses the `ArServices` endpoint and returns `transactions` as an array plus
+normalized `pagination` values (`totalRows`, request `startRow` and `pageSize`, and `rowsReturned`).
+`data` and `metadata` preserve the parsed CBS response, including
+namespaced or deployment-specific fields not modeled by the client. CBS paging uses `TotalRowNum`
+as the prior total and `BeginRowNum` as a zero-based offset; `FetchRowNum` is limited to 1000.
+`queryCdrDetail` uses `BbServices` and requires a CDR sequence; it does not search CDRs by number.
 
 ## Cleanup order
 
