@@ -7,18 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-10-05
+
 ### Added
 
 - Added `queryTransaction()` for subscriber billing transaction logs, with complete CBS response preservation, normalized records, and validated pagination.
 - Added `queryRechargeLog()` with subscriber/account scope control, recharge filters, normalized records, and pagination bounded by the CBS contract.
 - Added `queryRefundLog()` with typed refund details, full CBS response preservation, and pagination bounded by the CBS contract.
-- Added `adjustBalances()` to send account-balance and free-unit changes together in one CBS
-  adjustment request, including free-unit instance-ID adjustments.
 
 ### Changed
 
 - Prefix every outbound CBS `MessageSeq` with `CRM_` and a fresh UUID, including requests that
   provide a caller-defined sequence or previously used timestamp/constant defaults.
+
+## [2.11.0] - 2026-09-29
+
+### Added
+
+- Added `adjustBalances()` to send account-balance and free-unit changes together in one CBS
+  adjustment request, including free-unit instance-ID adjustments.
 
 ## [2.9.0] - 2026-09-15
 

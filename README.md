@@ -6,11 +6,16 @@ offering, lifecycle, and transaction operations.
 ## Install
 
 ```bash
-npm install @enochmk/cbs-client
+npm install @enochmk/cbs-client@2.12.0
 ```
 
-The package publishes only the compiled `dist` directory. The repository contains unit tests, a
-Postman collection, and a guarded live-CBS status-change test script.
+The package includes the compiled `dist` directory, integration guides in `docs`, and release
+notes in `CHANGELOG.md`. The repository contains unit tests, a Postman collection, and a guarded
+live-CBS status-change test script.
+
+Version `2.12.0` adds paged transaction, recharge, and refund log queries and retains
+`adjustBalances()` from `2.11.0`. See the [billing log integration guide](docs/billing-log-queries.md)
+for request options, pagination, returned data, and error handling.
 
 ## Configure the client
 
@@ -656,6 +661,8 @@ npm pack --dry-run
 
 `postman/cbs-client.collection.json` contains executable R25 SOAP examples. Set the collection
 variables locally before use; the committed collection contains placeholders and no credentials.
+The billing log examples were generated from client requests. Set `msisdn`, `startTime`, and
+`endTime` before querying logs; the combined adjustment example also requires `freeUnitType`.
 
 ## License
 

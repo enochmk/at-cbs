@@ -149,6 +149,18 @@
     {
       "key": "adjustmentAmount",
       "value": "500000"
+    },
+    {
+      "key": "startTime",
+      "value": ""
+    },
+    {
+      "key": "endTime",
+      "value": ""
+    },
+    {
+      "key": "freeUnitType",
+      "value": ""
     }
   ],
   "item": [
@@ -960,6 +972,99 @@
               "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:bcs=\"http://www.huawei.com/bme/cbsinterface/bcservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:bcc=\"http://www.huawei.com/bme/cbsinterface/bccommon\"><soapenv:Header/><soapenv:Body><bcs:QueryCDRDetailRequestMsg><RequestHeader><cbs:Version>1</cbs:Version><cbs:BusinessCode>QueryCDRDetail</cbs:BusinessCode><cbs:MessageSeq>{{$guid}}</cbs:MessageSeq><cbs:OwnershipInfo><cbs:BEID>101</cbs:BEID></cbs:OwnershipInfo><cbs:AccessSecurity><cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode><cbs:Password>{{password}}</cbs:Password></cbs:AccessSecurity><cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo><cbs:AccessMode>3</cbs:AccessMode><cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode><cbs:TimeFormat><cbs:TimeType>1</cbs:TimeType></cbs:TimeFormat></RequestHeader><QueryCDRDetailRequest><bcs:PrimaryIdentity>{{msisdn}}</bcs:PrimaryIdentity><bcs:CDRSeq>{{cdrSeq}}</bcs:CDRSeq></QueryCDRDetailRequest></bcs:QueryCDRDetailRequestMsg></soapenv:Body></soapenv:Envelope>"
             },
             "url": "{{baseUrl}}/services/BbServices"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Billing Logs and Adjustments",
+      "item": [
+        {
+          "name": "Query Transaction Logs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ars=\"http://www.huawei.com/bme/cbsinterface/arservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:arc=\"http://cbs.huawei.com/ar/wsservice/arcommon\">\n        <soapenv:Header/>\n        <soapenv:Body>\n          <ars:QueryTransactionRequestMsg>\n            \n      <RequestHeader>\n        <cbs:Version>1</cbs:Version>\n        <cbs:BusinessCode>QueryTransaction</cbs:BusinessCode>\n        <cbs:MessageSeq>CRM_{{$guid}}</cbs:MessageSeq>\n        <cbs:OwnershipInfo>\n          <cbs:BEID>101</cbs:BEID>\n        </cbs:OwnershipInfo>\n        <cbs:AccessSecurity>\n          <cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode>\n          <cbs:Password>{{password}}</cbs:Password>\n        </cbs:AccessSecurity>\n        \n        \n        \n        \n        \n        \n      </RequestHeader>\n            <QueryTransactionRequest>\n              <ars:QueryObj>\n                <ars:SubAccessCode>\n                  <arc:PrimaryIdentity>{{msisdn}}</arc:PrimaryIdentity>\n                </ars:SubAccessCode>\n              </ars:QueryObj>\n              <ars:StartTime>{{startTime}}</ars:StartTime><ars:EndTime>{{endTime}}</ars:EndTime>\n              <ars:TotalRowNum>0</ars:TotalRowNum>\n              <ars:BeginRowNum>0</ars:BeginRowNum>\n              <ars:FetchRowNum>50</ars:FetchRowNum>\n            </QueryTransactionRequest>\n          </ars:QueryTransactionRequestMsg>\n        </soapenv:Body>\n      </soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/ArServices"
+          }
+        },
+        {
+          "name": "Query Recharge Logs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ars=\"http://www.huawei.com/bme/cbsinterface/arservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:arc=\"http://cbs.huawei.com/ar/wsservice/arcommon\">\n        <soapenv:Header/>\n        <soapenv:Body>\n          <ars:QueryRechargeLogRequestMsg>\n            \n      <RequestHeader>\n        <cbs:Version>1</cbs:Version>\n        <cbs:BusinessCode>1</cbs:BusinessCode>\n        <cbs:MessageSeq>CRM_{{$guid}}</cbs:MessageSeq>\n        <cbs:OwnershipInfo>\n          <cbs:BEID>101</cbs:BEID>\n        </cbs:OwnershipInfo>\n        <cbs:AccessSecurity>\n          <cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode>\n          <cbs:Password>{{password}}</cbs:Password>\n        </cbs:AccessSecurity>\n        \n        \n        \n        <cbs:TimeFormat><cbs:TimeType>2</cbs:TimeType></cbs:TimeFormat>\n        \n        \n      </RequestHeader>\n            <QueryRechargeLogRequest>\n              <ars:QueryObj>\n                <ars:SubAccessCode>\n                  <arc:PrimaryIdentity>{{msisdn}}</arc:PrimaryIdentity>\n                </ars:SubAccessCode>\n              </ars:QueryObj>\n              \n              <ars:TotalRowNum>0</ars:TotalRowNum>\n              <ars:BeginRowNum>0</ars:BeginRowNum>\n              <ars:FetchRowNum>50</ars:FetchRowNum>\n              <ars:StartTime>{{startTime}}</ars:StartTime>\n              <ars:EndTime>{{endTime}}</ars:EndTime>\n              <ars:AdditionalProperty><arc:Code>C_SUB_LOG</arc:Code><arc:Value>1</arc:Value></ars:AdditionalProperty>\n            </QueryRechargeLogRequest>\n          </ars:QueryRechargeLogRequestMsg>\n        </soapenv:Body>\n      </soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/ArServices"
+          }
+        },
+        {
+          "name": "Query Refund Logs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ars=\"http://www.huawei.com/bme/cbsinterface/arservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:arc=\"http://cbs.huawei.com/ar/wsservice/arcommon\">\n        <soapenv:Header/>\n        <soapenv:Body>\n          <ars:QueryRefundLogRequestMsg>\n            \n      <RequestHeader>\n        <cbs:Version>1</cbs:Version>\n        <cbs:BusinessCode>QueryRefundLog</cbs:BusinessCode>\n        <cbs:MessageSeq>CRM_{{$guid}}</cbs:MessageSeq>\n        <cbs:OwnershipInfo>\n          <cbs:BEID>101</cbs:BEID>\n        </cbs:OwnershipInfo>\n        <cbs:AccessSecurity>\n          <cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode>\n          <cbs:Password>{{password}}</cbs:Password>\n        </cbs:AccessSecurity>\n        \n        \n        \n        \n        \n        \n      </RequestHeader>\n            <QueryRefundLogRequest>\n              <ars:QueryObj>\n                <ars:SubAccessCode>\n                  <arc:PrimaryIdentity>{{msisdn}}</arc:PrimaryIdentity>\n                </ars:SubAccessCode>\n              </ars:QueryObj>\n              <ars:StartTime>{{startTime}}</ars:StartTime><ars:EndTime>{{endTime}}</ars:EndTime>\n              <ars:TotalRowNum>0</ars:TotalRowNum>\n              <ars:BeginRowNum>0</ars:BeginRowNum>\n              <ars:FetchRowNum>50</ars:FetchRowNum>\n            </QueryRefundLogRequest>\n          </ars:QueryRefundLogRequestMsg>\n        </soapenv:Body>\n      </soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/ArServices"
+          }
+        },
+        {
+          "name": "Adjust Balances and Free Units",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              },
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ars=\"http://www.huawei.com/bme/cbsinterface/arservices\" xmlns:cbs=\"http://www.huawei.com/bme/cbsinterface/cbscommon\" xmlns:arc=\"http://cbs.huawei.com/ar/wsservice/arcommon\">\n        <soapenv:Header/>\n        <soapenv:Body>\n          <ars:AdjustmentRequestMsg>\n            \n      <RequestHeader>\n        <cbs:Version>1</cbs:Version>\n        <cbs:BusinessCode>Adjustment</cbs:BusinessCode>\n        <cbs:MessageSeq>CRM_{{$guid}}</cbs:MessageSeq>\n        <cbs:OwnershipInfo>\n          <cbs:BEID>101</cbs:BEID>\n        </cbs:OwnershipInfo>\n        <cbs:AccessSecurity>\n          <cbs:LoginSystemCode>{{username}}</cbs:LoginSystemCode>\n          <cbs:Password>{{password}}</cbs:Password>\n        </cbs:AccessSecurity>\n        <cbs:OperatorInfo><cbs:OperatorID>101</cbs:OperatorID></cbs:OperatorInfo>\n        <cbs:AccessMode>3</cbs:AccessMode>\n        <cbs:MsgLanguageCode>2002</cbs:MsgLanguageCode>\n        \n        \n        \n      </RequestHeader>\n            <AdjustmentRequest>\n              <ars:AdjustmentSerialNo>{{adjustmentSerialNo}}</ars:AdjustmentSerialNo>\n              <ars:AdjustmentObj><ars:SubAccessCode><arc:PrimaryIdentity>{{msisdn}}</arc:PrimaryIdentity></ars:SubAccessCode></ars:AdjustmentObj>\n              <ars:OpType>1</ars:OpType>\n              <ars:AdjustmentInfo>\n          <arc:BalanceType>C_MAIN_ACCOUNT</arc:BalanceType>\n          <arc:AdjustmentType>1</arc:AdjustmentType>\n          <arc:AdjustmentAmt>100000</arc:AdjustmentAmt>\n          <arc:CurrencyID>1054</arc:CurrencyID>\n          \n        </ars:AdjustmentInfo>\n              <ars:FreeUnitAdjustmentInfo>\n          <ars:FreeUnitType>{{freeUnitType}}</ars:FreeUnitType>\n          \n          <ars:AdjustmentType>1</ars:AdjustmentType>\n          <ars:AdjustmentAmt>500</ars:AdjustmentAmt>\n          \n          <ars:SelectInstanceMode>1</ars:SelectInstanceMode>\n        </ars:FreeUnitAdjustmentInfo>\n              \n            </AdjustmentRequest>\n          </ars:AdjustmentRequestMsg>\n        </soapenv:Body>\n      </soapenv:Envelope>"
+            },
+            "url": "{{baseUrl}}/services/ArServices"
           }
         }
       ]
